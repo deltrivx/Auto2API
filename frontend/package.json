@@ -13,7 +13,11 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "cap:sync": "cap sync",
+    "cap:ios": "cap sync ios && cap open ios",
+    "cap:android": "cap sync android && cap open android",
+    "build:mobile": "pnpm run build && cap sync"
   },
   "dependencies": {
     "@airwallex/components-sdk": "^1.30.2",
@@ -34,7 +38,12 @@
     "vue-draggable-plus": "^0.6.1",
     "vue-i18n": "^11.4.16",
     "vue-router": "^4.2.5",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/splash-screen": "^8.6.2",
+    "@capacitor/keyboard": "^8.6.2"
   },
   "devDependencies": {
     "@intlify/message-compiler": "11.4.16",
@@ -58,7 +67,8 @@
     "vite": "^5.0.10",
     "vite-plugin-checker": "^0.9.1",
     "vitest": "^2.1.9",
-    "vue-tsc": "^2.2.0"
+    "vue-tsc": "^2.2.0",
+    "@capacitor/cli": "^8.6.2"
   },
   "pnpm": {
     "overrides": {

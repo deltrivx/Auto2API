@@ -1,0 +1,232 @@
+name: Mobile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/mobile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '26'
+  PNPM_VERSION: '10'
+
+jobs:
+  # ---------------------------------------------------------------
+  # 先生成 Web 产物，iOS / Android 共用，避免重复构建
+  # ---------------------------------------------------------------
+  web:
+    name: Build web assets
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install and build
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: backend/internal/web/dist
+          retention-days: 3
+          compression-level: 6
+
+  # ---------------------------------------------------------------
+  # Android：生成原生工程 -> Gradle 构建 APK
+  # ---------------------------------------------------------------
+  android:
+    name: Build Android APK
+    needs: web
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-android@v3
+        with:
+          # Capacitor 8 要求 compileSdk 36
+          api-levels: '36'
+          build-tools: '36.0.0'
+
+      - name: Download web assets
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: backend/internal/web/dist
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Add Android platform
+        working-directory: frontend
+        run: pnpm exec cap add android
+
+      - name: Sync web assets
+        working-directory: frontend
+        run: pnpm exec cap sync android
+
+      - name: Prepare signing key
+        id: signing
+        working-directory: frontend/android
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > auto2api-release.keystore
+            {
+              echo "signed=true"
+              echo "storeFile=auto2api-release.keystore"
+              echo "storePassword=$STORE_PASSWORD"
+              echo "keyAlias=$KEY_ALIAS"
+              echo "keyPassword=$KEY_PASSWORD"
+            } > signing.properties
+            echo "::notice::使用 Secrets 中的签名证书构建 release APK"
+          else
+            echo "signed=false"
+            echo "::notice::未配置签名 Secrets，仅产出调试 APK"
+          fi
+
+      - name: Build APK (debug)
+        working-directory: frontend/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Build APK (release, signed)
+        if: steps.signing.outputs.signed == 'true'
+        working-directory: frontend/android
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Collect APKs
+        run: |
+          mkdir -p out
+          find frontend/android/app/build/outputs/apk -name '*.apk' \
+            -exec cp {} out/ \;
+          ls -lh out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: out/*.apk
+          retention-days: 30
+          compression-level: 0
+
+  # ---------------------------------------------------------------
+  # iOS：生成原生工程 -> xcodebuild 构建（未签名，供模拟器/后续签名）
+  # ---------------------------------------------------------------
+  ios:
+    name: Build iOS app
+    needs: web
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Download web assets
+        uses: actions/download-artifact@v4
+        with:
+          name: web-dist
+          path: backend/internal/web/dist
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Add iOS platform
+        working-directory: frontend
+        run: pnpm exec cap add ios
+
+      - name: Sync web assets
+        working-directory: frontend
+        run: pnpm exec cap sync ios
+
+      - name: Select Xcode
+        run: |
+          ls /Applications | grep -i '^Xcode'
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Resolve Swift packages
+        working-directory: frontend/ios/App
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -workspace App.xcworkspace \
+            -scheme App
+
+      - name: Build for simulator (unsigned)
+        working-directory: frontend/ios/App
+        run: |
+          xcodebuild build \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            | xcpretty || true
+
+      - name: Collect .app
+        run: |
+          mkdir -p out
+          APP=$(find frontend/ios/App/build/Build/Products -name 'App.app' -maxdepth 3 | head -1)
+          if [ -n "$APP" ]; then
+            cp -R "$APP" out/Auto2API.app
+            cd out && zip -qry Auto2API-simulator.zip Auto2API.app
+            echo "::notice::iOS 产物: $APP"
+          else
+            echo "::warning::未找到 App.app，构建可能失败"
+            find frontend/ios/App/build -name '*.app' 2>/dev/null | head
+          fi
+          ls -lh out/ || true
+
+      - uses: actions/upload-artifact@v4
+        if: hashFiles('out/*.zip') != ''
+        with:
+          name: ios-simulator-app
+          path: out/*.zip
+          retention-days: 30
+          compression-level: 0

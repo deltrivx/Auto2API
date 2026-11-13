@@ -42,8 +42,8 @@
     "@capacitor/core": "^8.6.2",
     "@capacitor/ios": "^8.6.2",
     "@capacitor/android": "^8.6.2",
-    "@capacitor/splash-screen": "^8.6.2",
-    "@capacitor/keyboard": "^8.6.2"
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/keyboard": "^8.0.6"
   },
   "devDependencies": {
     "@intlify/message-compiler": "11.4.16",

@@ -4,7 +4,8 @@
  */
 
 import { apiClient } from '../client'
-import type { AdminUser, UpdateUserRequest, PaginatedResponse, ApiKey } from '@/types'
+import { listPlatformIds } from '@/constants/platformCatalog'
+import type { AccountPlatform, AdminUser, UpdateUserRequest, PaginatedResponse, ApiKey } from '@/types'
 
 export interface AdminBindAuthIdentityChannelRequest {
   channel: string
@@ -44,6 +45,17 @@ export interface AdminBoundAuthIdentity {
   channel?: AdminBoundAuthIdentityChannel | null
 }
 
+export interface BatchUpdateUserLimitsRequest {
+  user_ids: number[]
+  all?: boolean
+  concurrency?: number
+  rpm_limit?: number
+}
+
+export interface BatchUpdateUserLimitsResponse {
+  affected: number
+}
+
 /**
  * List all users with pagination
  * @param page - Page number (default: 1)
@@ -60,6 +72,7 @@ export async function list(
     role?: 'admin' | 'user'
     search?: string
     group_name?: string         // fuzzy filter by allowed group name
+    api_key_group_id?: number   // filter users by the group their API keys are bound to
     attributes?: Record<number, string>  // attributeId -> value
     include_subscriptions?: boolean
     sort_by?: string
@@ -77,6 +90,7 @@ export async function list(
     role: filters?.role,
     search: filters?.search,
     group_name: filters?.group_name,
+    api_key_group_id: filters?.api_key_group_id,
     include_subscriptions: filters?.include_subscriptions,
     sort_by: filters?.sort_by,
     sort_order: filters?.sort_order
@@ -119,6 +133,7 @@ export async function create(userData: {
   password: string
   username?: string
   notes?: string
+  role?: 'admin' | 'user'
   balance?: number
   concurrency?: number
   rpm_limit?: number
@@ -179,6 +194,43 @@ export async function updateBalance(
  */
 export async function updateConcurrency(id: number, concurrency: number): Promise<AdminUser> {
   return update(id, { concurrency })
+}
+
+/** Overwrite concurrency and/or RPM limits for multiple users in one request. */
+export async function batchUpdateLimits(
+  request: BatchUpdateUserLimitsRequest
+): Promise<BatchUpdateUserLimitsResponse> {
+  const { data } = await apiClient.post<BatchUpdateUserLimitsResponse>(
+    '/admin/users/batch-limits',
+    request
+  )
+  return data
+}
+
+/** Active non-admin user whose inbox identity matches a blacklisted email. */
+export interface BlacklistedEmailUser {
+  id: number
+  email: string
+  username: string
+}
+
+/** Find active non-admin users whose email (or an alias of it) is in the given list. */
+export async function findBlacklistedEmailUsers(
+  emails: string[]
+): Promise<{ items: BlacklistedEmailUser[]; total: number }> {
+  const { data } = await apiClient.post<{ items: BlacklistedEmailUser[]; total: number }>(
+    '/admin/users/blacklist-matches',
+    { emails }
+  )
+  return data
+}
+
+/** Disable multiple users; admins and already-disabled users are skipped. */
+export async function batchDisable(userIds: number[]): Promise<{ affected: number }> {
+  const { data } = await apiClient.post<{ affected: number }>('/admin/users/batch-disable', {
+    user_ids: userIds
+  })
+  return data
 }
 
 /**
@@ -305,7 +357,11 @@ export async function bindUserAuthIdentity(
 /**
  * Platform quota types
  */
-export type PlatformQuotaPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity'
+// 与后端 AllowedQuotaPlatforms 同源：平台清单中的全部具体平台。
+export function platformQuotaPlatforms(): PlatformQuotaPlatform[] {
+  return listPlatformIds()
+}
+export type PlatformQuotaPlatform = AccountPlatform
 export type PlatformQuotaWindow = 'daily' | 'weekly' | 'monthly'
 
 export interface PlatformQuotaItem {
@@ -382,6 +438,9 @@ export const usersAPI = {
   delete: deleteUser,
   updateBalance,
   updateConcurrency,
+  batchUpdateLimits,
+  findBlacklistedEmailUsers,
+  batchDisable,
   toggleStatus,
   getUserApiKeys,
   getUserUsageStats,

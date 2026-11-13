@@ -56,7 +56,18 @@
                 searchable
                 creatable
                 :creatable-prefix="t('admin.users.fuzzySearch')"
-                :search-placeholder="t('admin.users.searchGroups')"
+                :search-placeholder="t('admin.users.searchAuthorizedGroups')"
+                @change="applyFilter"
+              />
+            </div>
+
+            <!-- API Key Group Filter (visible when enabled) -->
+            <div v-if="visibleFilters.has('apiKeyGroup')" class="w-full sm:w-44">
+              <Select
+                v-model="filters.apiKeyGroup"
+                :options="apiKeyGroupFilterOptions"
+                searchable
+                :search-placeholder="t('admin.users.searchApiKeyGroups')"
                 @change="applyFilter"
               />
             </div>
@@ -231,6 +242,27 @@
               </button>
             </div>
 
+            <button
+              v-if="selectedCount > 0"
+              class="btn btn-secondary flex-1 md:flex-initial"
+              data-test="bulk-edit-limits"
+              @click="showBulkEditModal = true"
+            >
+              <Icon name="users" size="md" class="mr-2" />
+              {{ t('admin.users.bulkLimits.action', { count: selectedCount }) }}
+            </button>
+
+            <button
+              v-if="selectedCount > 0"
+              class="btn btn-danger flex-1 md:flex-initial"
+              data-test="bulk-delete-users"
+              :disabled="bulkDeleting"
+              @click="bulkDeleteIds = [...selectedIds]"
+            >
+              <Icon name="trash" size="md" class="mr-2" />
+              {{ t('admin.users.bulkDelete.action', { count: selectedCount }) }}
+            </button>
+
             <!-- Create User Button (full width on mobile, auto width on desktop) -->
             <button @click="showCreateModal = true" class="btn btn-primary flex-1 md:flex-initial">
               <Icon name="plus" size="md" class="mr-2" />
@@ -246,12 +278,17 @@
           :columns="columns"
           :data="sortedUsers"
           :loading="loading"
+          row-key="id"
+          selectable
+          :selected-keys="selectedIds"
+          :selection-label="getUserSelectionLabel"
           :actions-count="7"
           :server-side-sort="true"
           default-sort-key="created_at"
           default-sort-order="desc"
           :sort-storage-key="USER_SORT_STORAGE_KEY"
           @sort="handleSort"
+          @update:selected-keys="handleSelectedKeysUpdate"
         >
           <template #cell-email="{ value }">
             <div class="flex items-center gap-2">
@@ -449,6 +486,7 @@
                     ? 'text-primary-600 dark:text-primary-400'
                     : 'text-gray-400 dark:text-dark-500'"
                   :title="t('admin.users.sortBy')"
+                  :data-test="`usage-sort-trigger-${usageKey}`"
                   @click.stop="toggleUsageSortMenu(usageKey)"
                 >
                   <span
@@ -485,6 +523,7 @@
                     :class="isUsageSortActive(usageKey, metric)
                       ? 'font-medium text-primary-600 dark:text-primary-400'
                       : 'text-gray-700 dark:text-gray-300'"
+                    :data-test="`usage-sort-${usageKey}-${metric}`"
                     @click.stop="toggleUsageSort(usageKey, metric)"
                   >
                     <span>{{ metric === 'today' ? t('admin.users.today') : t('admin.users.total') }}</span>
@@ -720,8 +759,23 @@
     </Teleport>
 
     <ConfirmDialog :show="showDeleteDialog" :title="t('admin.users.deleteUser')" :message="t('admin.users.deleteConfirm', { email: deletingUser?.email })" :danger="true" @confirm="confirmDelete" @cancel="showDeleteDialog = false" />
+    <ConfirmDialog
+      :show="bulkDeleteIds.length > 0"
+      :title="t('admin.users.bulkDelete.title')"
+      :message="t('admin.users.bulkDelete.confirm', { count: bulkDeleteIds.length })"
+      :confirm-text="t('common.delete')"
+      danger
+      @confirm="confirmBulkDelete"
+      @cancel="bulkDeleteIds = []"
+    />
     <UserCreateModal :show="showCreateModal" @close="showCreateModal = false" @success="loadUsers" />
     <UserEditModal :show="showEditModal" :user="editingUser" @close="closeEditModal" @success="loadUsers" />
+    <BulkEditUserModal
+      :show="showBulkEditModal"
+      :selected-ids="selectedIds"
+      @close="showBulkEditModal = false"
+      @success="handleBulkLimitsSuccess"
+    />
     <UserPlatformQuotaModal
       :show="showPlatformQuotaModal"
       :user="platformQuotaUser"
@@ -742,6 +796,7 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { useTableSelection } from '@/composables/useTableSelection'
 import { formatDateTime } from '@/utils/format'
 import Icon from '@/components/icons/Icon.vue'
 
@@ -751,6 +806,7 @@ import type { AdminUser, AdminGroup, UserAttributeDefinition } from '@/types'
 import type { BatchUserUsageStats } from '@/api/admin/dashboard'
 import type { PlatformQuotaItem } from '@/api/admin/users'
 import type { Column } from '@/components/common/types'
+import type { SelectOption } from '@/components/common/Select.vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import TablePageLayout from '@/components/layout/TablePageLayout.vue'
 import DataTable from '@/components/common/DataTable.vue'
@@ -759,6 +815,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import GroupBadge from '@/components/common/GroupBadge.vue'
 import Select from '@/components/common/Select.vue'
+import { buildApiKeyGroupFilterOptions } from './apiKeyGroupFilterOptions'
 import UserAttributesConfigModal from '@/components/user/UserAttributesConfigModal.vue'
 import UserConcurrencyCell from '@/components/user/UserConcurrencyCell.vue'
 import PlatformUsageBreakdown from '@/components/user/PlatformUsageBreakdown.vue'
@@ -766,6 +823,7 @@ import PlatformCostCell from '@/components/user/PlatformCostCell.vue'
 import UserPlatformQuotaCell from '@/components/user/UserPlatformQuotaCell.vue'
 import UserCreateModal from '@/components/admin/user/UserCreateModal.vue'
 import UserEditModal from '@/components/admin/user/UserEditModal.vue'
+import BulkEditUserModal from '@/components/admin/user/BulkEditUserModal.vue'
 import UserPlatformQuotaModal from '@/components/admin/user/UserPlatformQuotaModal.vue'
 import UserApiKeysModal from '@/components/admin/user/UserApiKeysModal.vue'
 import UserAllowedGroupsModal from '@/components/admin/user/UserAllowedGroupsModal.vue'
@@ -1004,7 +1062,7 @@ const loadInitialSortState = (): { sort_by: string; sort_order: 'asc' | 'desc' }
 }
 const sortState = reactive(loadInitialSortState())
 
-// Groups data for the groups column
+// Groups data for the groups column and the existing "authorised group" filter (active only)
 const allGroups = ref<AdminGroup[]>([])
 const loadAllGroups = async () => {
   if (allGroups.value.length > 0) return
@@ -1012,6 +1070,18 @@ const loadAllGroups = async () => {
     allGroups.value = await adminAPI.groups.getAll()
   } catch (e) {
     console.error('Failed to load groups:', e)
+  }
+}
+
+// Groups for the API Key group filter — includes disabled groups so admins can
+// filter users whose keys are still bound to a now-disabled group.
+const allGroupsForApiKeyFilter = ref<AdminGroup[]>([])
+const loadAllGroupsForApiKeyFilter = async () => {
+  if (allGroupsForApiKeyFilter.value.length > 0) return
+  try {
+    allGroupsForApiKeyFilter.value = await adminAPI.groups.getAllIncludingInactive()
+  } catch (e) {
+    console.error('Failed to load groups for API key filter:', e)
   }
 }
 // Resolve user's accessible groups: exclusive groups first, then public groups
@@ -1034,7 +1104,7 @@ const getUserGroups = (user: AdminUser) => {
 // Group filter options: "All Groups" + active exclusive groups (value = group name for fuzzy match)
 const groupFilterOptions = computed(() => {
   const options: { value: string; label: string }[] = [
-    { value: '', label: t('admin.users.allGroups') }
+    { value: '', label: t('admin.users.allAuthorizedGroups') }
   ]
   for (const g of allGroups.value) {
     if (g.status !== 'active' || !g.is_exclusive || g.subscription_type !== 'standard') continue
@@ -1043,11 +1113,24 @@ const groupFilterOptions = computed(() => {
   return options
 })
 
+// API Key group filter options: "All" + groups partitioned by type (value = group id).
+// Uses allGroupsForApiKeyFilter which includes disabled groups.
+const apiKeyGroupFilterOptions = computed(() =>
+  buildApiKeyGroupFilterOptions(allGroupsForApiKeyFilter.value, {
+    all: t('admin.users.allApiKeyGroups'),
+    exclusive: t('admin.users.apiKeyGroupExclusive'),
+    public: t('admin.users.apiKeyGroupPublic'),
+    subscription: t('admin.users.apiKeyGroupSubscription'),
+    disabled: t('admin.users.apiKeyGroupDisabled'),
+  }) as SelectOption[]
+)
+
 // Filter values (role, status, and custom attributes)
 const filters = reactive({
   role: '',
   status: '',
-  group: ''  // group name for fuzzy match, '' = all
+  group: '',  // group name for fuzzy match, '' = all
+  apiKeyGroup: null as number | null  // group id bound to the user's API keys, null = all
 })
 const activeAttributeFilters = reactive<Record<number, string>>({})
 
@@ -1076,7 +1159,8 @@ const filterableAttributes = computed(() =>
 const builtInFilters = computed(() => [
   { key: 'role', name: t('admin.users.columns.role'), type: 'select' as const },
   { key: 'status', name: t('admin.users.columns.status'), type: 'select' as const },
-  { key: 'group', name: t('admin.users.columns.groups'), type: 'select' as const }
+  { key: 'group', name: t('admin.users.authorizedGroupFilter'), type: 'select' as const },
+  { key: 'apiKeyGroup', name: t('admin.users.apiKeyGroupFilter'), type: 'select' as const }
 ])
 
 // Load saved filters from localStorage
@@ -1095,6 +1179,7 @@ const loadSavedFilters = () => {
       if (parsed.role) filters.role = parsed.role
       if (parsed.status) filters.status = parsed.status
       if (parsed.group) filters.group = parsed.group
+      if (typeof parsed.apiKeyGroup === 'number') filters.apiKeyGroup = parsed.apiKeyGroup
       if (parsed.attributes) {
         Object.assign(activeAttributeFilters, parsed.attributes)
       }
@@ -1114,6 +1199,7 @@ const saveFiltersToStorage = () => {
       role: filters.role,
       status: filters.status,
       group: filters.group,
+      apiKeyGroup: filters.apiKeyGroup,
       attributes: activeAttributeFilters
     }
     localStorage.setItem(FILTER_VALUES_KEY, JSON.stringify(values))
@@ -1139,6 +1225,8 @@ const getPlatformUsage = (userId: number, platform: string) =>
 type UsageMetric = 'today' | 'total'
 type UsageSortState = { key: string; metric: UsageMetric; order: 'asc' | 'desc' } | null
 const USAGE_SORT_STORAGE_KEY = 'admin-users-usage-sort'
+// 列头排序按钮点击后弹出的"今日/近30天"选择菜单，同时只允许一个列展开。
+const openUsageSortMenu = ref<string | null>(null)
 
 const loadInitialUsageSort = (): UsageSortState => {
   try {
@@ -1165,6 +1253,12 @@ const persistUsageSort = () => {
     console.error('Failed to persist usage sort:', e)
   }
 }
+const clearUsageSort = () => {
+  if (!usageSort.value) return
+  usageSort.value = null
+  openUsageSortMenu.value = null
+  persistUsageSort()
+}
 
 const isUsageSortActive = (key: string, metric: UsageMetric) =>
   !!usageSort.value && usageSort.value.key === key && usageSort.value.metric === metric
@@ -1184,9 +1278,7 @@ const toggleUsageSort = (key: string, metric: UsageMetric) => {
   openUsageSortMenu.value = null
 }
 
-// 列头排序按钮点击后弹出的"今日/近30天"选择菜单，同时只允许一个列展开。
 // 点击图标本身不触发排序，仅开关菜单；首次排序由用户在菜单内选择 metric 触发（默认 desc，详见 toggleUsageSort）。
-const openUsageSortMenu = ref<string | null>(null)
 const toggleUsageSortMenu = (key: string) => {
   openUsageSortMenu.value = openUsageSortMenu.value === key ? null : key
 }
@@ -1219,6 +1311,24 @@ const sortedUsers = computed(() => {
     .map((x) => x.row)
 })
 
+const {
+  selectedIds,
+  selectedCount,
+  setSelectedIds,
+  clear: clearSelection,
+  removeMany: removeSelectedIds
+} = useTableSelection<AdminUser>({
+  rows: sortedUsers,
+  getId: (user) => user.id
+})
+
+const handleSelectedKeysUpdate = (keys: Array<string | number>) => {
+  setSelectedIds(keys.filter((key): key is number => typeof key === 'number'))
+}
+
+const getUserSelectionLabel = (user: AdminUser) =>
+  t('admin.users.bulkLimits.selectUser', { email: user.email })
+
 // User attribute definitions and values
 const attributeDefinitions = ref<UserAttributeDefinition[]>([])
 const userAttributeValues = ref<Record<number, Record<number, string>>>({})
@@ -1231,7 +1341,10 @@ const pagination = reactive({
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showBulkEditModal = ref(false)
 const showDeleteDialog = ref(false)
+const bulkDeleteIds = ref<number[]>([])
+const bulkDeleting = ref(false)
 const showApiKeysModal = ref(false)
 const showAttributesModal = ref(false)
 const showPlatformQuotaModal = ref(false)
@@ -1492,6 +1605,7 @@ const loadUsers = async () => {
         status: filters.status as any,
         search: searchQuery.value || undefined,
         group_name: filters.group || undefined,
+        api_key_group_id: filters.apiKeyGroup ?? undefined,
         attributes: Object.keys(attrFilters).length > 0 ? attrFilters : undefined,
         // 始终请求 subscriptions：列隐藏时仍需用于 UserPlatformQuotaModal 的 active-subscription 警示 banner
         include_subscriptions: true,
@@ -1534,6 +1648,11 @@ const loadUsers = async () => {
   }
 }
 
+const handleBulkLimitsSuccess = async () => {
+  clearSelection()
+  await loadUsers()
+}
+
 let searchTimeout: ReturnType<typeof setTimeout>
 const handleSearch = () => {
   clearTimeout(searchTimeout)
@@ -1557,6 +1676,7 @@ const handlePageSizeChange = (pageSize: number) => {
 }
 
 const handleSort = (key: string, order: 'asc' | 'desc') => {
+  clearUsageSort()
   sortState.sort_by = key
   sortState.sort_order = order
   pagination.page = 1
@@ -1576,9 +1696,11 @@ const toggleBuiltInFilter = (key: string) => {
     if (key === 'role') filters.role = ''
     if (key === 'status') filters.status = ''
     if (key === 'group') filters.group = ''
+    if (key === 'apiKeyGroup') filters.apiKeyGroup = null
   } else {
     visibleFilters.add(key)
     if (key === 'group') loadAllGroups()
+    if (key === 'apiKeyGroup') loadAllGroupsForApiKeyFilter()
   }
   saveFiltersToStorage()
   pagination.page = 1
@@ -1623,11 +1745,21 @@ const closeEditModal = () => {
 const handleToggleStatus = async (user: AdminUser) => {
   const newStatus = user.status === 'active' ? 'disabled' : 'active'
   try {
-    await adminAPI.users.toggleStatus(user.id, newStatus)
+    const updated = await adminAPI.users.toggleStatus(user.id, newStatus)
     appStore.showSuccess(
       newStatus === 'active' ? t('admin.users.userEnabled') : t('admin.users.userDisabled')
     )
-    loadUsers()
+    if (loading.value) {
+      // 与本次更新并发的列表请求可能读到更新前的状态，重新拉取保证一致。
+      loadUsers()
+      return
+    }
+    // 更新接口的响应不含 current_concurrency、subscriptions 等列表专属字段，只回写状态相关字段。
+    const row = users.value.find((u) => u.id === user.id)
+    if (row) {
+      row.status = updated.status
+      row.updated_at = updated.updated_at
+    }
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.users.failedToToggle'))
     console.error('Error toggling user status:', error)
@@ -1686,6 +1818,30 @@ const confirmDelete = async () => {
   }
 }
 
+const confirmBulkDelete = async () => {
+  const ids = bulkDeleteIds.value
+  bulkDeleteIds.value = []
+  bulkDeleting.value = true
+  const deletedIds: number[] = []
+  for (const id of ids) {
+    try {
+      await adminAPI.users.delete(id)
+      deletedIds.push(id)
+    } catch (error) {
+      console.error('Error deleting user:', error)
+    }
+  }
+  removeSelectedIds(deletedIds)
+  if (deletedIds.length > 0) {
+    appStore.showSuccess(t('admin.users.bulkDelete.success', { count: deletedIds.length }))
+    pagination.page = 1
+  }
+  const failed = ids.length - deletedIds.length
+  if (failed > 0) appStore.showError(t('admin.users.bulkDelete.failed', { count: failed }))
+  await loadUsers()
+  bulkDeleting.value = false
+}
+
 const handleDeposit = (user: AdminUser) => {
   balanceUser.value = user
   balanceOperation.value = 'add'
@@ -1739,6 +1895,9 @@ onMounted(async () => {
   loadUsers()
   if (hasVisibleGroupsColumn.value || visibleFilters.has('group')) {
     loadAllGroups()
+  }
+  if (visibleFilters.has('apiKeyGroup')) {
+    loadAllGroupsForApiKeyFilter()
   }
   document.addEventListener('click', handleClickOutside)
   window.addEventListener('scroll', handleScroll, true)

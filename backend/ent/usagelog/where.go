@@ -90,6 +90,16 @@ func UpstreamModel(v string) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldUpstreamModel, v))
 }
 
+// UpstreamResponseModel applies equality check predicate on the "upstream_response_model" field. It's identical to UpstreamResponseModelEQ.
+func UpstreamResponseModel(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamModelMismatch applies equality check predicate on the "upstream_model_mismatch" field. It's identical to UpstreamModelMismatchEQ.
+func UpstreamModelMismatch(v bool) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldUpstreamModelMismatch, v))
+}
+
 // ChannelID applies equality check predicate on the "channel_id" field. It's identical to ChannelIDEQ.
 func ChannelID(v int64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldChannelID, v))
@@ -150,6 +160,16 @@ func CacheCreation1hTokens(v int) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldCacheCreation1hTokens, v))
 }
 
+// CacheCreation30mTokens applies equality check predicate on the "cache_creation_30m_tokens" field. It's identical to CacheCreation30mTokensEQ.
+func CacheCreation30mTokens(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCacheCreation30mTokens, v))
+}
+
+// CacheCreation12hTokens applies equality check predicate on the "cache_creation_12h_tokens" field. It's identical to CacheCreation12hTokensEQ.
+func CacheCreation12hTokens(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCacheCreation12hTokens, v))
+}
+
 // InputCost applies equality check predicate on the "input_cost" field. It's identical to InputCostEQ.
 func InputCost(v float64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldInputCost, v))
@@ -183,6 +203,11 @@ func ActualCost(v float64) predicate.UsageLog {
 // RateMultiplier applies equality check predicate on the "rate_multiplier" field. It's identical to RateMultiplierEQ.
 func RateMultiplier(v float64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldRateMultiplier, v))
+}
+
+// LongContextBillingApplied applies equality check predicate on the "long_context_billing_applied" field. It's identical to LongContextBillingAppliedEQ.
+func LongContextBillingApplied(v bool) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldLongContextBillingApplied, v))
 }
 
 // AccountRateMultiplier applies equality check predicate on the "account_rate_multiplier" field. It's identical to AccountRateMultiplierEQ.
@@ -243,6 +268,21 @@ func ImageOutputSize(v string) predicate.UsageLog {
 // ImageSizeSource applies equality check predicate on the "image_size_source" field. It's identical to ImageSizeSourceEQ.
 func ImageSizeSource(v string) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldImageSizeSource, v))
+}
+
+// VideoCount applies equality check predicate on the "video_count" field. It's identical to VideoCountEQ.
+func VideoCount(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldVideoCount, v))
+}
+
+// VideoResolution applies equality check predicate on the "video_resolution" field. It's identical to VideoResolutionEQ.
+func VideoResolution(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldVideoResolution, v))
+}
+
+// VideoDurationSeconds applies equality check predicate on the "video_duration_seconds" field. It's identical to VideoDurationSecondsEQ.
+func VideoDurationSeconds(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldVideoDurationSeconds, v))
 }
 
 // CacheTTLOverridden applies equality check predicate on the "cache_ttl_overridden" field. It's identical to CacheTTLOverriddenEQ.
@@ -593,6 +633,101 @@ func UpstreamModelEqualFold(v string) predicate.UsageLog {
 // UpstreamModelContainsFold applies the ContainsFold predicate on the "upstream_model" field.
 func UpstreamModelContainsFold(v string) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldContainsFold(FieldUpstreamModel, v))
+}
+
+// UpstreamResponseModelEQ applies the EQ predicate on the "upstream_response_model" field.
+func UpstreamResponseModelEQ(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelNEQ applies the NEQ predicate on the "upstream_response_model" field.
+func UpstreamResponseModelNEQ(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelIn applies the In predicate on the "upstream_response_model" field.
+func UpstreamResponseModelIn(vs ...string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldUpstreamResponseModel, vs...))
+}
+
+// UpstreamResponseModelNotIn applies the NotIn predicate on the "upstream_response_model" field.
+func UpstreamResponseModelNotIn(vs ...string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldUpstreamResponseModel, vs...))
+}
+
+// UpstreamResponseModelGT applies the GT predicate on the "upstream_response_model" field.
+func UpstreamResponseModelGT(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelGTE applies the GTE predicate on the "upstream_response_model" field.
+func UpstreamResponseModelGTE(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelLT applies the LT predicate on the "upstream_response_model" field.
+func UpstreamResponseModelLT(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelLTE applies the LTE predicate on the "upstream_response_model" field.
+func UpstreamResponseModelLTE(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelContains applies the Contains predicate on the "upstream_response_model" field.
+func UpstreamResponseModelContains(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldContains(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelHasPrefix applies the HasPrefix predicate on the "upstream_response_model" field.
+func UpstreamResponseModelHasPrefix(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldHasPrefix(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelHasSuffix applies the HasSuffix predicate on the "upstream_response_model" field.
+func UpstreamResponseModelHasSuffix(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldHasSuffix(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelIsNil applies the IsNil predicate on the "upstream_response_model" field.
+func UpstreamResponseModelIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldUpstreamResponseModel))
+}
+
+// UpstreamResponseModelNotNil applies the NotNil predicate on the "upstream_response_model" field.
+func UpstreamResponseModelNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldUpstreamResponseModel))
+}
+
+// UpstreamResponseModelEqualFold applies the EqualFold predicate on the "upstream_response_model" field.
+func UpstreamResponseModelEqualFold(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEqualFold(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamResponseModelContainsFold applies the ContainsFold predicate on the "upstream_response_model" field.
+func UpstreamResponseModelContainsFold(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldContainsFold(FieldUpstreamResponseModel, v))
+}
+
+// UpstreamModelMismatchEQ applies the EQ predicate on the "upstream_model_mismatch" field.
+func UpstreamModelMismatchEQ(v bool) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldUpstreamModelMismatch, v))
+}
+
+// UpstreamModelMismatchNEQ applies the NEQ predicate on the "upstream_model_mismatch" field.
+func UpstreamModelMismatchNEQ(v bool) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldUpstreamModelMismatch, v))
+}
+
+// UpstreamModelMismatchIsNil applies the IsNil predicate on the "upstream_model_mismatch" field.
+func UpstreamModelMismatchIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldUpstreamModelMismatch))
+}
+
+// UpstreamModelMismatchNotNil applies the NotNil predicate on the "upstream_model_mismatch" field.
+func UpstreamModelMismatchNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldUpstreamModelMismatch))
 }
 
 // ChannelIDEQ applies the EQ predicate on the "channel_id" field.
@@ -1170,6 +1305,86 @@ func CacheCreation1hTokensLTE(v int) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldLTE(FieldCacheCreation1hTokens, v))
 }
 
+// CacheCreation30mTokensEQ applies the EQ predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCacheCreation30mTokens, v))
+}
+
+// CacheCreation30mTokensNEQ applies the NEQ predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensNEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldCacheCreation30mTokens, v))
+}
+
+// CacheCreation30mTokensIn applies the In predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldCacheCreation30mTokens, vs...))
+}
+
+// CacheCreation30mTokensNotIn applies the NotIn predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensNotIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldCacheCreation30mTokens, vs...))
+}
+
+// CacheCreation30mTokensGT applies the GT predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensGT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldCacheCreation30mTokens, v))
+}
+
+// CacheCreation30mTokensGTE applies the GTE predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensGTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldCacheCreation30mTokens, v))
+}
+
+// CacheCreation30mTokensLT applies the LT predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensLT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldCacheCreation30mTokens, v))
+}
+
+// CacheCreation30mTokensLTE applies the LTE predicate on the "cache_creation_30m_tokens" field.
+func CacheCreation30mTokensLTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldCacheCreation30mTokens, v))
+}
+
+// CacheCreation12hTokensEQ applies the EQ predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldCacheCreation12hTokens, v))
+}
+
+// CacheCreation12hTokensNEQ applies the NEQ predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensNEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldCacheCreation12hTokens, v))
+}
+
+// CacheCreation12hTokensIn applies the In predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldCacheCreation12hTokens, vs...))
+}
+
+// CacheCreation12hTokensNotIn applies the NotIn predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensNotIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldCacheCreation12hTokens, vs...))
+}
+
+// CacheCreation12hTokensGT applies the GT predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensGT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldCacheCreation12hTokens, v))
+}
+
+// CacheCreation12hTokensGTE applies the GTE predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensGTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldCacheCreation12hTokens, v))
+}
+
+// CacheCreation12hTokensLT applies the LT predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensLT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldCacheCreation12hTokens, v))
+}
+
+// CacheCreation12hTokensLTE applies the LTE predicate on the "cache_creation_12h_tokens" field.
+func CacheCreation12hTokensLTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldCacheCreation12hTokens, v))
+}
+
 // InputCostEQ applies the EQ predicate on the "input_cost" field.
 func InputCostEQ(v float64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldEQ(FieldInputCost, v))
@@ -1448,6 +1663,16 @@ func RateMultiplierLT(v float64) predicate.UsageLog {
 // RateMultiplierLTE applies the LTE predicate on the "rate_multiplier" field.
 func RateMultiplierLTE(v float64) predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldLTE(FieldRateMultiplier, v))
+}
+
+// LongContextBillingAppliedEQ applies the EQ predicate on the "long_context_billing_applied" field.
+func LongContextBillingAppliedEQ(v bool) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldLongContextBillingApplied, v))
+}
+
+// LongContextBillingAppliedNEQ applies the NEQ predicate on the "long_context_billing_applied" field.
+func LongContextBillingAppliedNEQ(v bool) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldLongContextBillingApplied, v))
 }
 
 // AccountRateMultiplierEQ applies the EQ predicate on the "account_rate_multiplier" field.
@@ -2148,6 +2373,171 @@ func ImageSizeBreakdownIsNil() predicate.UsageLog {
 // ImageSizeBreakdownNotNil applies the NotNil predicate on the "image_size_breakdown" field.
 func ImageSizeBreakdownNotNil() predicate.UsageLog {
 	return predicate.UsageLog(sql.FieldNotNull(FieldImageSizeBreakdown))
+}
+
+// VideoCountEQ applies the EQ predicate on the "video_count" field.
+func VideoCountEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldVideoCount, v))
+}
+
+// VideoCountNEQ applies the NEQ predicate on the "video_count" field.
+func VideoCountNEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldVideoCount, v))
+}
+
+// VideoCountIn applies the In predicate on the "video_count" field.
+func VideoCountIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldVideoCount, vs...))
+}
+
+// VideoCountNotIn applies the NotIn predicate on the "video_count" field.
+func VideoCountNotIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldVideoCount, vs...))
+}
+
+// VideoCountGT applies the GT predicate on the "video_count" field.
+func VideoCountGT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldVideoCount, v))
+}
+
+// VideoCountGTE applies the GTE predicate on the "video_count" field.
+func VideoCountGTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldVideoCount, v))
+}
+
+// VideoCountLT applies the LT predicate on the "video_count" field.
+func VideoCountLT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldVideoCount, v))
+}
+
+// VideoCountLTE applies the LTE predicate on the "video_count" field.
+func VideoCountLTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldVideoCount, v))
+}
+
+// VideoResolutionEQ applies the EQ predicate on the "video_resolution" field.
+func VideoResolutionEQ(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldVideoResolution, v))
+}
+
+// VideoResolutionNEQ applies the NEQ predicate on the "video_resolution" field.
+func VideoResolutionNEQ(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldVideoResolution, v))
+}
+
+// VideoResolutionIn applies the In predicate on the "video_resolution" field.
+func VideoResolutionIn(vs ...string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldVideoResolution, vs...))
+}
+
+// VideoResolutionNotIn applies the NotIn predicate on the "video_resolution" field.
+func VideoResolutionNotIn(vs ...string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldVideoResolution, vs...))
+}
+
+// VideoResolutionGT applies the GT predicate on the "video_resolution" field.
+func VideoResolutionGT(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldVideoResolution, v))
+}
+
+// VideoResolutionGTE applies the GTE predicate on the "video_resolution" field.
+func VideoResolutionGTE(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldVideoResolution, v))
+}
+
+// VideoResolutionLT applies the LT predicate on the "video_resolution" field.
+func VideoResolutionLT(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldVideoResolution, v))
+}
+
+// VideoResolutionLTE applies the LTE predicate on the "video_resolution" field.
+func VideoResolutionLTE(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldVideoResolution, v))
+}
+
+// VideoResolutionContains applies the Contains predicate on the "video_resolution" field.
+func VideoResolutionContains(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldContains(FieldVideoResolution, v))
+}
+
+// VideoResolutionHasPrefix applies the HasPrefix predicate on the "video_resolution" field.
+func VideoResolutionHasPrefix(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldHasPrefix(FieldVideoResolution, v))
+}
+
+// VideoResolutionHasSuffix applies the HasSuffix predicate on the "video_resolution" field.
+func VideoResolutionHasSuffix(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldHasSuffix(FieldVideoResolution, v))
+}
+
+// VideoResolutionIsNil applies the IsNil predicate on the "video_resolution" field.
+func VideoResolutionIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldVideoResolution))
+}
+
+// VideoResolutionNotNil applies the NotNil predicate on the "video_resolution" field.
+func VideoResolutionNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldVideoResolution))
+}
+
+// VideoResolutionEqualFold applies the EqualFold predicate on the "video_resolution" field.
+func VideoResolutionEqualFold(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEqualFold(FieldVideoResolution, v))
+}
+
+// VideoResolutionContainsFold applies the ContainsFold predicate on the "video_resolution" field.
+func VideoResolutionContainsFold(v string) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldContainsFold(FieldVideoResolution, v))
+}
+
+// VideoDurationSecondsEQ applies the EQ predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldEQ(FieldVideoDurationSeconds, v))
+}
+
+// VideoDurationSecondsNEQ applies the NEQ predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsNEQ(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNEQ(FieldVideoDurationSeconds, v))
+}
+
+// VideoDurationSecondsIn applies the In predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIn(FieldVideoDurationSeconds, vs...))
+}
+
+// VideoDurationSecondsNotIn applies the NotIn predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsNotIn(vs ...int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotIn(FieldVideoDurationSeconds, vs...))
+}
+
+// VideoDurationSecondsGT applies the GT predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsGT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGT(FieldVideoDurationSeconds, v))
+}
+
+// VideoDurationSecondsGTE applies the GTE predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsGTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldGTE(FieldVideoDurationSeconds, v))
+}
+
+// VideoDurationSecondsLT applies the LT predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsLT(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLT(FieldVideoDurationSeconds, v))
+}
+
+// VideoDurationSecondsLTE applies the LTE predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsLTE(v int) predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldLTE(FieldVideoDurationSeconds, v))
+}
+
+// VideoDurationSecondsIsNil applies the IsNil predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsIsNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldIsNull(FieldVideoDurationSeconds))
+}
+
+// VideoDurationSecondsNotNil applies the NotNil predicate on the "video_duration_seconds" field.
+func VideoDurationSecondsNotNil() predicate.UsageLog {
+	return predicate.UsageLog(sql.FieldNotNull(FieldVideoDurationSeconds))
 }
 
 // CacheTTLOverriddenEQ applies the EQ predicate on the "cache_ttl_overridden" field.

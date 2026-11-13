@@ -164,12 +164,6 @@ func (s *AccountTestService) SetSettingService(settingService *SettingService) {
 	}
 }
 
-func (s *AccountTestService) SetPluginManager(pluginManager *PluginManager) {
-	if s != nil {
-		s.pluginManager = pluginManager
-	}
-}
-
 func (s *AccountTestService) SetOpenAIGatewayService(gateway *OpenAIGatewayService) {
 	if s != nil {
 		s.openaiGatewayService = gateway

@@ -73,11 +73,13 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: actions/setup-android@v3
-        with:
-          # Capacitor 8 要求 compileSdk 36
-          api-levels: '36'
-          build-tools: '36.0.0'
+      # ubuntu runner 已预装 Android SDK，无需 setup-android action
+      - name: Verify Android SDK
+        run: |
+          echo "ANDROID_HOME=${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/platforms" 2>/dev/null | tail -5
+          ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" 2>/dev/null | tail -5
+          which sdkmanager || ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/cmdline-tools"/*/bin/sdkmanager 2>/dev/null
 
       - name: Download web assets
         uses: actions/download-artifact@v4
@@ -188,18 +190,35 @@ jobs:
           sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcodebuild -version
 
+      - name: Inspect generated project
+        working-directory: frontend/ios/App
+        run: |
+          ls -la
+          # Capacitor 8 使用 SPM，生成的是 .xcodeproj（无 .xcworkspace）
+          if [ -d App.xcworkspace ]; then
+            echo "TARGET=App.xcworkspace" >> $GITHUB_ENV
+            echo "FLAG=-workspace" >> $GITHUB_ENV
+          elif [ -d App.xcodeproj ]; then
+            echo "TARGET=App.xcodeproj" >> $GITHUB_ENV
+            echo "FLAG=-project" >> $GITHUB_ENV
+          else
+            echo "::error::既没有 .xcworkspace 也没有 .xcodeproj"
+            exit 1
+          fi
+
       - name: Resolve Swift packages
         working-directory: frontend/ios/App
         run: |
           xcodebuild -resolvePackageDependencies \
-            -workspace App.xcworkspace \
+            ${{ env.FLAG }} ${{ env.TARGET }} \
             -scheme App
 
       - name: Build for simulator (unsigned)
         working-directory: frontend/ios/App
         run: |
+          set -o pipefail
           xcodebuild build \
-            -workspace App.xcworkspace \
+            ${{ env.FLAG }} ${{ env.TARGET }} \
             -scheme App \
             -configuration Release \
             -sdk iphonesimulator \
@@ -207,7 +226,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            | xcpretty || true
+            CODE_SIGN_ENTITLEMENTS=""
 
       - name: Collect .app
         run: |

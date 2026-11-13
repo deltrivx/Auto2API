@@ -10,9 +10,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/internal/payment"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/internal/payment"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
 	"github.com/shopspring/decimal"
 )
 

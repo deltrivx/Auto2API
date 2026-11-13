@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/service"
 )
 
 func (s *ProxyExpirySuite) TestSweep_RepeatedExpiryPreservesOriginalProxy() {

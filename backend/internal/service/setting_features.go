@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
 )
 
 // IsRegistrationEnabled 检查是否开放注册
@@ -293,7 +293,7 @@ func parseAuditLogRetentionDays(value string) int {
 func (s *SettingService) GetSiteName(ctx context.Context) string {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeySiteName)
 	if err != nil || value == "" {
-		return "Sub2API"
+		return "Auto2API"
 	}
 	return value
 }

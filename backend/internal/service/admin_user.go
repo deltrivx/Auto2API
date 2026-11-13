@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/authidentity"
-	"github.com/Wei-Shaw/sub2api/ent/authidentitychannel"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/ent/authidentity"
+	"github.com/DeltrivX/Auto2API/ent/authidentitychannel"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
+	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
+	"github.com/DeltrivX/Auto2API/internal/pkg/pagination"
 )
 
 // User management implementations

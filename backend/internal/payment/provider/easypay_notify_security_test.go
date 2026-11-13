@@ -1,7 +1,7 @@
 package provider
 
 // Regression tests for the EasyPay forged-callback vulnerability
-// (Wei-Shaw/sub2api issue #7875).
+// (Wei-Shaw/auto2api issue #7875).
 //
 // Attack recap: the order-creation signature (visible to the payer in the
 // submit.php popup URL) signs return_url among other fields, and the sign
@@ -24,7 +24,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/payment"
+	"github.com/DeltrivX/Auto2API/internal/payment"
 )
 
 // easyPayPoCProvider returns a provider with a fixed test credential set.

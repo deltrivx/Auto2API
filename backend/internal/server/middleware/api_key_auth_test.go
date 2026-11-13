@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/pkg/ctxkey"
+	"github.com/DeltrivX/Auto2API/internal/pkg/pagination"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
@@ -1338,7 +1338,7 @@ func TestAPIKeyAuthBillingInfoSkipsBillingAndSideEffects(t *testing.T) {
 	router := newAuthTestRouter(apiKeyService, subscriptionService, cfg)
 
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v1/sub2api/billing", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/auto2api/billing", nil)
 	req.Header.Set("x-api-key", apiKey.Key)
 	router.ServeHTTP(w, req)
 
@@ -1368,7 +1368,7 @@ func TestAPIKeyAuthBillingInfoSkipsLastUsedInSimpleMode(t *testing.T) {
 	router := newAuthTestRouter(apiKeyService, nil, cfg)
 
 	w := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/v1/sub2api/billing", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/auto2api/billing", nil)
 	req.Header.Set("x-api-key", apiKey.Key)
 	router.ServeHTTP(w, req)
 
@@ -1573,7 +1573,7 @@ func newAuthTestRouter(apiKeyService *service.APIKeyService, subscriptionService
 	router.POST("/v1/responses", ok)
 	router.POST("/v1/messages", ok)
 	router.GET("/v1/usage", ok)
-	router.GET("/v1/sub2api/billing", ok)
+	router.GET("/v1/auto2api/billing", ok)
 	return router
 }
 

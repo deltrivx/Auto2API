@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/antigravity"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/claude"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/geminicli"
+	"github.com/DeltrivX/Auto2API/internal/pkg/antigravity"
+	"github.com/DeltrivX/Auto2API/internal/pkg/claude"
+	"github.com/DeltrivX/Auto2API/internal/pkg/geminicli"
 )
 
 const (

@@ -5,14 +5,14 @@ package admin
 import (
 	"context"
 	"encoding/json"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
+	"github.com/DeltrivX/Auto2API/internal/pkg/pagination"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/adminaccess"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/pkg/adminaccess"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

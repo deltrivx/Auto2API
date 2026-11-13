@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/channelmonitor"
-	"github.com/Wei-Shaw/sub2api/ent/channelmonitorrequesttemplate"
+	"github.com/DeltrivX/Auto2API/ent/channelmonitor"
+	"github.com/DeltrivX/Auto2API/ent/channelmonitorrequesttemplate"
 )
 
 // ChannelMonitorRequestTemplateCreate is the builder for creating a ChannelMonitorRequestTemplate entity.

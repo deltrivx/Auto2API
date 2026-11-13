@@ -7937,7 +7937,7 @@
                       v-model="form.payment_product_name_prefix"
                       type="text"
                       class="input"
-                      placeholder="Sub2API"
+                      placeholder="Auto2API"
                     />
                   </div>
                   <div>
@@ -7959,7 +7959,7 @@
                       class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-300"
                     >
                       {{
-                        (form.payment_product_name_prefix || "Sub2API") +
+                        (form.payment_product_name_prefix || "Auto2API") +
                         " 100 " +
                         (form.payment_product_name_suffix || "CNY")
                       }}
@@ -8332,7 +8332,7 @@
                     </div>
                   </div>
                 </div>
-                <!-- Row 4: Enabled payment types (provider badges like sub2apipay) -->
+                <!-- Row 4: Enabled payment types (provider badges like auto2apipay) -->
                 <div>
                   <label class="input-label">{{
                     t("admin.settings.payment.enabledPaymentTypes")
@@ -9046,14 +9046,14 @@ function localText(zh: string, en: string): string {
 
 const paymentGuideHref = computed(() =>
   locale.value.startsWith("zh")
-    ? "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT_CN.md"
-    : "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT.md",
+    ? "https://github.com/Wei-Shaw/auto2api/blob/main/docs/PAYMENT_CN.md"
+    : "https://github.com/Wei-Shaw/auto2api/blob/main/docs/PAYMENT.md",
 );
 
 const paymentMethodsHref = computed(() =>
   locale.value.startsWith("zh")
-    ? "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT_CN.md#支持的支付方式"
-    : "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT.md#supported-payment-methods",
+    ? "https://github.com/Wei-Shaw/auto2api/blob/main/docs/PAYMENT_CN.md#支持的支付方式"
+    : "https://github.com/Wei-Shaw/auto2api/blob/main/docs/PAYMENT.md#supported-payment-methods",
 );
 
 type SettingsTab =
@@ -9772,7 +9772,7 @@ const form = reactive<SettingsForm>({
   default_subscriptions: [],
   force_email_on_third_party_signup: false,
   default_user_rpm_limit: 0,
-  site_name: "Sub2API",
+  site_name: "Auto2API",
   site_logo: "",
   site_subtitle: "Subscription to API Conversion Platform",
   api_base_url: "",

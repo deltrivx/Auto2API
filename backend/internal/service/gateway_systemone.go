@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/typesafe"
+	"github.com/DeltrivX/Auto2API/internal/pkg/typesafe"
 	"github.com/gin-gonic/gin"
 )
 

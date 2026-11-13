@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
 	"go.uber.org/zap"
 )
 

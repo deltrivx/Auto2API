@@ -13,12 +13,12 @@ import (
 
 	"entgo.io/ent/dialect"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentauditlog"
-	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
-	"github.com/Wei-Shaw/sub2api/internal/payment"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/servertiming"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/ent/paymentauditlog"
+	"github.com/DeltrivX/Auto2API/ent/paymentorder"
+	"github.com/DeltrivX/Auto2API/internal/payment"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
+	"github.com/DeltrivX/Auto2API/internal/pkg/servertiming"
 )
 
 // ErrOrderNotFound is returned by HandlePaymentNotification when the webhook

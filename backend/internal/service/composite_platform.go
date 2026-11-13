@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/domain"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
+	"github.com/DeltrivX/Auto2API/internal/domain"
+	"github.com/DeltrivX/Auto2API/internal/pkg/ctxkey"
 )
 
 // WithResolvedTargetPlatform stores the concrete provider chosen for a request
@@ -86,7 +86,7 @@ func CompositeRouteSourceFromContext(ctx context.Context) (string, bool) {
 }
 
 // DetectModelPlatform maps common public model IDs to the concrete provider
-// platform used by sub2api. It intentionally returns false for ambiguous model
+// platform used by auto2api. It intentionally returns false for ambiguous model
 // names so composite groups fail closed instead of guessing.
 func DetectModelPlatform(model string) (string, bool) {
 	normalized := strings.ToLower(strings.TrimSpace(model))

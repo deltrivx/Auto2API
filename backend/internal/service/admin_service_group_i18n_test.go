@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 

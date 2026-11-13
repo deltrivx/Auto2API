@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
+	"github.com/DeltrivX/Auto2API/internal/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

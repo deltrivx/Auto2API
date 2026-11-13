@@ -1,0 +1,22 @@
+[Unit]
+Description=Auto2API Data Management Daemon
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=auto2api
+Group=auto2api
+WorkingDirectory=/opt/auto2api
+ExecStart=/opt/auto2api/datamanagementd \
+  -socket-path /tmp/auto2api-datamanagement.sock \
+  -sqlite-path /var/lib/auto2api/datamanagement/datamanagementd.db \
+  -version 1.0.0
+Restart=always
+RestartSec=5s
+LimitNOFILE=100000
+NoNewPrivileges=true
+PrivateTmp=false
+
+[Install]
+WantedBy=multi-user.target

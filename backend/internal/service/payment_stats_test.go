@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
+	dbent "github.com/DeltrivX/Auto2API/ent"
 	"github.com/stretchr/testify/require"
 )
 

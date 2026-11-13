@@ -10,10 +10,10 @@ import (
 	"sync"
 	"testing"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/enttest"
-	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/ent/enttest"
+	"github.com/DeltrivX/Auto2API/ent/securitysecret"
+	"github.com/DeltrivX/Auto2API/internal/config"
 	"github.com/stretchr/testify/require"
 
 	"entgo.io/ent/dialect"

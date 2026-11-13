@@ -12,8 +12,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/batchimagejob"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
+	"github.com/DeltrivX/Auto2API/ent/batchimagejob"
+	"github.com/DeltrivX/Auto2API/ent/predicate"
 )
 
 // BatchImageJobQuery is the builder for querying BatchImageJob entities.

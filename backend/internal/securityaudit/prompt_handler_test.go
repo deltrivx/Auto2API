@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	servermiddleware "github.com/Wei-Shaw/sub2api/internal/server/middleware"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
+	servermiddleware "github.com/DeltrivX/Auto2API/internal/server/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

@@ -7,10 +7,10 @@ import (
 	"log"
 	"time"
 
-	_ "github.com/Wei-Shaw/sub2api/ent/runtime"
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/repository"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	_ "github.com/DeltrivX/Auto2API/ent/runtime"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/repository"
+	"github.com/DeltrivX/Auto2API/internal/service"
 )
 
 func main() {

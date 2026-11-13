@@ -18,11 +18,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/claude"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/openai"
-	"github.com/Wei-Shaw/sub2api/internal/util/urlvalidator"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/pkg/claude"
+	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
+	"github.com/DeltrivX/Auto2API/internal/pkg/openai"
+	"github.com/DeltrivX/Auto2API/internal/util/urlvalidator"
 	"go.uber.org/zap"
 )
 
@@ -802,7 +802,7 @@ func (s *PricingService) parsePricingData(body []byte) (map[string]*LiteLLMModel
 }
 
 // deriveLongContextFromAboveTierFields 把 LiteLLM 目录的 *_above_XXXk_tokens 绝对价字段
-// 折算成 long_context_* 阈值+倍率（sub2api 计费机制的内部表达）：阈值取自字段名，
+// 折算成 long_context_* 阈值+倍率（auto2api 计费机制的内部表达）：阈值取自字段名，
 // 倍率 = above 价 ÷ 基础价。条目显式携带任一 long_context_* 字段（含显式 0）时由
 // 调用方跳过折算，以显式配置为准——显式写 threshold=0 或 multiplier=1 均可关闭该
 // 模型的阶梯。多个阈值并存时取最小阈值。

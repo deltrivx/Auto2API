@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/adminaccess"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/middleware"
+	"github.com/DeltrivX/Auto2API/internal/pkg/adminaccess"
+	"github.com/DeltrivX/Auto2API/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"

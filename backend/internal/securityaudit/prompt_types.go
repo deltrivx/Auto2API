@@ -9,8 +9,8 @@ const (
 	SettingKeyPromptAuditConfig = "prompt_audit_config"
 	SettingKeyRiskControl       = "risk_control_enabled"
 
-	ConfigInvalidationChannel = "sub2api:prompt_guard:config:invalidate"
-	PayloadKeyPrefix          = "sub2api:prompt_audit:payload:"
+	ConfigInvalidationChannel = "auto2api:prompt_guard:config:invalidate"
+	PayloadKeyPrefix          = "auto2api:prompt_audit:payload:"
 
 	ErrorCodeBlocked               = "prompt_guard_blocked"
 	ErrorCodeUnavailable           = "prompt_guard_unavailable"

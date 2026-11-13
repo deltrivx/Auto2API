@@ -7,8 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/redis/go-redis/v9"
 )
 

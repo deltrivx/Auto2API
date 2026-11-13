@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"strings"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
-	"github.com/Wei-Shaw/sub2api/ent/paymentproviderinstance"
-	"github.com/Wei-Shaw/sub2api/internal/payment"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/ent/paymentorder"
+	"github.com/DeltrivX/Auto2API/ent/paymentproviderinstance"
+	"github.com/DeltrivX/Auto2API/internal/payment"
 )
 
 // GetWebhookProvider returns the provider instance that should verify a webhook.

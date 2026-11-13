@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
+	"github.com/DeltrivX/Auto2API/internal/pkg/xai"
 )
 
 const (

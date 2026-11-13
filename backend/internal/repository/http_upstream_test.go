@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/pkg/tlsfingerprint"
+	"github.com/DeltrivX/Auto2API/internal/pkg/xai"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

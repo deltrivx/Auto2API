@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/service"
 
 	"github.com/gin-gonic/gin"
 )

@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
@@ -95,7 +95,7 @@ func TestMCPInitializeAndPermissionFilteredDiscovery(t *testing.T) {
 		"protocolVersion": "2025-06-18", "capabilities": map[string]any{}, "clientInfo": map[string]any{"name": "test", "version": "1"},
 	})
 	require.Equal(t, 200, status)
-	require.Equal(t, "sub2api-management", rpcObject(t, rpcObject(t, initialized["result"])["serverInfo"])["name"])
+	require.Equal(t, "auto2api-management", rpcObject(t, rpcObject(t, initialized["result"])["serverInfo"])["name"])
 	for _, tc := range []struct {
 		token              string
 		hasAdmin, hasWrite bool

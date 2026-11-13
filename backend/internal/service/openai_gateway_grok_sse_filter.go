@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/config"
 )
 
 // OpenAI Responses SSE event types are a closed enum for strict clients

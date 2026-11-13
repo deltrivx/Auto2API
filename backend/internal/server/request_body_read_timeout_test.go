@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/handler"
-	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/handler"
+	pkghttputil "github.com/DeltrivX/Auto2API/internal/pkg/httputil"
+	"github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

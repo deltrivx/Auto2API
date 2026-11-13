@@ -80,7 +80,7 @@ func TestGetUserAgentForContextPreservesVersionOverride(t *testing.T) {
 }
 
 func TestGetUserAgentEnvironmentOverride(t *testing.T) {
-	const expectedVersionEnv = "SUB2API_TEST_EXPECTED_ANTIGRAVITY_VERSION"
+	const expectedVersionEnv = "AUTO2API_TEST_EXPECTED_ANTIGRAVITY_VERSION"
 	if expected := os.Getenv(expectedVersionEnv); expected != "" {
 		if got := GetDefaultUserAgentVersion(); got != expected {
 			t.Fatalf("environment version must be loaded during initialization: got %q, want %q", got, expected)

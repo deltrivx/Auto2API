@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	appTimezone "github.com/Wei-Shaw/sub2api/internal/pkg/timezone"
+	appTimezone "github.com/DeltrivX/Auto2API/internal/pkg/timezone"
 )
 
 const groupUsageDateFormat = "2006-01-02"

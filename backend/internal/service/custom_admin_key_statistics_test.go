@@ -13,10 +13,10 @@ import (
 	"testing/synctest"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/adminaccess"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	httppool "github.com/Wei-Shaw/sub2api/internal/pkg/httpclient"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/usagestats"
+	"github.com/DeltrivX/Auto2API/internal/pkg/adminaccess"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
+	httppool "github.com/DeltrivX/Auto2API/internal/pkg/httpclient"
+	"github.com/DeltrivX/Auto2API/internal/pkg/usagestats"
 	"github.com/stretchr/testify/require"
 )
 

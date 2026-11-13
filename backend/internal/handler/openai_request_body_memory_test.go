@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	pkghttputil "github.com/DeltrivX/Auto2API/internal/pkg/httputil"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 )

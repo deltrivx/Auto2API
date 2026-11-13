@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/ip"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/typesafe"
-	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/pkg/ip"
+	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
+	"github.com/DeltrivX/Auto2API/internal/pkg/typesafe"
+	middleware2 "github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )

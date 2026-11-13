@@ -3,8 +3,8 @@
 package repository
 
 import (
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/pkg/pagination"
+	"github.com/DeltrivX/Auto2API/internal/service"
 )
 
 // TestListWithAccountCountSort_AttachesActiveCount 验证通过 account_count 排序时，

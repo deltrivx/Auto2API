@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/setting"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/ent/setting"
+	"github.com/DeltrivX/Auto2API/internal/service"
 )
 
 // SetContentModerationConfig holds live group rows until the setting is written.

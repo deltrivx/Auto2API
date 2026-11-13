@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/geminicli"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/googleapi"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/pkg/geminicli"
+	"github.com/DeltrivX/Auto2API/internal/pkg/googleapi"
+	"github.com/DeltrivX/Auto2API/internal/service"
 
 	"github.com/imroc/req/v3"
 )

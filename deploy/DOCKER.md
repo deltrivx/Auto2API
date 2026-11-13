@@ -1,16 +1,16 @@
-# Sub2API Docker Image
+# Auto2API Docker Image
 
-Sub2API is an AI API Gateway Platform for distributing and managing AI product subscription API quotas.
+Auto2API is an AI API Gateway Platform for distributing and managing AI product subscription API quotas.
 
 ## Quick Start
 
 ```bash
 docker run -d \
-  --name sub2api \
+  --name auto2api \
   -p 8080:8080 \
-  -e DATABASE_URL="postgres://user:pass@host:5432/sub2api" \
+  -e DATABASE_URL="postgres://user:pass@host:5432/auto2api" \
   -e REDIS_URL="redis://host:6379" \
-  weishaw/sub2api:latest
+  weishaw/auto2api:latest
 ```
 
 ## Docker Compose
@@ -19,12 +19,12 @@ docker run -d \
 version: '3.8'
 
 services:
-  sub2api:
-    image: weishaw/sub2api:latest
+  auto2api:
+    image: weishaw/auto2api:latest
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/sub2api?sslmode=disable
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/auto2api?sslmode=disable
       - REDIS_URL=redis://redis:6379
     depends_on:
       - db
@@ -35,7 +35,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=sub2api
+      - POSTGRES_DB=auto2api
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -51,7 +51,7 @@ volumes:
 
 ## Startup and Database Recovery
 
-Sub2API runs database migrations while starting. PostgreSQL may still be
+Auto2API runs database migrations while starting. PostgreSQL may still be
 recovering briefly after a host or Docker daemon restart. The application
 retries transient PostgreSQL startup and connection errors with bounded
 exponential backoff, then continues startup when the database is ready.
@@ -86,5 +86,5 @@ Docker restores existing containers after a host restart.
 
 ## Links
 
-- [GitHub Repository](https://github.com/weishaw/sub2api)
-- [Documentation](https://github.com/weishaw/sub2api#readme)
+- [GitHub Repository](https://github.com/weishaw/auto2api)
+- [Documentation](https://github.com/weishaw/auto2api#readme)

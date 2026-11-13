@@ -15,9 +15,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	servermiddleware "github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
+	servermiddleware "github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -48,9 +48,9 @@ var upgrader = websocket.Upgrader{
 		return isAllowedOpsWSOrigin(r)
 	},
 	// Subprotocol negotiation:
-	// - The frontend passes ["sub2api-admin", "jwt.<token>"].
-	// - We always select "sub2api-admin" so the token is never echoed back in the handshake response.
-	Subprotocols: []string{"sub2api-admin"},
+	// - The frontend passes ["auto2api-admin", "jwt.<token>"].
+	// - We always select "auto2api-admin" so the token is never echoed back in the handshake response.
+	Subprotocols: []string{"auto2api-admin"},
 }
 
 const (

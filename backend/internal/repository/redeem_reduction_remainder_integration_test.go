@@ -4,7 +4,7 @@ package repository
 
 import (
 	"context"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"

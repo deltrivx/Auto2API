@@ -10,10 +10,10 @@ import (
 	"testing"
 	"testing/iotest"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	pkghttputil "github.com/DeltrivX/Auto2API/internal/pkg/httputil"
+	"github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

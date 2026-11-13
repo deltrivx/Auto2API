@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/group"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
-	"github.com/Wei-Shaw/sub2api/ent/schema/mixins"
-	"github.com/Wei-Shaw/sub2api/ent/user"
-	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/ent/group"
+	"github.com/DeltrivX/Auto2API/ent/predicate"
+	"github.com/DeltrivX/Auto2API/ent/schema/mixins"
+	"github.com/DeltrivX/Auto2API/ent/user"
+	"github.com/DeltrivX/Auto2API/ent/usersubscription"
+	"github.com/DeltrivX/Auto2API/internal/pkg/pagination"
+	"github.com/DeltrivX/Auto2API/internal/service"
 )
 
 type userSubscriptionRepository struct {

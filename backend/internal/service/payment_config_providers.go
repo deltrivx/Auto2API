@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
-	"github.com/Wei-Shaw/sub2api/ent/paymentproviderinstance"
-	"github.com/Wei-Shaw/sub2api/internal/payment"
-	"github.com/Wei-Shaw/sub2api/internal/payment/provider"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	"github.com/DeltrivX/Auto2API/ent/paymentorder"
+	"github.com/DeltrivX/Auto2API/ent/paymentproviderinstance"
+	"github.com/DeltrivX/Auto2API/internal/payment"
+	"github.com/DeltrivX/Auto2API/internal/payment/provider"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
 )
 
 // validateProviderConfig runs the provider's constructor to surface config-level

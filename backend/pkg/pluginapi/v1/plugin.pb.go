@@ -2030,7 +2030,7 @@ var File_plugin_proto protoreflect.FileDescriptor
 
 const file_plugin_proto_rawDesc = "" +
 	"\n" +
-	"\fplugin.proto\x12\x11sub2api.plugin.v1\"\x10\n" +
+	"\fplugin.proto\x12\x11auto2api.plugin.v1\"\x10\n" +
 	"\x0eGetInfoRequest\"\xd8\x01\n" +
 	"\x0fGetInfoResponse\x12\x1b\n" +
 	"\tplugin_id\x18\x01 \x01(\tR\bpluginId\x12%\n" +
@@ -2075,7 +2075,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x06method\x18\x02 \x01(\tR\x06method\x12\x10\n" +
 	"\x03url\x18\x03 \x01(\tR\x03url\x12\x12\n" +
 	"\x04host\x18\x04 \x01(\tR\x04host\x12M\n" +
-	"\aheaders\x18\x05 \x03(\v23.sub2api.plugin.v1.ForwardRequestStart.HeadersEntryR\aheaders\x12\x1b\n" +
+	"\aheaders\x18\x05 \x03(\v23.auto2api.plugin.v1.ForwardRequestStart.HeadersEntryR\aheaders\x12\x1b\n" +
 	"\tproxy_url\x18\x06 \x01(\tR\bproxyUrl\x12\x1d\n" +
 	"\n" +
 	"account_id\x18\a \x01(\x03R\taccountId\x12/\n" +
@@ -2087,9 +2087,9 @@ const file_plugin_proto_rawDesc = "" +
 	"\bhas_body\x18\f \x01(\bR\ahasBody\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.sub2api.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\x97\x01\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.auto2api.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\x97\x01\n" +
 	"\x0eForwardRequest\x12>\n" +
-	"\x05start\x18\x01 \x01(\v2&.sub2api.plugin.v1.ForwardRequestStartH\x00R\x05start\x12\x1f\n" +
+	"\x05start\x18\x01 \x01(\v2&.auto2api.plugin.v1.ForwardRequestStartH\x00R\x05start\x12\x1f\n" +
 	"\n" +
 	"body_chunk\x18\x02 \x01(\fH\x00R\tbodyChunk\x12\x1b\n" +
 	"\bbody_end\x18\x03 \x01(\bH\x00R\abodyEndB\a\n" +
@@ -2101,11 +2101,11 @@ const file_plugin_proto_rawDesc = "" +
 	"\bprotocol\x18\x03 \x01(\tR\bprotocol\x12%\n" +
 	"\x0eprotocol_major\x18\x04 \x01(\x05R\rprotocolMajor\x12%\n" +
 	"\x0eprotocol_minor\x18\x05 \x01(\x05R\rprotocolMinor\x12N\n" +
-	"\aheaders\x18\x06 \x03(\v24.sub2api.plugin.v1.ForwardResponseStart.HeadersEntryR\aheaders\x12%\n" +
+	"\aheaders\x18\x06 \x03(\v24.auto2api.plugin.v1.ForwardResponseStart.HeadersEntryR\aheaders\x12%\n" +
 	"\x0econtent_length\x18\a \x01(\x03R\rcontentLength\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.sub2api.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\\\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.auto2api.plugin.v1.HeaderValuesR\x05value:\x028\x01\"\\\n" +
 	"\x12ForwardResponseEnd\x12%\n" +
 	"\x0ebytes_received\x18\x01 \x01(\x03R\rbytesReceived\x12\x1f\n" +
 	"\vduration_ms\x18\x02 \x01(\x03R\n" +
@@ -2115,11 +2115,11 @@ const file_plugin_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12!\n" +
 	"\frequest_sent\x18\x03 \x01(\bR\vrequestSent\"\xf8\x01\n" +
 	"\x0fForwardResponse\x12?\n" +
-	"\x05start\x18\x01 \x01(\v2'.sub2api.plugin.v1.ForwardResponseStartH\x00R\x05start\x12\x1f\n" +
+	"\x05start\x18\x01 \x01(\v2'.auto2api.plugin.v1.ForwardResponseStartH\x00R\x05start\x12\x1f\n" +
 	"\n" +
 	"body_chunk\x18\x02 \x01(\fH\x00R\tbodyChunk\x129\n" +
-	"\x03end\x18\x03 \x01(\v2%.sub2api.plugin.v1.ForwardResponseEndH\x00R\x03end\x12?\n" +
-	"\x05error\x18\x04 \x01(\v2'.sub2api.plugin.v1.ForwardResponseErrorH\x00R\x05errorB\a\n" +
+	"\x03end\x18\x03 \x01(\v2%.auto2api.plugin.v1.ForwardResponseEndH\x00R\x03end\x12?\n" +
+	"\x05error\x18\x04 \x01(\v2'.auto2api.plugin.v1.ForwardResponseErrorH\x00R\x05errorB\a\n" +
 	"\x05frame\"z\n" +
 	"\x17InitHostServicesRequest\x12&\n" +
 	"\x0fhost_service_id\x18\x01 \x01(\rR\rhostServiceId\x127\n" +
@@ -2157,7 +2157,7 @@ const file_plugin_proto_rawDesc = "" +
 	"\x14ListAccountsResponse\x12\x1f\n" +
 	"\vaccount_ids\x18\x01 \x03(\x03R\n" +
 	"accountIds\x12:\n" +
-	"\baccounts\x18\x02 \x03(\v2\x1e.sub2api.plugin.v1.AccountInfoR\baccounts\"\xec\x01\n" +
+	"\baccounts\x18\x02 \x03(\v2\x1e.auto2api.plugin.v1.AccountInfoR\baccounts\"\xec\x01\n" +
 	"\vAccountInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\bplatform\x18\x02 \x01(\tR\bplatform\x12!\n" +
@@ -2178,26 +2178,26 @@ const file_plugin_proto_rawDesc = "" +
 	"\faccount_type\x18\x04 \x01(\tR\vaccountType\x12\x1b\n" +
 	"\tproxy_url\x18\x05 \x01(\tR\bproxyUrl\x12\x14\n" +
 	"\x05token\x18\x06 \x01(\tR\x05token\x12Y\n" +
-	"\aheaders\x18\a \x03(\v2?.sub2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntryR\aheaders\x1a[\n" +
+	"\aheaders\x18\a \x03(\v2?.auto2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntryR\aheaders\x1a[\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.sub2api.plugin.v1.HeaderValuesR\x05value:\x028\x012\x95\x05\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.auto2api.plugin.v1.HeaderValuesR\x05value:\x028\x012\x95\x05\n" +
 	"\x0fTransportPlugin\x12P\n" +
-	"\aGetInfo\x12!.sub2api.plugin.v1.GetInfoRequest\x1a\".sub2api.plugin.v1.GetInfoResponse\x12M\n" +
-	"\x06Health\x12 .sub2api.plugin.v1.HealthRequest\x1a!.sub2api.plugin.v1.HealthResponse\x12e\n" +
-	"\x0eValidateConfig\x12(.sub2api.plugin.v1.ValidateConfigRequest\x1a).sub2api.plugin.v1.ValidateConfigResponse\x12\\\n" +
-	"\vApplyConfig\x12%.sub2api.plugin.v1.ApplyConfigRequest\x1a&.sub2api.plugin.v1.ApplyConfigResponse\x12Y\n" +
+	"\aGetInfo\x12!.auto2api.plugin.v1.GetInfoRequest\x1a\".auto2api.plugin.v1.GetInfoResponse\x12M\n" +
+	"\x06Health\x12 .auto2api.plugin.v1.HealthRequest\x1a!.auto2api.plugin.v1.HealthResponse\x12e\n" +
+	"\x0eValidateConfig\x12(.auto2api.plugin.v1.ValidateConfigRequest\x1a).auto2api.plugin.v1.ValidateConfigResponse\x12\\\n" +
+	"\vApplyConfig\x12%.auto2api.plugin.v1.ApplyConfigRequest\x1a&.auto2api.plugin.v1.ApplyConfigResponse\x12Y\n" +
 	"\n" +
-	"TestConfig\x12$.sub2api.plugin.v1.TestConfigRequest\x1a%.sub2api.plugin.v1.TestConfigResponse\x12T\n" +
-	"\aForward\x12!.sub2api.plugin.v1.ForwardRequest\x1a\".sub2api.plugin.v1.ForwardResponse(\x010\x01\x12k\n" +
-	"\x10InitHostServices\x12*.sub2api.plugin.v1.InitHostServicesRequest\x1a+.sub2api.plugin.v1.InitHostServicesResponse2\xad\x04\n" +
+	"TestConfig\x12$.auto2api.plugin.v1.TestConfigRequest\x1a%.auto2api.plugin.v1.TestConfigResponse\x12T\n" +
+	"\aForward\x12!.auto2api.plugin.v1.ForwardRequest\x1a\".auto2api.plugin.v1.ForwardResponse(\x010\x01\x12k\n" +
+	"\x10InitHostServices\x12*.auto2api.plugin.v1.InitHostServicesRequest\x1a+.auto2api.plugin.v1.InitHostServicesResponse2\xad\x04\n" +
 	"\vHostService\x12J\n" +
-	"\x05KVGet\x12\x1f.sub2api.plugin.v1.KVGetRequest\x1a .sub2api.plugin.v1.KVGetResponse\x12J\n" +
-	"\x05KVSet\x12\x1f.sub2api.plugin.v1.KVSetRequest\x1a .sub2api.plugin.v1.KVSetResponse\x12S\n" +
-	"\bKVDelete\x12\".sub2api.plugin.v1.KVDeleteRequest\x1a#.sub2api.plugin.v1.KVDeleteResponse\x12M\n" +
-	"\x06KVList\x12 .sub2api.plugin.v1.KVListRequest\x1a!.sub2api.plugin.v1.KVListResponse\x12_\n" +
-	"\fListAccounts\x12&.sub2api.plugin.v1.ListAccountsRequest\x1a'.sub2api.plugin.v1.ListAccountsResponse\x12\x80\x01\n" +
-	"\x17ResolveOutboundIdentity\x121.sub2api.plugin.v1.ResolveOutboundIdentityRequest\x1a2.sub2api.plugin.v1.ResolveOutboundIdentityResponseB7Z5github.com/Wei-Shaw/sub2api/pkg/pluginapi/v1;pluginv1b\x06proto3"
+	"\x05KVGet\x12\x1f.auto2api.plugin.v1.KVGetRequest\x1a .auto2api.plugin.v1.KVGetResponse\x12J\n" +
+	"\x05KVSet\x12\x1f.auto2api.plugin.v1.KVSetRequest\x1a .auto2api.plugin.v1.KVSetResponse\x12S\n" +
+	"\bKVDelete\x12\".auto2api.plugin.v1.KVDeleteRequest\x1a#.auto2api.plugin.v1.KVDeleteResponse\x12M\n" +
+	"\x06KVList\x12 .auto2api.plugin.v1.KVListRequest\x1a!.auto2api.plugin.v1.KVListResponse\x12_\n" +
+	"\fListAccounts\x12&.auto2api.plugin.v1.ListAccountsRequest\x1a'.auto2api.plugin.v1.ListAccountsResponse\x12\x80\x01\n" +
+	"\x17ResolveOutboundIdentity\x121.auto2api.plugin.v1.ResolveOutboundIdentityRequest\x1a2.auto2api.plugin.v1.ResolveOutboundIdentityResponseB7Z5github.com/DeltrivX/Auto2API/pkg/pluginapi/v1;pluginv1b\x06proto3"
 
 var (
 	file_plugin_proto_rawDescOnce sync.Once
@@ -2213,80 +2213,80 @@ func file_plugin_proto_rawDescGZIP() []byte {
 
 var file_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 35)
 var file_plugin_proto_goTypes = []any{
-	(*GetInfoRequest)(nil),                  // 0: sub2api.plugin.v1.GetInfoRequest
-	(*GetInfoResponse)(nil),                 // 1: sub2api.plugin.v1.GetInfoResponse
-	(*HealthRequest)(nil),                   // 2: sub2api.plugin.v1.HealthRequest
-	(*HealthResponse)(nil),                  // 3: sub2api.plugin.v1.HealthResponse
-	(*ValidateConfigRequest)(nil),           // 4: sub2api.plugin.v1.ValidateConfigRequest
-	(*ValidateConfigResponse)(nil),          // 5: sub2api.plugin.v1.ValidateConfigResponse
-	(*ApplyConfigRequest)(nil),              // 6: sub2api.plugin.v1.ApplyConfigRequest
-	(*ApplyConfigResponse)(nil),             // 7: sub2api.plugin.v1.ApplyConfigResponse
-	(*TestConfigRequest)(nil),               // 8: sub2api.plugin.v1.TestConfigRequest
-	(*TestConfigResponse)(nil),              // 9: sub2api.plugin.v1.TestConfigResponse
-	(*HeaderValues)(nil),                    // 10: sub2api.plugin.v1.HeaderValues
-	(*ForwardRequestStart)(nil),             // 11: sub2api.plugin.v1.ForwardRequestStart
-	(*ForwardRequest)(nil),                  // 12: sub2api.plugin.v1.ForwardRequest
-	(*ForwardResponseStart)(nil),            // 13: sub2api.plugin.v1.ForwardResponseStart
-	(*ForwardResponseEnd)(nil),              // 14: sub2api.plugin.v1.ForwardResponseEnd
-	(*ForwardResponseError)(nil),            // 15: sub2api.plugin.v1.ForwardResponseError
-	(*ForwardResponse)(nil),                 // 16: sub2api.plugin.v1.ForwardResponse
-	(*InitHostServicesRequest)(nil),         // 17: sub2api.plugin.v1.InitHostServicesRequest
-	(*InitHostServicesResponse)(nil),        // 18: sub2api.plugin.v1.InitHostServicesResponse
-	(*KVGetRequest)(nil),                    // 19: sub2api.plugin.v1.KVGetRequest
-	(*KVGetResponse)(nil),                   // 20: sub2api.plugin.v1.KVGetResponse
-	(*KVSetRequest)(nil),                    // 21: sub2api.plugin.v1.KVSetRequest
-	(*KVSetResponse)(nil),                   // 22: sub2api.plugin.v1.KVSetResponse
-	(*KVDeleteRequest)(nil),                 // 23: sub2api.plugin.v1.KVDeleteRequest
-	(*KVDeleteResponse)(nil),                // 24: sub2api.plugin.v1.KVDeleteResponse
-	(*KVListRequest)(nil),                   // 25: sub2api.plugin.v1.KVListRequest
-	(*KVListResponse)(nil),                  // 26: sub2api.plugin.v1.KVListResponse
-	(*ListAccountsRequest)(nil),             // 27: sub2api.plugin.v1.ListAccountsRequest
-	(*ListAccountsResponse)(nil),            // 28: sub2api.plugin.v1.ListAccountsResponse
-	(*AccountInfo)(nil),                     // 29: sub2api.plugin.v1.AccountInfo
-	(*ResolveOutboundIdentityRequest)(nil),  // 30: sub2api.plugin.v1.ResolveOutboundIdentityRequest
-	(*ResolveOutboundIdentityResponse)(nil), // 31: sub2api.plugin.v1.ResolveOutboundIdentityResponse
-	nil,                                     // 32: sub2api.plugin.v1.ForwardRequestStart.HeadersEntry
-	nil,                                     // 33: sub2api.plugin.v1.ForwardResponseStart.HeadersEntry
-	nil,                                     // 34: sub2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntry
+	(*GetInfoRequest)(nil),                  // 0: auto2api.plugin.v1.GetInfoRequest
+	(*GetInfoResponse)(nil),                 // 1: auto2api.plugin.v1.GetInfoResponse
+	(*HealthRequest)(nil),                   // 2: auto2api.plugin.v1.HealthRequest
+	(*HealthResponse)(nil),                  // 3: auto2api.plugin.v1.HealthResponse
+	(*ValidateConfigRequest)(nil),           // 4: auto2api.plugin.v1.ValidateConfigRequest
+	(*ValidateConfigResponse)(nil),          // 5: auto2api.plugin.v1.ValidateConfigResponse
+	(*ApplyConfigRequest)(nil),              // 6: auto2api.plugin.v1.ApplyConfigRequest
+	(*ApplyConfigResponse)(nil),             // 7: auto2api.plugin.v1.ApplyConfigResponse
+	(*TestConfigRequest)(nil),               // 8: auto2api.plugin.v1.TestConfigRequest
+	(*TestConfigResponse)(nil),              // 9: auto2api.plugin.v1.TestConfigResponse
+	(*HeaderValues)(nil),                    // 10: auto2api.plugin.v1.HeaderValues
+	(*ForwardRequestStart)(nil),             // 11: auto2api.plugin.v1.ForwardRequestStart
+	(*ForwardRequest)(nil),                  // 12: auto2api.plugin.v1.ForwardRequest
+	(*ForwardResponseStart)(nil),            // 13: auto2api.plugin.v1.ForwardResponseStart
+	(*ForwardResponseEnd)(nil),              // 14: auto2api.plugin.v1.ForwardResponseEnd
+	(*ForwardResponseError)(nil),            // 15: auto2api.plugin.v1.ForwardResponseError
+	(*ForwardResponse)(nil),                 // 16: auto2api.plugin.v1.ForwardResponse
+	(*InitHostServicesRequest)(nil),         // 17: auto2api.plugin.v1.InitHostServicesRequest
+	(*InitHostServicesResponse)(nil),        // 18: auto2api.plugin.v1.InitHostServicesResponse
+	(*KVGetRequest)(nil),                    // 19: auto2api.plugin.v1.KVGetRequest
+	(*KVGetResponse)(nil),                   // 20: auto2api.plugin.v1.KVGetResponse
+	(*KVSetRequest)(nil),                    // 21: auto2api.plugin.v1.KVSetRequest
+	(*KVSetResponse)(nil),                   // 22: auto2api.plugin.v1.KVSetResponse
+	(*KVDeleteRequest)(nil),                 // 23: auto2api.plugin.v1.KVDeleteRequest
+	(*KVDeleteResponse)(nil),                // 24: auto2api.plugin.v1.KVDeleteResponse
+	(*KVListRequest)(nil),                   // 25: auto2api.plugin.v1.KVListRequest
+	(*KVListResponse)(nil),                  // 26: auto2api.plugin.v1.KVListResponse
+	(*ListAccountsRequest)(nil),             // 27: auto2api.plugin.v1.ListAccountsRequest
+	(*ListAccountsResponse)(nil),            // 28: auto2api.plugin.v1.ListAccountsResponse
+	(*AccountInfo)(nil),                     // 29: auto2api.plugin.v1.AccountInfo
+	(*ResolveOutboundIdentityRequest)(nil),  // 30: auto2api.plugin.v1.ResolveOutboundIdentityRequest
+	(*ResolveOutboundIdentityResponse)(nil), // 31: auto2api.plugin.v1.ResolveOutboundIdentityResponse
+	nil,                                     // 32: auto2api.plugin.v1.ForwardRequestStart.HeadersEntry
+	nil,                                     // 33: auto2api.plugin.v1.ForwardResponseStart.HeadersEntry
+	nil,                                     // 34: auto2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntry
 }
 var file_plugin_proto_depIdxs = []int32{
-	32, // 0: sub2api.plugin.v1.ForwardRequestStart.headers:type_name -> sub2api.plugin.v1.ForwardRequestStart.HeadersEntry
-	11, // 1: sub2api.plugin.v1.ForwardRequest.start:type_name -> sub2api.plugin.v1.ForwardRequestStart
-	33, // 2: sub2api.plugin.v1.ForwardResponseStart.headers:type_name -> sub2api.plugin.v1.ForwardResponseStart.HeadersEntry
-	13, // 3: sub2api.plugin.v1.ForwardResponse.start:type_name -> sub2api.plugin.v1.ForwardResponseStart
-	14, // 4: sub2api.plugin.v1.ForwardResponse.end:type_name -> sub2api.plugin.v1.ForwardResponseEnd
-	15, // 5: sub2api.plugin.v1.ForwardResponse.error:type_name -> sub2api.plugin.v1.ForwardResponseError
-	29, // 6: sub2api.plugin.v1.ListAccountsResponse.accounts:type_name -> sub2api.plugin.v1.AccountInfo
-	34, // 7: sub2api.plugin.v1.ResolveOutboundIdentityResponse.headers:type_name -> sub2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntry
-	10, // 8: sub2api.plugin.v1.ForwardRequestStart.HeadersEntry.value:type_name -> sub2api.plugin.v1.HeaderValues
-	10, // 9: sub2api.plugin.v1.ForwardResponseStart.HeadersEntry.value:type_name -> sub2api.plugin.v1.HeaderValues
-	10, // 10: sub2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntry.value:type_name -> sub2api.plugin.v1.HeaderValues
-	0,  // 11: sub2api.plugin.v1.TransportPlugin.GetInfo:input_type -> sub2api.plugin.v1.GetInfoRequest
-	2,  // 12: sub2api.plugin.v1.TransportPlugin.Health:input_type -> sub2api.plugin.v1.HealthRequest
-	4,  // 13: sub2api.plugin.v1.TransportPlugin.ValidateConfig:input_type -> sub2api.plugin.v1.ValidateConfigRequest
-	6,  // 14: sub2api.plugin.v1.TransportPlugin.ApplyConfig:input_type -> sub2api.plugin.v1.ApplyConfigRequest
-	8,  // 15: sub2api.plugin.v1.TransportPlugin.TestConfig:input_type -> sub2api.plugin.v1.TestConfigRequest
-	12, // 16: sub2api.plugin.v1.TransportPlugin.Forward:input_type -> sub2api.plugin.v1.ForwardRequest
-	17, // 17: sub2api.plugin.v1.TransportPlugin.InitHostServices:input_type -> sub2api.plugin.v1.InitHostServicesRequest
-	19, // 18: sub2api.plugin.v1.HostService.KVGet:input_type -> sub2api.plugin.v1.KVGetRequest
-	21, // 19: sub2api.plugin.v1.HostService.KVSet:input_type -> sub2api.plugin.v1.KVSetRequest
-	23, // 20: sub2api.plugin.v1.HostService.KVDelete:input_type -> sub2api.plugin.v1.KVDeleteRequest
-	25, // 21: sub2api.plugin.v1.HostService.KVList:input_type -> sub2api.plugin.v1.KVListRequest
-	27, // 22: sub2api.plugin.v1.HostService.ListAccounts:input_type -> sub2api.plugin.v1.ListAccountsRequest
-	30, // 23: sub2api.plugin.v1.HostService.ResolveOutboundIdentity:input_type -> sub2api.plugin.v1.ResolveOutboundIdentityRequest
-	1,  // 24: sub2api.plugin.v1.TransportPlugin.GetInfo:output_type -> sub2api.plugin.v1.GetInfoResponse
-	3,  // 25: sub2api.plugin.v1.TransportPlugin.Health:output_type -> sub2api.plugin.v1.HealthResponse
-	5,  // 26: sub2api.plugin.v1.TransportPlugin.ValidateConfig:output_type -> sub2api.plugin.v1.ValidateConfigResponse
-	7,  // 27: sub2api.plugin.v1.TransportPlugin.ApplyConfig:output_type -> sub2api.plugin.v1.ApplyConfigResponse
-	9,  // 28: sub2api.plugin.v1.TransportPlugin.TestConfig:output_type -> sub2api.plugin.v1.TestConfigResponse
-	16, // 29: sub2api.plugin.v1.TransportPlugin.Forward:output_type -> sub2api.plugin.v1.ForwardResponse
-	18, // 30: sub2api.plugin.v1.TransportPlugin.InitHostServices:output_type -> sub2api.plugin.v1.InitHostServicesResponse
-	20, // 31: sub2api.plugin.v1.HostService.KVGet:output_type -> sub2api.plugin.v1.KVGetResponse
-	22, // 32: sub2api.plugin.v1.HostService.KVSet:output_type -> sub2api.plugin.v1.KVSetResponse
-	24, // 33: sub2api.plugin.v1.HostService.KVDelete:output_type -> sub2api.plugin.v1.KVDeleteResponse
-	26, // 34: sub2api.plugin.v1.HostService.KVList:output_type -> sub2api.plugin.v1.KVListResponse
-	28, // 35: sub2api.plugin.v1.HostService.ListAccounts:output_type -> sub2api.plugin.v1.ListAccountsResponse
-	31, // 36: sub2api.plugin.v1.HostService.ResolveOutboundIdentity:output_type -> sub2api.plugin.v1.ResolveOutboundIdentityResponse
+	32, // 0: auto2api.plugin.v1.ForwardRequestStart.headers:type_name -> auto2api.plugin.v1.ForwardRequestStart.HeadersEntry
+	11, // 1: auto2api.plugin.v1.ForwardRequest.start:type_name -> auto2api.plugin.v1.ForwardRequestStart
+	33, // 2: auto2api.plugin.v1.ForwardResponseStart.headers:type_name -> auto2api.plugin.v1.ForwardResponseStart.HeadersEntry
+	13, // 3: auto2api.plugin.v1.ForwardResponse.start:type_name -> auto2api.plugin.v1.ForwardResponseStart
+	14, // 4: auto2api.plugin.v1.ForwardResponse.end:type_name -> auto2api.plugin.v1.ForwardResponseEnd
+	15, // 5: auto2api.plugin.v1.ForwardResponse.error:type_name -> auto2api.plugin.v1.ForwardResponseError
+	29, // 6: auto2api.plugin.v1.ListAccountsResponse.accounts:type_name -> auto2api.plugin.v1.AccountInfo
+	34, // 7: auto2api.plugin.v1.ResolveOutboundIdentityResponse.headers:type_name -> auto2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntry
+	10, // 8: auto2api.plugin.v1.ForwardRequestStart.HeadersEntry.value:type_name -> auto2api.plugin.v1.HeaderValues
+	10, // 9: auto2api.plugin.v1.ForwardResponseStart.HeadersEntry.value:type_name -> auto2api.plugin.v1.HeaderValues
+	10, // 10: auto2api.plugin.v1.ResolveOutboundIdentityResponse.HeadersEntry.value:type_name -> auto2api.plugin.v1.HeaderValues
+	0,  // 11: auto2api.plugin.v1.TransportPlugin.GetInfo:input_type -> auto2api.plugin.v1.GetInfoRequest
+	2,  // 12: auto2api.plugin.v1.TransportPlugin.Health:input_type -> auto2api.plugin.v1.HealthRequest
+	4,  // 13: auto2api.plugin.v1.TransportPlugin.ValidateConfig:input_type -> auto2api.plugin.v1.ValidateConfigRequest
+	6,  // 14: auto2api.plugin.v1.TransportPlugin.ApplyConfig:input_type -> auto2api.plugin.v1.ApplyConfigRequest
+	8,  // 15: auto2api.plugin.v1.TransportPlugin.TestConfig:input_type -> auto2api.plugin.v1.TestConfigRequest
+	12, // 16: auto2api.plugin.v1.TransportPlugin.Forward:input_type -> auto2api.plugin.v1.ForwardRequest
+	17, // 17: auto2api.plugin.v1.TransportPlugin.InitHostServices:input_type -> auto2api.plugin.v1.InitHostServicesRequest
+	19, // 18: auto2api.plugin.v1.HostService.KVGet:input_type -> auto2api.plugin.v1.KVGetRequest
+	21, // 19: auto2api.plugin.v1.HostService.KVSet:input_type -> auto2api.plugin.v1.KVSetRequest
+	23, // 20: auto2api.plugin.v1.HostService.KVDelete:input_type -> auto2api.plugin.v1.KVDeleteRequest
+	25, // 21: auto2api.plugin.v1.HostService.KVList:input_type -> auto2api.plugin.v1.KVListRequest
+	27, // 22: auto2api.plugin.v1.HostService.ListAccounts:input_type -> auto2api.plugin.v1.ListAccountsRequest
+	30, // 23: auto2api.plugin.v1.HostService.ResolveOutboundIdentity:input_type -> auto2api.plugin.v1.ResolveOutboundIdentityRequest
+	1,  // 24: auto2api.plugin.v1.TransportPlugin.GetInfo:output_type -> auto2api.plugin.v1.GetInfoResponse
+	3,  // 25: auto2api.plugin.v1.TransportPlugin.Health:output_type -> auto2api.plugin.v1.HealthResponse
+	5,  // 26: auto2api.plugin.v1.TransportPlugin.ValidateConfig:output_type -> auto2api.plugin.v1.ValidateConfigResponse
+	7,  // 27: auto2api.plugin.v1.TransportPlugin.ApplyConfig:output_type -> auto2api.plugin.v1.ApplyConfigResponse
+	9,  // 28: auto2api.plugin.v1.TransportPlugin.TestConfig:output_type -> auto2api.plugin.v1.TestConfigResponse
+	16, // 29: auto2api.plugin.v1.TransportPlugin.Forward:output_type -> auto2api.plugin.v1.ForwardResponse
+	18, // 30: auto2api.plugin.v1.TransportPlugin.InitHostServices:output_type -> auto2api.plugin.v1.InitHostServicesResponse
+	20, // 31: auto2api.plugin.v1.HostService.KVGet:output_type -> auto2api.plugin.v1.KVGetResponse
+	22, // 32: auto2api.plugin.v1.HostService.KVSet:output_type -> auto2api.plugin.v1.KVSetResponse
+	24, // 33: auto2api.plugin.v1.HostService.KVDelete:output_type -> auto2api.plugin.v1.KVDeleteResponse
+	26, // 34: auto2api.plugin.v1.HostService.KVList:output_type -> auto2api.plugin.v1.KVListResponse
+	28, // 35: auto2api.plugin.v1.HostService.ListAccounts:output_type -> auto2api.plugin.v1.ListAccountsResponse
+	31, // 36: auto2api.plugin.v1.HostService.ResolveOutboundIdentity:output_type -> auto2api.plugin.v1.ResolveOutboundIdentityResponse
 	24, // [24:37] is the sub-list for method output_type
 	11, // [11:24] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name

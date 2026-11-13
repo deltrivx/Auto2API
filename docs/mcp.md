@@ -17,7 +17,7 @@ mcp:
   public_url: https://api.example.com/api/v1/mcp
 ```
 
-地址必须是站点根路径下的 `/api/v1/mcp`，不带尾斜杠、查询参数或片段；OAuth 发现端点同样位于站点根路径，因此不支持挂在子路径（如 `https://example.com/sub2api/`）下部署。生产环境使用 HTTPS；本机开发允许 localhost 或回环 IP 的 HTTP 地址。服务不会从前端 URL、请求 Host 或转发头推断该地址；未配置时 MCP 及其 OAuth 接口均返回 503。清空该配置即可关闭 MCP，已签发的令牌随之无法使用。
+地址必须是站点根路径下的 `/api/v1/mcp`，不带尾斜杠、查询参数或片段；OAuth 发现端点同样位于站点根路径，因此不支持挂在子路径（如 `https://example.com/auto2api/`）下部署。生产环境使用 HTTPS；本机开发允许 localhost 或回环 IP 的 HTTP 地址。服务不会从前端 URL、请求 Host 或转发头推断该地址；未配置时 MCP 及其 OAuth 接口均返回 503。清空该配置即可关闭 MCP，已签发的令牌随之无法使用。
 
 同域部署只需上述 MCP 地址。前后端分域时，另外配置平台前端 URL（管理设置或 `SERVER_FRONTEND_URL`），用于定位浏览器授权页。反向代理需转发 `/api/v1/mcp`、`/api/v1/mcp/oauth/*` 及下列 `/.well-known/*` 发现端点，保留 Authorization、Accept 和 MCP 协议请求头。浏览器客户端访问 MCP 资源仍需符合平台的 CORS/Origin 白名单。
 
@@ -33,7 +33,7 @@ mcp:
 ```json
 {
   "mcpServers": {
-    "sub2api": {
+    "auto2api": {
       "url": "https://api.example.com/api/v1/mcp"
     }
   }

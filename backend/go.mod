@@ -1,4 +1,4 @@
-module github.com/Wei-Shaw/sub2api
+module github.com/DeltrivX/Auto2API
 
 go 1.27.3
 

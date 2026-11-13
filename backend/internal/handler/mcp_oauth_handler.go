@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/pkg/response"
+	"github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/modelcontextprotocol/go-sdk/oauthex"
 )
@@ -66,7 +66,7 @@ func (h *MCPOAuthHandler) ResourceMetadata(c *gin.Context) {
 	c.JSON(http.StatusOK, oauthex.ProtectedResourceMetadata{
 		Resource: resource, AuthorizationServers: []string{issuer},
 		ScopesSupported: []string{service.MCPOAuthScope}, BearerMethodsSupported: []string{"header"},
-		ResourceName: "Sub2API management",
+		ResourceName: "Auto2API management",
 	})
 }
 

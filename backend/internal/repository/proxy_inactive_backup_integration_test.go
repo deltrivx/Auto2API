@@ -3,7 +3,7 @@
 package repository
 
 import (
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"time"
 )
 

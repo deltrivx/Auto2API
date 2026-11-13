@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/payment"
+	"github.com/DeltrivX/Auto2API/internal/payment"
 	"github.com/smartwalle/alipay/v3"
 )
 

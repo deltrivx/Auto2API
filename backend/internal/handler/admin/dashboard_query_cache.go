@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/usagestats"
+	"github.com/DeltrivX/Auto2API/internal/pkg/usagestats"
 )
 
 var (

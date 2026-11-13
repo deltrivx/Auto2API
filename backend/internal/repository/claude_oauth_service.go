@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/oauth"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyurl"
-	"github.com/Wei-Shaw/sub2api/internal/service"
-	"github.com/Wei-Shaw/sub2api/internal/util/logredact"
+	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
+	"github.com/DeltrivX/Auto2API/internal/pkg/oauth"
+	"github.com/DeltrivX/Auto2API/internal/pkg/proxyurl"
+	"github.com/DeltrivX/Auto2API/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/util/logredact"
 
 	"github.com/imroc/req/v3"
 )

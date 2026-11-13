@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/adminaccess"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	"github.com/DeltrivX/Auto2API/internal/pkg/adminaccess"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
 )
 
 type scopedAccountOperationKey struct{}

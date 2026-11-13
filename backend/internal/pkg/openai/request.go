@@ -44,7 +44,7 @@ const codexOfficialClientFamilyPrefix = "codex "
 // codexOfficialClientOriginators：Codex 官方客户端家族 originator 精确集合。
 // app-server `initialize` 把 originator 设为 clientInfo.name 逐字值（codex-rs default_client.rs），
 // 故官方集合是这些确定字面量；镜像 is_first_party_originator / is_first_party_chat_originator
-// 并叠加 sub2api 已取证变体。用精确匹配而非「含 codex_/codex」的宽松兜底，避免 evil-codex_ 之类
+// 并叠加 auto2api 已取证变体。用精确匹配而非「含 codex_/codex」的宽松兜底，避免 evil-codex_ 之类
 // 伪造绕过（gate 仍需 UA 双因子佐证）。新官方/合作客户端经 allowed_client.go 命名预设放行，
 // 或在 bump context/codex 时同步补入本集合。
 var codexOfficialClientOriginators = map[string]bool{
@@ -271,7 +271,7 @@ const CodexTUIOriginator = "codex-tui"
 const CodexDefaultOriginator = CodexCLIOriginator
 
 // NormalizeCodexClientIdentityToCLI 将已配对的 TUI 身份归一为 CLI 身份。
-// sub2api 历史默认 UA 使用 codex-tui；上游仓库的 #5198 记录了该身份会收到
+// auto2api 历史默认 UA 使用 codex-tui；上游仓库的 #5198 记录了该身份会收到
 // server_is_overloaded，而相同请求改用 codex_cli_rs 可以成功。归一化必须同时改写
 // originator 和 User-Agent 首段，避免触发 #3901 的身份配对校验。
 //

@@ -11,9 +11,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/antigravity"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/claude"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/openai"
+	"github.com/DeltrivX/Auto2API/internal/pkg/antigravity"
+	"github.com/DeltrivX/Auto2API/internal/pkg/claude"
+	"github.com/DeltrivX/Auto2API/internal/pkg/openai"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -98,7 +98,7 @@ const antigravityUserAgentVersionErrorTTL = 5 * time.Second
 const antigravityUserAgentVersionDBTimeout = 5 * time.Second
 
 // DefaultOpenAICodexUserAgent 是 OpenAI Codex 默认 User-Agent，用于规避浏览器 UA 的质询。
-// 默认采用 codex_cli_rs 身份，避免历史 codex-tui 出口触发 sub2api 的身份风控指纹。
+// 默认采用 codex_cli_rs 身份，避免历史 codex-tui 出口触发 auto2api 的身份风控指纹。
 const DefaultOpenAICodexUserAgent = codexCLIUserAgent
 
 // cachedOpenAICodexUserAgent 缓存 OpenAI Codex UA（进程内缓存，60s TTL）
@@ -421,7 +421,7 @@ func NormalizeClaudeCodeClientVersion(version string) string {
 
 // GetClaudeCodeClientVersion 返回出站声明的 Claude Code CLI 客户端版本号。
 // 优先级：管理员在面板覆写的版本 → 自动同步到的官方最新版本 → claude.CLIVersion()
-// （环境变量 SUB2API_CLAUDE_CLI_VERSION 覆盖 + 内置基线）。
+// （环境变量 AUTO2API_CLAUDE_CLI_VERSION 覆盖 + 内置基线）。
 // 版本太旧会被 Anthropic 拒绝（HTTP 400 claude_code_version_too_old），故该值需保持跟随官方发布。
 //
 // ⚠️ 一致性约束：同一次请求里，拼 User-Agent（claude-cli/<版本>）的版本号和用于

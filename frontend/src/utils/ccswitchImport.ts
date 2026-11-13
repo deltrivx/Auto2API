@@ -115,12 +115,12 @@ export function buildCcSwitchImportDeeplink(input: CcSwitchImportDeeplinkInput):
   if (config.app === 'codex') {
     // CC Switch's embedded-config import preserves provider auth and headers.
     // It deliberately leaves global [features] settings to the user.
-    const codexConfig = `model_provider = "sub2api"
+    const codexConfig = `model_provider = "auto2api"
 model = ${JSON.stringify(config.model)}
 web_search = "live"
 
-[model_providers.sub2api]
-name = "Sub2API"
+[model_providers.auto2api]
+name = "Auto2API"
 base_url = ${JSON.stringify(config.endpoint)}
 wire_api = "responses"
 ${buildCodexApiKeyAuthConfig(input.apiKey)}

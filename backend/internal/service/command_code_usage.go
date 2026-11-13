@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	infraerrors "github.com/DeltrivX/Auto2API/internal/pkg/errors"
 )
 
 // Command Code 的积分与用量窗口来自 /alpha 下四个只读接口（官方 CLI /usage 同源，

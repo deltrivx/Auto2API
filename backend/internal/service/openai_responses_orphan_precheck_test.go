@@ -133,7 +133,7 @@ func TestOpenAIResponsesOrphanPrecheckCompatibilityErrors(t *testing.T) {
 func TestOpenAIResponsesOrphanPrecheckLargeEscapedContent(t *testing.T) {
 	// AllocsPerRun counts allocations across the process, including background
 	// goroutines left by other service tests. Measure only this case in a child.
-	const childEnv = "SUB2API_OPENAI_ORPHAN_ALLOC_TEST_CHILD"
+	const childEnv = "AUTO2API_OPENAI_ORPHAN_ALLOC_TEST_CHILD"
 	if os.Getenv(childEnv) != "1" {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()

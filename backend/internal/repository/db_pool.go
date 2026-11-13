@@ -12,7 +12,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/config"
 )
 
 const (

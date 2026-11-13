@@ -13,11 +13,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/group"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
-	"github.com/Wei-Shaw/sub2api/ent/usagelog"
-	"github.com/Wei-Shaw/sub2api/ent/user"
-	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
+	"github.com/DeltrivX/Auto2API/ent/group"
+	"github.com/DeltrivX/Auto2API/ent/predicate"
+	"github.com/DeltrivX/Auto2API/ent/usagelog"
+	"github.com/DeltrivX/Auto2API/ent/user"
+	"github.com/DeltrivX/Auto2API/ent/usersubscription"
 )
 
 // UserSubscriptionQuery is the builder for querying UserSubscription entities.

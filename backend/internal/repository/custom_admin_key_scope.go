@@ -9,13 +9,13 @@ import (
 	"time"
 
 	entsql "entgo.io/ent/dialect/sql"
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	dbaccount "github.com/Wei-Shaw/sub2api/ent/account"
-	dbaccountgroup "github.com/Wei-Shaw/sub2api/ent/accountgroup"
-	dbpredicate "github.com/Wei-Shaw/sub2api/ent/predicate"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/adminaccess"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	dbent "github.com/DeltrivX/Auto2API/ent"
+	dbaccount "github.com/DeltrivX/Auto2API/ent/account"
+	dbaccountgroup "github.com/DeltrivX/Auto2API/ent/accountgroup"
+	dbpredicate "github.com/DeltrivX/Auto2API/ent/predicate"
+	"github.com/DeltrivX/Auto2API/internal/pkg/adminaccess"
+	"github.com/DeltrivX/Auto2API/internal/pkg/pagination"
+	"github.com/DeltrivX/Auto2API/internal/service"
 )
 
 func (r *accountRepository) ScopedAdminList(ctx context.Context, p pagination.PaginationParams, platform, kind, status, search string, groupID int64) ([]service.Account, int64, error) {

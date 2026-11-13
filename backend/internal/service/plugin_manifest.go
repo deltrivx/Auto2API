@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	pluginv1 "github.com/Wei-Shaw/sub2api/pkg/pluginapi/v1"
+	pluginv1 "github.com/DeltrivX/Auto2API/pkg/pluginapi/v1"
 )
 
 const (
@@ -45,9 +45,9 @@ type PluginManifest struct {
 }
 
 type PluginRequirements struct {
-	Sub2API                   string   `json:"sub2api"`
-	RecommendedSub2APIVersion string   `json:"recommended_sub2api_version,omitempty"`
-	TestedSub2APIVersions     []string `json:"tested_sub2api_versions,omitempty"`
+	Auto2API                   string   `json:"auto2api"`
+	RecommendedAuto2APIVersion string   `json:"recommended_auto2api_version,omitempty"`
+	TestedAuto2APIVersions     []string `json:"tested_auto2api_versions,omitempty"`
 	PluginProtocol            int      `json:"plugin_protocol"`
 	TransportAPI              int      `json:"transport_api"`
 	UIBridge                  int      `json:"ui_bridge"`
@@ -79,9 +79,9 @@ type PluginCompatibility struct {
 	Tested             bool   `json:"tested"`
 	Status             string `json:"status"`
 	Message            string `json:"message"`
-	CurrentSub2API     string `json:"current_sub2api_version"`
-	RequiredSub2API    string `json:"required_sub2api_version"`
-	RecommendedSub2API string `json:"recommended_sub2api_version"`
+	CurrentAuto2API     string `json:"current_auto2api_version"`
+	RequiredAuto2API    string `json:"required_auto2api_version"`
+	RecommendedAuto2API string `json:"recommended_auto2api_version"`
 	PluginProtocol     int    `json:"plugin_protocol"`
 	TransportAPI       int    `json:"transport_api"`
 	UIBridge           int    `json:"ui_bridge"`
@@ -157,8 +157,8 @@ func (m PluginManifest) Validate() error {
 	if normalizeSemver(m.Version) == "" {
 		return errors.New("插件版本必须是有效的语义化版本")
 	}
-	if strings.TrimSpace(m.Requires.Sub2API) == "" {
-		return errors.New("插件必须声明 requires.sub2api")
+	if strings.TrimSpace(m.Requires.Auto2API) == "" {
+		return errors.New("插件必须声明 requires.auto2api")
 	}
 	if m.Requires.PluginProtocol != pluginv1.ProtocolVersion ||
 		m.Requires.TransportAPI != pluginv1.TransportAPIVersion ||

@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/Wei-Shaw/sub2api/ent/runtime"
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/repository"
+	_ "github.com/DeltrivX/Auto2API/ent/runtime"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/repository"
 	"github.com/lib/pq"
 )
 

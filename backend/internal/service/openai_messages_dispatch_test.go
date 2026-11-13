@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
+	"github.com/DeltrivX/Auto2API/internal/pkg/xai"
 	"github.com/stretchr/testify/require"
 )
 

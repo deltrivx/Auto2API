@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
+	pkghttputil "github.com/DeltrivX/Auto2API/internal/pkg/httputil"
 	"go.uber.org/zap"
 )
 

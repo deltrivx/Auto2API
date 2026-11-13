@@ -13,11 +13,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/channelmonitor"
-	"github.com/Wei-Shaw/sub2api/ent/channelmonitordailyrollup"
-	"github.com/Wei-Shaw/sub2api/ent/channelmonitorhistory"
-	"github.com/Wei-Shaw/sub2api/ent/channelmonitorrequesttemplate"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
+	"github.com/DeltrivX/Auto2API/ent/channelmonitor"
+	"github.com/DeltrivX/Auto2API/ent/channelmonitordailyrollup"
+	"github.com/DeltrivX/Auto2API/ent/channelmonitorhistory"
+	"github.com/DeltrivX/Auto2API/ent/channelmonitorrequesttemplate"
+	"github.com/DeltrivX/Auto2API/ent/predicate"
 )
 
 // ChannelMonitorQuery is the builder for querying ChannelMonitor entities.

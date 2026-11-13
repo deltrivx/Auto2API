@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/typesafe"
+	"github.com/DeltrivX/Auto2API/internal/pkg/typesafe"
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	typeSafeTestDefaultState    = "Sub2API connection test"
+	typeSafeTestDefaultState    = "Auto2API connection test"
 	typeSafeTestQuestionID      = "connection_test"
 	typeSafeTestMaxPreviewBytes = 2000
 )

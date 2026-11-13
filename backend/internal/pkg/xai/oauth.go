@@ -15,9 +15,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/redissession"
-	"github.com/Wei-Shaw/sub2api/internal/util/logredact"
-	"github.com/Wei-Shaw/sub2api/internal/util/urlvalidator"
+	"github.com/DeltrivX/Auto2API/internal/pkg/redissession"
+	"github.com/DeltrivX/Auto2API/internal/util/logredact"
+	"github.com/DeltrivX/Auto2API/internal/util/urlvalidator"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -584,7 +584,7 @@ func BuildAuthorizationURL(state, codeChallenge, redirectURI, nonce string) (str
 	params.Set("code_challenge", codeChallenge)
 	params.Set("code_challenge_method", "S256")
 	params.Set("plan", "generic")
-	params.Set("referrer", "sub2api")
+	params.Set("referrer", "auto2api")
 
 	return fmt.Sprintf("%s?%s", authorizeURL, params.Encode()), nil
 }

@@ -154,19 +154,19 @@
                   {{ t("admin.plugins.currentVersion") }}
                 </dt>
                 <dd class="font-mono text-gray-800 dark:text-gray-200">
-                  {{ plugin.compatibility.current_sub2api_version }}
+                  {{ plugin.compatibility.current_auto2api_version }}
                 </dd>
                 <dt class="text-gray-500">
                   {{ t("admin.plugins.requiredVersion") }}
                 </dt>
                 <dd class="font-mono text-gray-800 dark:text-gray-200">
-                  {{ plugin.compatibility.required_sub2api_version }}
+                  {{ plugin.compatibility.required_auto2api_version }}
                 </dd>
                 <dt class="text-gray-500">
                   {{ t("admin.plugins.recommendedVersion") }}
                 </dt>
                 <dd class="font-mono text-gray-800 dark:text-gray-200">
-                  {{ plugin.compatibility.recommended_sub2api_version || "-" }}
+                  {{ plugin.compatibility.recommended_auto2api_version || "-" }}
                 </dd>
               </dl>
             </div>
@@ -585,7 +585,7 @@ function postBridgeResult(
   pendingBridgeRequests.delete(requestID);
   pluginFrame.value.contentWindow.postMessage(
     {
-      source: "sub2api-plugin-host",
+      source: "auto2api-plugin-host",
       bridge_token: uiSession.value.bridge_token,
       type: `${request.type}.result`,
       request_id: requestID,
@@ -608,7 +608,7 @@ async function handleBridgeMessage(event: MessageEvent): Promise<void> {
   const message = event.data as PluginBridgeMessage;
   if (
     !message ||
-    message.source !== "sub2api-plugin-ui" ||
+    message.source !== "auto2api-plugin-ui" ||
     message.bridge_token !== uiSession.value.bridge_token
   )
     return;
@@ -626,7 +626,7 @@ async function handleBridgeMessage(event: MessageEvent): Promise<void> {
 
   try {
     switch (message.type) {
-      case "sub2api.plugin.ready":
+      case "auto2api.plugin.ready":
         uiLoading.value = false;
         break;
       case "config.load": {

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/migrations"
+	"github.com/DeltrivX/Auto2API/migrations"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 )

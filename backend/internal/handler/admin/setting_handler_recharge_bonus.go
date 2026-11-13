@@ -1,8 +1,8 @@
 package admin
 
 import (
-	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/handler/dto"
+	"github.com/DeltrivX/Auto2API/internal/service"
 )
 
 // rechargeBonusTiersFromDTO 请求 nil 表示未携带该字段（保持现值）；空数组表示清空阶梯。

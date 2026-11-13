@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Sub2API Logo" width="128" />
+<img src="assets/logo.svg" alt="Auto2API Logo" width="128" />
 
-# Sub2API
+# Auto2API
 
 [![Go](https://img.shields.io/badge/Go-1.27.0-00ADD8.svg)](https://golang.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D.svg)](https://vuejs.org/)
@@ -10,7 +10,7 @@
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 
-<a href="https://trendshift.io/repositories/21823" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21823" alt="Wei-Shaw%2Fsub2api | Trendshift" width="250" height="55"/></a>
+<a href="https://trendshift.io/repositories/21823" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21823" alt="Wei-Shaw%2Fauto2api | Trendshift" width="250" height="55"/></a>
 
 **サブスクリプションクォータ配分のための AI API ゲートウェイプラットフォーム**
 
@@ -34,24 +34,24 @@
 <details open>
 <summary>クリックで折りたたむ</summary>
 
-<p align="center"><a href="https://wandapi.com/go/sub2api"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/partners/banners/wandapi-en-dark.svg"><img src="assets/partners/banners/wandapi-en.svg" alt="WandAPI" width="100%"></picture></a></p>
+<p align="center"><a href="https://wandapi.com/go/auto2api"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/partners/banners/wandapi-en-dark.svg"><img src="assets/partners/banners/wandapi-en.svg" alt="WandAPI" width="100%"></picture></a></p>
 
-**[WandAPI](https://wandapi.com/go/sub2api)** — 本プロジェクトのコアコントリビューターが手がける、エンタープライズグレードで安定した AI モデル API ゲートウェイ。1 つの API キーで Claude、GPT、Gemini などの主要モデルを利用でき、OpenAI と Anthropic のプロトコルにネイティブ対応しているため、Claude Code、Codex や既存の SDK も Base URL を変更するだけで接続できます。レイテンシと上流の稼働状況に応じたリアルタイムルーティングとミリ秒単位の自動フェイルオーバーでリクエストを途切れさせず、99.99% のサービス可用性を実現します。従量課金で、リクエストごとの token 数と費用の内訳を確認できます。
+**[WandAPI](https://wandapi.com/go/auto2api)** — 本プロジェクトのコアコントリビューターが手がける、エンタープライズグレードで安定した AI モデル API ゲートウェイ。1 つの API キーで Claude、GPT、Gemini などの主要モデルを利用でき、OpenAI と Anthropic のプロトコルにネイティブ対応しているため、Claude Code、Codex や既存の SDK も Base URL を変更するだけで接続できます。レイテンシと上流の稼働状況に応じたリアルタイムルーティングとミリ秒単位の自動フェイルオーバーでリクエストを途切れさせず、99.99% のサービス可用性を実現します。従量課金で、リクエストごとの token 数と費用の内訳を確認できます。
 
-**無料トライアルクレジット**：[専用リンク](https://wandapi.com/go/sub2api)から登録すると、無料トライアルクレジットを受け取れます。
+**無料トライアルクレジット**：[専用リンク](https://wandapi.com/go/auto2api)から登録すると、無料トライアルクレジットを受け取れます。
 
 ---
 
 <table>
 
 <tr>
-<td width="180"><a href="https://cctk.ai/register?aff=SUB2API"><img src="assets/partners/logos/cctk.jpg" alt="CCTK.AI" width="150"></a></td>
-<td>CCTK.AI のご支援に感謝します！<a href="https://cctk.ai/register?aff=SUB2API">CCTK.AI</a> は安定性とコストパフォーマンスにこだわった AI API ゲートウェイで、Claude、OpenAI、Gemini など主要モデルの高速中継サービスを提供しています。Claude Code や Codex などの主要なコーディングツールにシームレスに対応し、公式価格を大きく下回るコストで同等のモデル能力を利用できます。<a href="https://cctk.ai/register?aff=SUB2API">こちらのリンク</a>から登録して、より速く、より安定した、よりお得な AI API 接続をお試しください。</td>
+<td width="180"><a href="https://cctk.ai/register?aff=AUTO2API"><img src="assets/partners/logos/cctk.jpg" alt="CCTK.AI" width="150"></a></td>
+<td>CCTK.AI のご支援に感謝します！<a href="https://cctk.ai/register?aff=AUTO2API">CCTK.AI</a> は安定性とコストパフォーマンスにこだわった AI API ゲートウェイで、Claude、OpenAI、Gemini など主要モデルの高速中継サービスを提供しています。Claude Code や Codex などの主要なコーディングツールにシームレスに対応し、公式価格を大きく下回るコストで同等のモデル能力を利用できます。<a href="https://cctk.ai/register?aff=AUTO2API">こちらのリンク</a>から登録して、より速く、より安定した、よりお得な AI API 接続をお試しください。</td>
 </tr>
 
 <tr>
-<td width="180"><a href="https://www.openmodel.ai?ref=sub2api"><img src="assets/partners/logos/openmodel.jpg" alt="openmodel" width="150"></a></td>
-<td>1つの API で、トップモデルを使い放題！<a href="https://www.openmodel.ai?ref=sub2api">OpenModel</a> は本番環境グレードで高可用性の AI API ゲートウェイに特化し、アプリを真に高速・安定させます：自動フェイルオーバー、最適なチャネルへのスマートルーティング、本番グレードの SLA 保証。単一プロバイダーをはるかに上回る SLA で、安定性をあなたの核心的な競争力にします。</td>
+<td width="180"><a href="https://www.openmodel.ai?ref=auto2api"><img src="assets/partners/logos/openmodel.jpg" alt="openmodel" width="150"></a></td>
+<td>1つの API で、トップモデルを使い放題！<a href="https://www.openmodel.ai?ref=auto2api">OpenModel</a> は本番環境グレードで高可用性の AI API ゲートウェイに特化し、アプリを真に高速・安定させます：自動フェイルオーバー、最適なチャネルへのスマートルーティング、本番グレードの SLA 保証。単一プロバイダーをはるかに上回る SLA で、安定性をあなたの核心的な競争力にします。</td>
 </tr>
 
 <tr>
@@ -60,13 +60,13 @@
 </tr>
 
 <tr>
-<td width="180"><a href="https://apikey.fan/register?aff=SUB2API"><img src="assets/partners/logos/apikey-fun.png" alt="APIKEY.FUN" width="150"></a></td>
-<td>APIKEY.FUN のご支援に感謝します！<a href="https://apikey.fan/register?aff=SUB2API">APIKEY.FUN</a> は sub2api オープンソースプロジェクトのコアコントリビューターの一つであり、オープンで安定した、コストパフォーマンスに優れた AI API アクセスサービスの提供に取り組んでいます。プラットフォームは Claude、OpenAI、Gemini など人気モデルの API 中継サービスをサポートし、価格は公式料金のわずか 7% から。専用リンク <a href="https://apikey.fan/register?aff=SUB2API">APIKEY</a> から登録すると、すべてのチャージで永久 5% 割引をご利用いただけます。</td>
+<td width="180"><a href="https://apikey.fan/register?aff=AUTO2API"><img src="assets/partners/logos/apikey-fun.png" alt="APIKEY.FUN" width="150"></a></td>
+<td>APIKEY.FUN のご支援に感謝します！<a href="https://apikey.fan/register?aff=AUTO2API">APIKEY.FUN</a> は auto2api オープンソースプロジェクトのコアコントリビューターの一つであり、オープンで安定した、コストパフォーマンスに優れた AI API アクセスサービスの提供に取り組んでいます。プラットフォームは Claude、OpenAI、Gemini など人気モデルの API 中継サービスをサポートし、価格は公式料金のわずか 7% から。専用リンク <a href="https://apikey.fan/register?aff=AUTO2API">APIKEY</a> から登録すると、すべてのチャージで永久 5% 割引をご利用いただけます。</td>
 </tr>
 
 <tr>
-<td width="180"><a href="https://api.aigocode.dev/invite/SUB2API"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/partners/logos/aigocode-dark.png"><img src="assets/partners/logos/aigocode.png" alt="AIGoCode" width="150"></picture></a></td>
-<td>AIGoCode のご支援に感謝します！トークン従量課金だけではない、サブスクリプション型の AI コーディングプラットフォームです。1 つのアカウント・月額プランで Claude Code、Codex、Gemini を使い放題。中国本土から直接接続でき、レスポンスも高速です。<a href="https://api.aigocode.dev/invite/SUB2API">こちらのリンク</a>から購読すると、10% の追加クレジットをプレゼント！</td>
+<td width="180"><a href="https://api.aigocode.dev/invite/AUTO2API"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/partners/logos/aigocode-dark.png"><img src="assets/partners/logos/aigocode.png" alt="AIGoCode" width="150"></picture></a></td>
+<td>AIGoCode のご支援に感謝します！トークン従量課金だけではない、サブスクリプション型の AI コーディングプラットフォームです。1 つのアカウント・月額プランで Claude Code、Codex、Gemini を使い放題。中国本土から直接接続でき、レスポンスも高速です。<a href="https://api.aigocode.dev/invite/AUTO2API">こちらのリンク</a>から購読すると、10% の追加クレジットをプレゼント！</td>
 </tr>
 
 <tr>
@@ -87,8 +87,8 @@
 </tr>
 
 <tr>
-<td width="180"><a href="https://api.pptoken.cc/register?promo=SUB2API"><img src="assets/partners/logos/pptoken.png" alt="pptoken" width="150"></a></td>
-<td>PPToken.cc のご支援に感謝します！<a href="https://api.pptoken.cc/register?promo=SUB2API">PPToken.cc</a> は GPT シリーズモデルの API 中継サービスを専門としており、Codex、Claude Code、OpenAI 互換クライアント、Gemini CLI などのツール接続をサポートしています。チャージは 1:1（1元＝1ドル分のクレジット）、GPT モデルは最低 0.16 倍のレート倍率で、総合コストは公式価格の約 2.2% 、最速ファーストトークンは約1秒 — 開発者が低コスト・高速レスポンスで GPT モデル機能にアクセスするのに最適です。テクニカルサポート：24時間365日リアルな人間が対応（ボットではありません）、グループ内で @技術 すれば 10 分以内に返信。スポンサー特典：先着 200 名のユーザーが<a href="https://api.pptoken.cc/register?promo=SUB2API">専用登録リンク</a>から登録し、プロモコード `SUB2API` を入力すると、Codex / Claude Code の無料トライアルクレジットを獲得できます — 最低利用額なし、カード登録不要。
+<td width="180"><a href="https://api.pptoken.cc/register?promo=AUTO2API"><img src="assets/partners/logos/pptoken.png" alt="pptoken" width="150"></a></td>
+<td>PPToken.cc のご支援に感謝します！<a href="https://api.pptoken.cc/register?promo=AUTO2API">PPToken.cc</a> は GPT シリーズモデルの API 中継サービスを専門としており、Codex、Claude Code、OpenAI 互換クライアント、Gemini CLI などのツール接続をサポートしています。チャージは 1:1（1元＝1ドル分のクレジット）、GPT モデルは最低 0.16 倍のレート倍率で、総合コストは公式価格の約 2.2% 、最速ファーストトークンは約1秒 — 開発者が低コスト・高速レスポンスで GPT モデル機能にアクセスするのに最適です。テクニカルサポート：24時間365日リアルな人間が対応（ボットではありません）、グループ内で @技術 すれば 10 分以内に返信。スポンサー特典：先着 200 名のユーザーが<a href="https://api.pptoken.cc/register?promo=AUTO2API">専用登録リンク</a>から登録し、プロモコード `AUTO2API` を入力すると、Codex / Claude Code の無料トライアルクレジットを獲得できます — 最低利用額なし、カード登録不要。
 </td>
 </tr>
 
@@ -100,7 +100,7 @@
 
 <tr>
 <td width="180"><a href="https://roxybrowser.com/invite/bgGKG7"><img src="assets/partners/logos/RoxyBrowser.png" alt="RoxyBrowser" width="150"></a></td>
-<td>RoxyBrowser のご支援に感謝します！<a href="https://roxybrowser.com/invite/bgGKG7">RoxyBrowser</a> は Sub2API の理想的なパートナーです：ネイティブ統合された Roxy AI Agent と高品質なネイティブ住宅 IP を搭載し、シンプルなコマンドで一括自動化をサポート、マルチアカウント管理のセキュリティと効率を大幅に向上させます！<a href="https://roxybrowser.com/invite/bgGKG7">このリンク</a>から登録すると、無料の住宅 IP パッケージと生涯 10% 割引を獲得できます。
+<td>RoxyBrowser のご支援に感謝します！<a href="https://roxybrowser.com/invite/bgGKG7">RoxyBrowser</a> は Auto2API の理想的なパートナーです：ネイティブ統合された Roxy AI Agent と高品質なネイティブ住宅 IP を搭載し、シンプルなコマンドで一括自動化をサポート、マルチアカウント管理のセキュリティと効率を大幅に向上させます！<a href="https://roxybrowser.com/invite/bgGKG7">このリンク</a>から登録すると、無料の住宅 IP パッケージと生涯 10% 割引を獲得できます。
 </td>
 </tr>
 
@@ -111,17 +111,17 @@
 
 <tr>
 <td width="180"><a href="https://s.qiniu.com/u6rQrq"><img src="assets/partners/logos/qiniu.jpg" alt="Qiniu AI" width="150"></a></td>
-<td>七牛云AI のご支援に感謝します！七牛云AI は、七牛云（02567.HK）傘下のエンタープライズ向け大規模モデル MaaS プラットフォームです。世界の主要モデル 150+ をワンストップで利用でき、グローバル主要モデルプロバイダーのプロトコルに対応し、テキスト、画像、音声、動画、ファイル処理などのフルモーダル処理能力をカバー。169万を超える企業・開発者ユーザーにサービスを提供しています。Sub2API ユーザー向けの限定特典として、<a href="https://s.qiniu.com/u6rQrq">こちらのリンク</a>から登録すると、企業ユーザーは 1200万 Token、開発者は 300万 Token を無料で獲得できます。</td>
+<td>七牛云AI のご支援に感謝します！七牛云AI は、七牛云（02567.HK）傘下のエンタープライズ向け大規模モデル MaaS プラットフォームです。世界の主要モデル 150+ をワンストップで利用でき、グローバル主要モデルプロバイダーのプロトコルに対応し、テキスト、画像、音声、動画、ファイル処理などのフルモーダル処理能力をカバー。169万を超える企業・開発者ユーザーにサービスを提供しています。Auto2API ユーザー向けの限定特典として、<a href="https://s.qiniu.com/u6rQrq">こちらのリンク</a>から登録すると、企業ユーザーは 1200万 Token、開発者は 300万 Token を無料で獲得できます。</td>
 </tr>
 
 <tr>
 <td width="180"><a href="https://api.fenno.ai/s/dC4k"><img src="assets/partners/logos/fennoai.jpg" alt="FennoAI" width="150"></a></td>
-<td>FennoAI のご支援に感謝します！FennoAI は、企業の研究開発チームと開発者向けの高安定・高性能 API 中継サービスプロバイダーです。OpenAI と Anthropic のプロトコルに対応し、Codex、Claude Code、OpenCode などの主要 AI コーディングツールにシームレスに接続できます。エンタープライズ級の安定性を備え、1 日あたり千億規模の Token 呼び出しに対応。国内外法人間の企業間決済と請求書発行もサポートし、企業の研究開発・調達ニーズに応えます。Sub2API ユーザー限定特典として、<a href="https://api.fenno.ai/s/dC4k">専用リンク</a>からサブスクリプションを購入すると、わずか 1.99 ドルで 50 ドル相当の Coding Plan クレジットを獲得できます。さらに招待報酬にも対応しており、友達の購入で最大 20% の還元を獲得可能。招待が多いほど、報酬も増えます。</td>
+<td>FennoAI のご支援に感謝します！FennoAI は、企業の研究開発チームと開発者向けの高安定・高性能 API 中継サービスプロバイダーです。OpenAI と Anthropic のプロトコルに対応し、Codex、Claude Code、OpenCode などの主要 AI コーディングツールにシームレスに接続できます。エンタープライズ級の安定性を備え、1 日あたり千億規模の Token 呼び出しに対応。国内外法人間の企業間決済と請求書発行もサポートし、企業の研究開発・調達ニーズに応えます。Auto2API ユーザー限定特典として、<a href="https://api.fenno.ai/s/dC4k">専用リンク</a>からサブスクリプションを購入すると、わずか 1.99 ドルで 50 ドル相当の Coding Plan クレジットを獲得できます。さらに招待報酬にも対応しており、友達の購入で最大 20% の還元を獲得可能。招待が多いほど、報酬も増えます。</td>
 </tr>
 
 <tr>
-<td width="180"><a href="https://www.rapidproxy.io/?ref=sub2api"><img src="assets/partners/logos/rapidproxy.jpg" alt="RapidProxy" width="150"></a></td>
-<td><a href="https://www.rapidproxy.io/?ref=sub2api">RapidProxy</a> は開発者向けのデータ収集プロキシソリューションであり、安定して信頼できる住宅用プロキシサービスを提供します。9,000 万以上のグローバル住宅 IP と 200 以上の国・地域のカバー、インテリジェントなローテーション機構、精密な地域ターゲティング機能により、クローラー、AI データ学習、SEO モニタリング、EC データ分析などのプロジェクトがアクセス制限を突破し、データ収集の効率を高めます。Playwright、Selenium、Puppeteer などの主要な自動化フレームワークに対応し、料金は $0.65/GB から。<a href="https://www.rapidproxy.io/?ref=sub2api">今すぐ無料でお試しください</a>。</td>
+<td width="180"><a href="https://www.rapidproxy.io/?ref=auto2api"><img src="assets/partners/logos/rapidproxy.jpg" alt="RapidProxy" width="150"></a></td>
+<td><a href="https://www.rapidproxy.io/?ref=auto2api">RapidProxy</a> は開発者向けのデータ収集プロキシソリューションであり、安定して信頼できる住宅用プロキシサービスを提供します。9,000 万以上のグローバル住宅 IP と 200 以上の国・地域のカバー、インテリジェントなローテーション機構、精密な地域ターゲティング機能により、クローラー、AI データ学習、SEO モニタリング、EC データ分析などのプロジェクトがアクセス制限を突破し、データ収集の効率を高めます。Playwright、Selenium、Puppeteer などの主要な自動化フレームワークに対応し、料金は $0.65/GB から。<a href="https://www.rapidproxy.io/?ref=auto2api">今すぐ無料でお試しください</a>。</td>
 </tr>
 
 <tr>
@@ -130,8 +130,8 @@
 </tr>
 
 <tr>
-<td width="180"><a href="https://www.swiftproxy.net/?ref=sub2api"><img src="assets/partners/logos/swiftprox.png" alt="Swiftproxy" width="150"></a></td>
-<td>Swiftproxy は開発者向けの高性能プロキシソリューションで、安定して信頼できるレジデンシャルおよび静的レジデンシャルプロキシサービスを提供します。9,000 万以上のクリーンな住宅 IP を保有し、グローバルカバレッジ、柔軟なローテーション、精密なジオターゲティングにより、Web スクレイピング、AI オートメーション、ブラウザ自動化、SEO モニタリング、マルチアカウント管理などのプロジェクトがアクセス制限を克服し、ワークフロー効率を向上させます。HTTP(S) および SOCKS5 プロトコルに対応し、Playwright、Selenium、Puppeteer などの主要な自動化ツールと統合可能。動的プロキシトラフィックは使い切るまで期限切れなし、無料テストも利用可能 — <a href="https://www.swiftproxy.net/?ref=sub2api">今すぐ無料テストを開始</a>！</td>
+<td width="180"><a href="https://www.swiftproxy.net/?ref=auto2api"><img src="assets/partners/logos/swiftprox.png" alt="Swiftproxy" width="150"></a></td>
+<td>Swiftproxy は開発者向けの高性能プロキシソリューションで、安定して信頼できるレジデンシャルおよび静的レジデンシャルプロキシサービスを提供します。9,000 万以上のクリーンな住宅 IP を保有し、グローバルカバレッジ、柔軟なローテーション、精密なジオターゲティングにより、Web スクレイピング、AI オートメーション、ブラウザ自動化、SEO モニタリング、マルチアカウント管理などのプロジェクトがアクセス制限を克服し、ワークフロー効率を向上させます。HTTP(S) および SOCKS5 プロトコルに対応し、Playwright、Selenium、Puppeteer などの主要な自動化ツールと統合可能。動的プロキシトラフィックは使い切るまで期限切れなし、無料テストも利用可能 — <a href="https://www.swiftproxy.net/?ref=auto2api">今すぐ無料テストを開始</a>！</td>
 </tr>
 
 <tr>
@@ -140,18 +140,18 @@
 </tr>
 
 <tr>
-<td width="180"><a href="https://pp.dog/register?aff=SUB2API"><img src="assets/partners/logos/ppdog.png" alt="PP.dog" width="150"></a></td>
-<td><a href="https://pp.dog/register?aff=SUB2API">PP.dog</a> は自社運用の大規模アカウントプールを持つソースレベルの API ゲートウェイで、下流の中継ステーションや高頻度開発者向けに API ゲートウェイリレーサービスを提供し、アカウントプールの自主構築にかかるすべての手間を省きます。✅ ソース直供：自社運用の大規模アカウントプール、中間マージンなし；🧧 コスト最強：総合レート倍率わずか 0.03x、コストは公式の 0.35% のみ；🚀 超高速体験：ファーストトークンレイテンシ 1 秒未満、公式ネイティブ API に匹敵するスムーズさ。<a href="https://www.pp.dog/register?aff=SUB2API">今すぐ PP.dog に接続</a></td>
+<td width="180"><a href="https://pp.dog/register?aff=AUTO2API"><img src="assets/partners/logos/ppdog.png" alt="PP.dog" width="150"></a></td>
+<td><a href="https://pp.dog/register?aff=AUTO2API">PP.dog</a> は自社運用の大規模アカウントプールを持つソースレベルの API ゲートウェイで、下流の中継ステーションや高頻度開発者向けに API ゲートウェイリレーサービスを提供し、アカウントプールの自主構築にかかるすべての手間を省きます。✅ ソース直供：自社運用の大規模アカウントプール、中間マージンなし；🧧 コスト最強：総合レート倍率わずか 0.03x、コストは公式の 0.35% のみ；🚀 超高速体験：ファーストトークンレイテンシ 1 秒未満、公式ネイティブ API に匹敵するスムーズさ。<a href="https://www.pp.dog/register?aff=AUTO2API">今すぐ PP.dog に接続</a></td>
 </tr>
 
 <tr>
-<td width="180"><a href="https://colaproxy.com/?utm_source=sub2api&utm_medium=sub2api&ref=sub2api"><img src="assets/partners/logos/cola-proxy.jpg" alt="ColaProxy" width="150"></a></td>
-<td>ColaProxy は、Web スクレイピング、自動化、マルチアカウント管理向けに構築された高品質な住宅プロキシを提供します。有効期限なしのトラフィックで無料トライアルが利用でき、料金は $0.3/GB から、無制限の同時接続とインテリジェントな IP ローテーションにより、よりスムーズで安定したプロキシ体験を実現します。割引コード COLA10 で 10% オフ、信頼性の高い住宅プロキシでプロジェクトを今すぐスケールしましょう。<a href="https://colaproxy.com/?utm_source=sub2api&utm_medium=sub2api&ref=sub2api">ColaProxy を始める</a></td>
+<td width="180"><a href="https://colaproxy.com/?utm_source=auto2api&utm_medium=auto2api&ref=auto2api"><img src="assets/partners/logos/cola-proxy.jpg" alt="ColaProxy" width="150"></a></td>
+<td>ColaProxy は、Web スクレイピング、自動化、マルチアカウント管理向けに構築された高品質な住宅プロキシを提供します。有効期限なしのトラフィックで無料トライアルが利用でき、料金は $0.3/GB から、無制限の同時接続とインテリジェントな IP ローテーションにより、よりスムーズで安定したプロキシ体験を実現します。割引コード COLA10 で 10% オフ、信頼性の高い住宅プロキシでプロジェクトを今すぐスケールしましょう。<a href="https://colaproxy.com/?utm_source=auto2api&utm_medium=auto2api&ref=auto2api">ColaProxy を始める</a></td>
 </tr>
 
 <tr>
-<td width="180"><a href="https://modelflare.dev/ja/sign-up?utm_source=github&utm_campaign=sub2api"><img src="assets/partners/logos/modelflare.png" alt="Modelflare" width="150"></a></td>
-<td>Modelflare：フルスペック、安定、水増しなし。世界の SOTA モデルを、より低いコストで。米国拠点の Havenbyte LLC が運営する Modelflare は、一般的な互換プロトコルを通じて GPT、Claude、Gemini、Grok などの主要モデルに対応し、さらに 40 以上の画像・動画モデルも利用できます。注目はキャッシュ補償です。対象の OpenAI グループ（価格優先・安定・プレミアム）は、1 日のキャッシュヒット率をそれぞれ 65%、75%、85% で保証します。対象リクエストがこの水準に達しない場合、Modelflare が差額を返金し、精算後に利用状況ダッシュボードで確認できます。特別オファー：US$20 を 1 回チャージすると、価格倍率 0.015 倍の GPT 割引グループが解放されます。US$50 を 1 回チャージすると、価格倍率 0.03 倍の Claude 割引グループが解放されます。<a href="https://modelflare.dev/ja/sign-up?utm_source=github&utm_campaign=sub2api">こちらの専用リンク</a>から登録して始めましょう。</td>
+<td width="180"><a href="https://modelflare.dev/ja/sign-up?utm_source=github&utm_campaign=auto2api"><img src="assets/partners/logos/modelflare.png" alt="Modelflare" width="150"></a></td>
+<td>Modelflare：フルスペック、安定、水増しなし。世界の SOTA モデルを、より低いコストで。米国拠点の Havenbyte LLC が運営する Modelflare は、一般的な互換プロトコルを通じて GPT、Claude、Gemini、Grok などの主要モデルに対応し、さらに 40 以上の画像・動画モデルも利用できます。注目はキャッシュ補償です。対象の OpenAI グループ（価格優先・安定・プレミアム）は、1 日のキャッシュヒット率をそれぞれ 65%、75%、85% で保証します。対象リクエストがこの水準に達しない場合、Modelflare が差額を返金し、精算後に利用状況ダッシュボードで確認できます。特別オファー：US$20 を 1 回チャージすると、価格倍率 0.015 倍の GPT 割引グループが解放されます。US$50 を 1 回チャージすると、価格倍率 0.03 倍の Claude 割引グループが解放されます。<a href="https://modelflare.dev/ja/sign-up?utm_source=github&utm_campaign=auto2api">こちらの専用リンク</a>から登録して始めましょう。</td>
 </tr>
 
 <tr>
@@ -165,18 +165,18 @@
 </tr>
 
 <tr>
-<td width="180"><a href="https://niuproxy.com/?utm_source=sub2api&utm_medium=sub2api&ref=sub2api"><img src="assets/partners/logos/NiuProxy.jpg" alt="NiuProxy" width="150"></a></td>
-<td><a href="https://niuproxy.com/?utm_source=sub2api&utm_medium=sub2api&ref=sub2api">NiuProxy</a> は、Web スクレイピング、AI エージェント、自動化、データ収集向けに、手頃な価格のグローバルプロキシソリューションを提供します。住宅プロキシは $0.35/GB から、190 以上の国と地域をカバーし、柔軟なプランと HTTP(S)/SOCKS5 に対応しています。<br>🎁 コード PAY2 でチャージが 10% オフ！</td>
+<td width="180"><a href="https://niuproxy.com/?utm_source=auto2api&utm_medium=auto2api&ref=auto2api"><img src="assets/partners/logos/NiuProxy.jpg" alt="NiuProxy" width="150"></a></td>
+<td><a href="https://niuproxy.com/?utm_source=auto2api&utm_medium=auto2api&ref=auto2api">NiuProxy</a> は、Web スクレイピング、AI エージェント、自動化、データ収集向けに、手頃な価格のグローバルプロキシソリューションを提供します。住宅プロキシは $0.35/GB から、190 以上の国と地域をカバーし、柔軟なプランと HTTP(S)/SOCKS5 に対応しています。<br>🎁 コード PAY2 でチャージが 10% オフ！</td>
 </tr>
 
 <tr>
-<td width="180"><a href="https://soleapi.com/r/sub2api"><img src="assets/partners/logos/soleapi.png" alt="SoleAPI" width="150"></a></td>
-<td><a href="https://soleapi.com/r/sub2api">SoleAPI</a> 様、本プロジェクトへのご支援ありがとうございます！SoleAPI は開発者と企業向けの AI モデルゲートウェイです。1 つの API キーで Claude、GPT、Gemini をはじめとする 30 以上の主要モデルを利用できます。OpenAI と Anthropic のプロトコルにネイティブ対応しているため、Claude Code、Codex、Cursor や既存の SDK も Base URL を変更するだけで動作します。リクエストはレイテンシと上流の稼働状況に応じてリアルタイムにルーティングされ、ミリ秒単位でバックアップチャネルへ自動フェイルオーバーします。サービス可用性は 99.99%、24 時間 365 日の技術サポートも提供しています。すべての呼び出しは 1 つの請求書にまとめられ、リクエストごとの token 数と費用の内訳をいつでも確認できます。本プロジェクトの<a href="https://soleapi.com/r/sub2api">紹介リンク</a>から登録すると無料トライアルクレジットを受け取れ、友人を招待してチャージしてもらうと継続的にキャッシュバックを獲得できます！</td>
+<td width="180"><a href="https://soleapi.com/r/auto2api"><img src="assets/partners/logos/soleapi.png" alt="SoleAPI" width="150"></a></td>
+<td><a href="https://soleapi.com/r/auto2api">SoleAPI</a> 様、本プロジェクトへのご支援ありがとうございます！SoleAPI は開発者と企業向けの AI モデルゲートウェイです。1 つの API キーで Claude、GPT、Gemini をはじめとする 30 以上の主要モデルを利用できます。OpenAI と Anthropic のプロトコルにネイティブ対応しているため、Claude Code、Codex、Cursor や既存の SDK も Base URL を変更するだけで動作します。リクエストはレイテンシと上流の稼働状況に応じてリアルタイムにルーティングされ、ミリ秒単位でバックアップチャネルへ自動フェイルオーバーします。サービス可用性は 99.99%、24 時間 365 日の技術サポートも提供しています。すべての呼び出しは 1 つの請求書にまとめられ、リクエストごとの token 数と費用の内訳をいつでも確認できます。本プロジェクトの<a href="https://soleapi.com/r/auto2api">紹介リンク</a>から登録すると無料トライアルクレジットを受け取れ、友人を招待してチャージしてもらうと継続的にキャッシュバックを獲得できます！</td>
 </tr>
 
 <tr>
-<td width="180"><a href="https://massivetokens.com/signup?ref=SUB2API"><img src="assets/partners/logos/massivetokens.jpg" alt="Massive Tokens" width="150"></a></td>
-<td><a href="https://massivetokens.com/signup?ref=SUB2API">Massive Tokens</a> は、企業や大量に利用する開発者向けに、Claude API を token 単位の卸売価格で提供しています。標準の Anthropic Messages API を提供しているため、Claude Code、Sub2API、LiteLLM、One API とコードを変更せずに連携できます。招待コード SUB2API で登録すると、すべての呼び出しが 5% オフになります。登録後は Telegram グループ @massivetokens (<a href="https://t.me/massivetokens">https://t.me/massivetokens</a>) に参加し、管理者に $10 分のクレジットをリクエストしてください。</td>
+<td width="180"><a href="https://massivetokens.com/signup?ref=AUTO2API"><img src="assets/partners/logos/massivetokens.jpg" alt="Massive Tokens" width="150"></a></td>
+<td><a href="https://massivetokens.com/signup?ref=AUTO2API">Massive Tokens</a> は、企業や大量に利用する開発者向けに、Claude API を token 単位の卸売価格で提供しています。標準の Anthropic Messages API を提供しているため、Claude Code、Auto2API、LiteLLM、One API とコードを変更せずに連携できます。招待コード AUTO2API で登録すると、すべての呼び出しが 5% オフになります。登録後は Telegram グループ @massivetokens (<a href="https://t.me/massivetokens">https://t.me/massivetokens</a>) に参加し、管理者に $10 分のクレジットをリクエストしてください。</td>
 </tr>
 
 </table>
@@ -185,7 +185,7 @@
 
 ## 概要
 
-Sub2API は、AI 製品のサブスクリプションから API クォータを配分・管理するために設計された AI API ゲートウェイプラットフォームです。ユーザーはプラットフォームが生成した API キーを通じて上流の AI サービスにアクセスでき、プラットフォームは認証、課金、負荷分散、リクエスト転送を処理します。
+Auto2API は、AI 製品のサブスクリプションから API クォータを配分・管理するために設計された AI API ゲートウェイプラットフォームです。ユーザーはプラットフォームが生成した API キーを通じて上流の AI サービスにアクセスでき、プラットフォームは認証、課金、負荷分散、リクエスト転送を処理します。
 
 ## 機能
 
@@ -201,12 +201,12 @@ Sub2API は、AI 製品のサブスクリプションから API クォータを�
 
 ## エコシステム
 
-Sub2API を拡張・統合するコミュニティプロジェクト:
+Auto2API を拡張・統合するコミュニティプロジェクト:
 
 | プロジェクト | 説明 | 機能 |
 |---------|-------------|----------|
-| ~~[Sub2ApiPay](https://github.com/touwaeriol/sub2apipay)~~ | ~~セルフサービス決済システム~~ | **内蔵済み** — 決済機能は Sub2API に統合されました。別途デプロイは不要です。[決済設定ガイド](docs/PAYMENT.md)をご参照ください |
-| [sub2api-mobile](https://github.com/ckken/sub2api-mobile) | モバイル管理コンソール | ユーザー管理、アカウント管理、監視ダッシュボード、マルチバックエンド切り替えが可能なクロスプラットフォームアプリ（iOS/Android/Web）。Expo + React Native で構築 |
+| ~~[Sub2ApiPay](https://github.com/touwaeriol/auto2apipay)~~ | ~~セルフサービス決済システム~~ | **内蔵済み** — 決済機能は Auto2API に統合されました。別途デプロイは不要です。[決済設定ガイド](docs/PAYMENT.md)をご参照ください |
+| [auto2api-mobile](https://github.com/ckken/auto2api-mobile) | モバイル管理コンソール | ユーザー管理、アカウント管理、監視ダッシュボード、マルチバックエンド切り替えが可能なクロスプラットフォームアプリ（iOS/Android/Web）。Expo + React Native で構築 |
 
 ## 技術スタック
 
@@ -221,7 +221,7 @@ Sub2API を拡張・統合するコミュニティプロジェクト:
 
 ## Nginx リバースプロキシに関する注意
 
-Sub2API（または CRS）を Nginx でリバースプロキシし、Codex CLI と組み合わせて使用する場合、Nginx の `http` ブロックに以下の設定を追加してください:
+Auto2API（または CRS）を Nginx でリバースプロキシし、Codex CLI と組み合わせて使用する場合、Nginx の `http` ブロックに以下の設定を追加してください:
 
 ```nginx
 underscores_in_headers on;
@@ -247,13 +247,13 @@ GitHub Releases からビルド済みバイナリをダウンロードするワ�
 #### インストール手順
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/Wei-Shaw/auto2api/main/deploy/install.sh | sudo bash
 ```
 
 スクリプトは以下を実行します:
 1. システムアーキテクチャの検出
 2. 最新リリースのダウンロード
-3. バイナリを `/opt/sub2api` にインストール
+3. バイナリを `/opt/auto2api` にインストール
 4. systemd サービスの作成
 5. システムユーザーと権限の設定
 
@@ -261,10 +261,10 @@ curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install
 
 ```bash
 # 1. サービスを起動
-sudo systemctl start sub2api
+sudo systemctl start auto2api
 
 # 2. 起動時の自動起動を有効化
-sudo systemctl enable sub2api
+sudo systemctl enable auto2api
 
 # 3. ブラウザでセットアップウィザードを開く
 # http://YOUR_SERVER_IP:8080
@@ -288,16 +288,16 @@ Web インターフェースでは以下が可能です:
 
 ```bash
 # ステータスを確認
-sudo systemctl status sub2api
+sudo systemctl status auto2api
 
 # ログを表示
-sudo journalctl -u sub2api -f
+sudo journalctl -u auto2api -f
 
 # サービスを再起動
-sudo systemctl restart sub2api
+sudo systemctl restart auto2api
 
 # アンインストール
-curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install.sh | sudo bash -s -- uninstall -y
+curl -sSL https://raw.githubusercontent.com/Wei-Shaw/auto2api/main/deploy/install.sh | sudo bash -s -- uninstall -y
 ```
 
 ---
@@ -317,16 +317,16 @@ PostgreSQL と Redis のコンテナを含む Docker Compose でデプロイし�
 
 ```bash
 # デプロイ用ディレクトリを作成
-mkdir -p sub2api-deploy && cd sub2api-deploy
+mkdir -p auto2api-deploy && cd auto2api-deploy
 
 # デプロイ準備スクリプトをダウンロードして実行
-curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/docker-deploy.sh | bash
+curl -sSL https://raw.githubusercontent.com/Wei-Shaw/auto2api/main/deploy/docker-deploy.sh | bash
 
 # サービスを起動
 docker compose up -d
 
 # ログを表示
-docker compose logs -f sub2api
+docker compose logs -f auto2api
 ```
 
 **スクリプトの動作内容:**
@@ -342,8 +342,8 @@ docker compose logs -f sub2api
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/Wei-Shaw/sub2api.git
-cd sub2api/deploy
+git clone https://github.com/Wei-Shaw/auto2api.git
+cd auto2api/deploy
 
 # 2. 環境設定ファイルをコピー
 cp .env.example .env
@@ -402,7 +402,7 @@ docker compose up -d
 docker compose -f docker-compose.local.yml ps
 
 # 7. ログを表示
-docker compose -f docker-compose.local.yml logs -f sub2api
+docker compose -f docker-compose.local.yml logs -f auto2api
 ```
 
 #### デプロイバージョン
@@ -420,7 +420,7 @@ docker compose -f docker-compose.local.yml logs -f sub2api
 
 管理者メールアドレス（ログインユーザー名）またはパスワードが自動生成された場合は、ログで確認できます:
 ```bash
-docker compose -f docker-compose.local.yml logs sub2api | grep "Generated admin"
+docker compose -f docker-compose.local.yml logs auto2api | grep "Generated admin"
 ```
 
 #### アップグレード
@@ -439,14 +439,14 @@ docker compose -f docker-compose.local.yml up -d
 # 移行元サーバーにて
 docker compose -f docker-compose.local.yml down
 cd ..
-tar czf sub2api-complete.tar.gz sub2api-deploy/
+tar czf auto2api-complete.tar.gz auto2api-deploy/
 
 # 新しいサーバーに転送
-scp sub2api-complete.tar.gz user@new-server:/path/
+scp auto2api-complete.tar.gz user@new-server:/path/
 
 # 移行先サーバーにて
-tar xzf sub2api-complete.tar.gz
-cd sub2api-deploy/
+tar xzf auto2api-complete.tar.gz
+cd auto2api-deploy/
 docker compose -f docker-compose.local.yml up -d
 ```
 
@@ -471,11 +471,11 @@ rm -rf data/ postgres_data/ redis_data/
 
 ### 方法3: Apple container（macOS）
 
-Apple シリコン搭載 Mac と macOS 26 では、Apple `container` 1.1.0 以降を使用して Sub2API、PostgreSQL、Redis の完全なスタックを実行できます:
+Apple シリコン搭載 Mac と macOS 26 では、Apple `container` 1.1.0 以降を使用して Auto2API、PostgreSQL、Redis の完全なスタックを実行できます:
 
 ```bash
-git clone https://github.com/Wei-Shaw/sub2api.git
-cd sub2api/deploy
+git clone https://github.com/Wei-Shaw/auto2api.git
+cd auto2api/deploy
 ./apple-container.sh init
 ./apple-container.sh up
 ./apple-container.sh status
@@ -500,8 +500,8 @@ cd sub2api/deploy
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/Wei-Shaw/sub2api.git
-cd sub2api
+git clone https://github.com/Wei-Shaw/auto2api.git
+cd auto2api
 
 # 2. pnpm をインストール（未インストールの場合）
 npm install -g pnpm
@@ -515,7 +515,7 @@ pnpm run build
 # 4. フロントエンドを組み込んだバックエンドをビルド
 cd ../backend
 VERSION="$(./scripts/resolve-version.sh)"
-go build -tags embed -ldflags="-X main.Version=${VERSION}" -o sub2api ./cmd/server
+go build -tags embed -ldflags="-X main.Version=${VERSION}" -o auto2api ./cmd/server
 
 # 5. 設定ファイルを作成
 cp ../deploy/config.example.yaml ./config.yaml
@@ -539,7 +539,7 @@ database:
   port: 5432
   user: "postgres"
   password: "your_password"
-  dbname: "sub2api"
+  dbname: "auto2api"
 
 redis:
   host: "localhost"
@@ -567,7 +567,7 @@ default:
 - `security.response_headers.enabled` - 設定可能なレスポンスヘッダーフィルタリングを有効化（無効時はデフォルトの許可リストを使用）
 - `security.csp` - Content-Security-Policy ヘッダーの制御
 - `billing.circuit_breaker` - 課金エラー時にフェイルクローズ
-- `security.trust_forwarded_ip_for_api_key_acl` - 従来の生転送ヘッダーによる上書きを制御（アップグレード互換性のため既定で有効）。無効にすると `server.trusted_proxies` を厳格に使用し、Sub2API に直接接続するプロキシの正確な CIDR のみを指定
+- `security.trust_forwarded_ip_for_api_key_acl` - 従来の生転送ヘッダーによる上書きを制御（アップグレード互換性のため既定で有効）。無効にすると `server.trusted_proxies` を厳格に使用し、Auto2API に直接接続するプロキシの正確な CIDR のみを指定
 - `security.forwarded_client_ip_headers` - サードパーティ CDN のクライアント IP ヘッダーを最大 16 個指定。従来モードが有効な場合のみ、設定順で組み込みヘッダーより先に評価
 - `turnstile.required` - リリースモードでの Turnstile 必須化
 
@@ -627,20 +627,20 @@ URL バリデーションまたはレスポンスヘッダーフィルタリン�
 
 **管理者アカウントを作成する 2 つの方法:**
 
-1. **推奨 — ウィザードに `config.yaml` を自動生成させる:** 上記ステップ 5 をスキップします（`cp` を実行しない）。`./sub2api` を直接起動し、`http://localhost:8080` にアクセスすると、セットアップウィザードがデータベース・Redis・管理者アカウントの設定を案内し、`config.yaml` を自動生成します。
+1. **推奨 — ウィザードに `config.yaml` を自動生成させる:** 上記ステップ 5 をスキップします（`cp` を実行しない）。`./auto2api` を直接起動し、`http://localhost:8080` にアクセスすると、セットアップウィザードがデータベース・Redis・管理者アカウントの設定を案内し、`config.yaml` を自動生成します。
 
 2. **すでに `config.yaml` を作成してしまった場合:** 初回起動前に一時的に退避してウィザードを発生させ、完了後に戻します:
    ```bash
    mv config.yaml config.yaml.bak
-   ./sub2api        # ウィザードが http://localhost:8080 で起動し、新しい config.yaml を生成します
+   ./auto2api        # ウィザードが http://localhost:8080 で起動し、新しい config.yaml を生成します
    # ウィザード完了後、Ctrl+C でサーバーを停止し、設定を復元します:
    mv config.yaml.bak config.yaml
-   ./sub2api        # 通常モードで再起動し、作成した管理者でログインします
+   ./auto2api        # 通常モードで再起動し、作成した管理者でログインします
    ```
 
 ```bash
 # 6. アプリケーションを実行
-./sub2api
+./auto2api
 ```
 
 #### 開発モード
@@ -679,7 +679,7 @@ go generate ./cmd/server
 
 ## Antigravity サポート
 
-Sub2API は [Antigravity](https://antigravity.so/) アカウントをサポートしています。認証後、Claude および Gemini モデル用の専用エンドポイントが利用可能になります。
+Auto2API は [Antigravity](https://antigravity.so/) アカウントをサポートしています。認証後、Claude および Gemini モデル用の専用エンドポイントが利用可能になります。
 
 ### 専用エンドポイント
 
@@ -706,7 +706,7 @@ Antigravity アカウントはオプションの**ハイブリッドスケジュ
 ## プロジェクト構成
 
 ```
-sub2api/
+auto2api/
 ├── backend/                  # Go バックエンドサービス
 │   ├── cmd/server/           # アプリケーションエントリ
 │   ├── internal/             # 内部モジュール
@@ -733,11 +733,11 @@ sub2api/
 
 ## スター履歴
 
-<a href="https://star-history.dera.page/#Wei-Shaw/sub2api&Date">
+<a href="https://star-history.dera.page/#Wei-Shaw/auto2api&Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Wei-Shaw/sub2api&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Wei-Shaw/sub2api&type=Date" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=Wei-Shaw/sub2api&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=Wei-Shaw/auto2api&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=Wei-Shaw/auto2api&type=Date" />
+   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=Wei-Shaw/auto2api&type=Date" />
  </picture>
 </a>
 

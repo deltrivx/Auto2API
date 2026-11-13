@@ -11,11 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/account"
-	"github.com/Wei-Shaw/sub2api/ent/group"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
-	"github.com/Wei-Shaw/sub2api/ent/proxy"
-	"github.com/Wei-Shaw/sub2api/ent/usagelog"
+	"github.com/DeltrivX/Auto2API/ent/account"
+	"github.com/DeltrivX/Auto2API/ent/group"
+	"github.com/DeltrivX/Auto2API/ent/predicate"
+	"github.com/DeltrivX/Auto2API/ent/proxy"
+	"github.com/DeltrivX/Auto2API/ent/usagelog"
 )
 
 // AccountUpdate is the builder for updating Account entities.

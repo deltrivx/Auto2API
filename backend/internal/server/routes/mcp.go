@@ -3,11 +3,11 @@ package routes
 import (
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/handler"
-	"github.com/Wei-Shaw/sub2api/internal/managementmcp"
-	ratelimit "github.com/Wei-Shaw/sub2api/internal/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/handler"
+	"github.com/DeltrivX/Auto2API/internal/managementmcp"
+	ratelimit "github.com/DeltrivX/Auto2API/internal/middleware"
+	"github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 )

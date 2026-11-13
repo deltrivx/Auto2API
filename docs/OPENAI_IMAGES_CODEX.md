@@ -12,7 +12,7 @@ capability signal; it does not authenticate a request or grant image permissions
 
 ## Timeout budget
 
-A proxy in front of Sub2API must allow the entire image operation, including queue
+A proxy in front of Auto2API must allow the entire image operation, including queue
 waits, account selection and upstream processing, before the first response byte.
 The proxy's upstream response-header deadline and idle-read timeout must exceed
 that budget. A larger HTTP client total timeout alone does not override a short

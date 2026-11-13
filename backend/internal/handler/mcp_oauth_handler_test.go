@@ -14,9 +14,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	"github.com/DeltrivX/Auto2API/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
@@ -134,7 +134,7 @@ func TestMCPOAuthHandlerResourceURLTrustedConfiguration(t *testing.T) {
 		{"stored frontend stays disabled", "", "", "https://stored.example.com", ""},
 		{"insecure public URL", "http://api.example.com/api/v1/mcp", "", "", ""},
 		{"wrong resource path", "https://api.example.com/mcp", "", "", ""},
-		{"sub-path deployment", "https://example.com/sub2api/api/v1/mcp", "", "", ""},
+		{"sub-path deployment", "https://example.com/auto2api/api/v1/mcp", "", "", ""},
 		{"resource userinfo", "https://user:password@api.example.com/api/v1/mcp", "", "", ""},
 		{"resource query", handlerMCPResource + "?q=1", "", "", ""},
 		{"resource fragment", handlerMCPResource + "#x", "", "", ""},

@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/gemini"
+	"github.com/DeltrivX/Auto2API/internal/pkg/gemini"
 	"github.com/google/uuid"
 )
 

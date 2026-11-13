@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
+	pkghttputil "github.com/DeltrivX/Auto2API/internal/pkg/httputil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

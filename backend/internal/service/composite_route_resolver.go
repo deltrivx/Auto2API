@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/domain"
+	"github.com/DeltrivX/Auto2API/internal/domain"
 )
 
 const (

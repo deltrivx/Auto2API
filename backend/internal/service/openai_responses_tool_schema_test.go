@@ -589,7 +589,7 @@ func buildToolSchemaNullTypeBody(t *testing.T, hits int) []byte {
 // 构造请求可以塞进百万级命中，会被放大成 TB 级 memcpy。这里用分配次数锁死该行为：
 // 命中数放大 500 倍，分配次数不得随之增长。
 func TestSanitizeOpenAIResponsesToolParameterTypes_RewriteCountIndependentOfHits(t *testing.T) {
-	const isolatedAllocEnv = "SUB2API_TOOL_SCHEMA_ALLOC_ISOLATED"
+	const isolatedAllocEnv = "AUTO2API_TOOL_SCHEMA_ALLOC_ISOLATED"
 	if os.Getenv(isolatedAllocEnv) != "1" {
 		executable, err := os.Executable()
 		require.NoError(t, err)

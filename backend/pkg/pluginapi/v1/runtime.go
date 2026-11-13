@@ -26,11 +26,11 @@ const (
 	TransportPluginName = "oauth_transport"
 )
 
-// HandshakeConfig 防止普通可执行文件被误当成 Sub2API 插件启动。
+// HandshakeConfig 防止普通可执行文件被误当成 Auto2API 插件启动。
 var HandshakeConfig = hcplugin.HandshakeConfig{
 	ProtocolVersion:  ProtocolVersion,
-	MagicCookieKey:   "SUB2API_PLUGIN_MAGIC_COOKIE",
-	MagicCookieValue: "sub2api-plugin-v1",
+	MagicCookieKey:   "AUTO2API_PLUGIN_MAGIC_COOKIE",
+	MagicCookieValue: "auto2api-plugin-v1",
 }
 
 // HostBrokerReceiver 由需要反向调用宿主服务的插件传输实现选择性实现。

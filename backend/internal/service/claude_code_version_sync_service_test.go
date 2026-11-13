@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/claude"
+	"github.com/DeltrivX/Auto2API/internal/pkg/claude"
 	"github.com/stretchr/testify/require"
 )
 

@@ -28,7 +28,7 @@ def main():
     subprocess.run(["git", "cat-file", "-e", revision + "^{commit}"], cwd=repo, check=True)
     archive = subprocess.check_output(["git", "archive", revision, "backend"], cwd=repo)
 
-    with tempfile.TemporaryDirectory(prefix="sub2api-routing-main-") as scratch:
+    with tempfile.TemporaryDirectory(prefix="auto2api-routing-main-") as scratch:
         root = Path(scratch)
         with tarfile.open(fileobj=io.BytesIO(archive)) as files:
             files.extractall(root, filter="data")

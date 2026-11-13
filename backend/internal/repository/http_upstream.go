@@ -26,15 +26,15 @@ import (
 	"golang.org/x/mod/semver"
 	"golang.org/x/net/http2"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyurl"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyutil"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/servertiming"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
-	"github.com/Wei-Shaw/sub2api/internal/service"
-	"github.com/Wei-Shaw/sub2api/internal/util/urlvalidator"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	pkghttputil "github.com/DeltrivX/Auto2API/internal/pkg/httputil"
+	"github.com/DeltrivX/Auto2API/internal/pkg/proxyurl"
+	"github.com/DeltrivX/Auto2API/internal/pkg/proxyutil"
+	"github.com/DeltrivX/Auto2API/internal/pkg/servertiming"
+	"github.com/DeltrivX/Auto2API/internal/pkg/tlsfingerprint"
+	"github.com/DeltrivX/Auto2API/internal/pkg/xai"
+	"github.com/DeltrivX/Auto2API/internal/service"
+	"github.com/DeltrivX/Auto2API/internal/util/urlvalidator"
 )
 
 // 默认配置常量

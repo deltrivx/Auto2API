@@ -3,7 +3,7 @@ package service
 import (
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/domain"
+	"github.com/DeltrivX/Auto2API/internal/domain"
 )
 
 // MonitorBodyOverrideMode 自定义请求体处理模式。

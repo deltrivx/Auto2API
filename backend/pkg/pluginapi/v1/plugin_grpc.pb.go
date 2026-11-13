@@ -19,13 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TransportPlugin_GetInfo_FullMethodName          = "/sub2api.plugin.v1.TransportPlugin/GetInfo"
-	TransportPlugin_Health_FullMethodName           = "/sub2api.plugin.v1.TransportPlugin/Health"
-	TransportPlugin_ValidateConfig_FullMethodName   = "/sub2api.plugin.v1.TransportPlugin/ValidateConfig"
-	TransportPlugin_ApplyConfig_FullMethodName      = "/sub2api.plugin.v1.TransportPlugin/ApplyConfig"
-	TransportPlugin_TestConfig_FullMethodName       = "/sub2api.plugin.v1.TransportPlugin/TestConfig"
-	TransportPlugin_Forward_FullMethodName          = "/sub2api.plugin.v1.TransportPlugin/Forward"
-	TransportPlugin_InitHostServices_FullMethodName = "/sub2api.plugin.v1.TransportPlugin/InitHostServices"
+	TransportPlugin_GetInfo_FullMethodName          = "/auto2api.plugin.v1.TransportPlugin/GetInfo"
+	TransportPlugin_Health_FullMethodName           = "/auto2api.plugin.v1.TransportPlugin/Health"
+	TransportPlugin_ValidateConfig_FullMethodName   = "/auto2api.plugin.v1.TransportPlugin/ValidateConfig"
+	TransportPlugin_ApplyConfig_FullMethodName      = "/auto2api.plugin.v1.TransportPlugin/ApplyConfig"
+	TransportPlugin_TestConfig_FullMethodName       = "/auto2api.plugin.v1.TransportPlugin/TestConfig"
+	TransportPlugin_Forward_FullMethodName          = "/auto2api.plugin.v1.TransportPlugin/Forward"
+	TransportPlugin_InitHostServices_FullMethodName = "/auto2api.plugin.v1.TransportPlugin/InitHostServices"
 )
 
 // TransportPluginClient is the client API for TransportPlugin service.
@@ -312,7 +312,7 @@ func _TransportPlugin_InitHostServices_Handler(srv interface{}, ctx context.Cont
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TransportPlugin_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "sub2api.plugin.v1.TransportPlugin",
+	ServiceName: "auto2api.plugin.v1.TransportPlugin",
 	HandlerType: (*TransportPluginServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -352,12 +352,12 @@ var TransportPlugin_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	HostService_KVGet_FullMethodName                   = "/sub2api.plugin.v1.HostService/KVGet"
-	HostService_KVSet_FullMethodName                   = "/sub2api.plugin.v1.HostService/KVSet"
-	HostService_KVDelete_FullMethodName                = "/sub2api.plugin.v1.HostService/KVDelete"
-	HostService_KVList_FullMethodName                  = "/sub2api.plugin.v1.HostService/KVList"
-	HostService_ListAccounts_FullMethodName            = "/sub2api.plugin.v1.HostService/ListAccounts"
-	HostService_ResolveOutboundIdentity_FullMethodName = "/sub2api.plugin.v1.HostService/ResolveOutboundIdentity"
+	HostService_KVGet_FullMethodName                   = "/auto2api.plugin.v1.HostService/KVGet"
+	HostService_KVSet_FullMethodName                   = "/auto2api.plugin.v1.HostService/KVSet"
+	HostService_KVDelete_FullMethodName                = "/auto2api.plugin.v1.HostService/KVDelete"
+	HostService_KVList_FullMethodName                  = "/auto2api.plugin.v1.HostService/KVList"
+	HostService_ListAccounts_FullMethodName            = "/auto2api.plugin.v1.HostService/ListAccounts"
+	HostService_ResolveOutboundIdentity_FullMethodName = "/auto2api.plugin.v1.HostService/ResolveOutboundIdentity"
 )
 
 // HostServiceClient is the client API for HostService service.
@@ -635,7 +635,7 @@ func _HostService_ResolveOutboundIdentity_Handler(srv interface{}, ctx context.C
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HostService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "sub2api.plugin.v1.HostService",
+	ServiceName: "auto2api.plugin.v1.HostService",
 	HandlerType: (*HostServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

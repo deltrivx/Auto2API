@@ -1,8 +1,8 @@
 package schema
 
 import (
-	"github.com/Wei-Shaw/sub2api/ent/schema/mixins"
-	"github.com/Wei-Shaw/sub2api/internal/domain"
+	"github.com/DeltrivX/Auto2API/ent/schema/mixins"
+	"github.com/DeltrivX/Auto2API/internal/domain"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"

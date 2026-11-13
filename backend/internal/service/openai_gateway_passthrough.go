@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/apicompat"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/util/responseheaders"
+	"github.com/DeltrivX/Auto2API/internal/pkg/apicompat"
+	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
+	"github.com/DeltrivX/Auto2API/internal/util/responseheaders"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -1803,7 +1803,7 @@ func (s *OpenAIGatewayService) newOpenAIStreamFailoverErrorWithModel(
 
 // nonStreamingTerminalFailureFailover applies the streaming path's terminal-event
 // verdict to a stream=false request whose upstream answered with SSE anyway
-// (other sub2api instances and several OpenAI-compatible upstreams do this).
+// (other auto2api instances and several OpenAI-compatible upstreams do this).
 //
 // Both handleSSEToJSON and handlePassthroughSSEToJSON collapsed every terminal
 // `response.failed` / `error` frame into writeOpenAINonStreamingProtocolError, a
@@ -2334,7 +2334,7 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 	}
 
 	// Detect SSE responses from upstream and convert to JSON.
-	// Some upstreams (e.g. other sub2api instances) may return SSE even when
+	// Some upstreams (e.g. other auto2api instances) may return SSE even when
 	// stream=false was requested. Without this conversion the client would
 	// receive raw SSE text or a terminal event with empty output.
 	// The ChatGPT OAuth upstream may omit Content-Type while still sending SSE,

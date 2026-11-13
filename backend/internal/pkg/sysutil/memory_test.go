@@ -27,10 +27,10 @@ func TestCgroupMemoryLimit(t *testing.T) {
 	t.Run("v2 tightest limit along the path", func(t *testing.T) {
 		root := t.TempDir()
 		self := filepath.Join(t.TempDir(), "cgroup")
-		writeFile(t, self, "0::/system.slice/sub2api.service\n")
+		writeFile(t, self, "0::/system.slice/auto2api.service\n")
 		writeFile(t, filepath.Join(root, "memory.max"), "max\n")
 		writeFile(t, filepath.Join(root, "system.slice", "memory.max"), "8589934592\n")
-		writeFile(t, filepath.Join(root, "system.slice", "sub2api.service", "memory.max"), "max\n")
+		writeFile(t, filepath.Join(root, "system.slice", "auto2api.service", "memory.max"), "max\n")
 		require.Equal(t, uint64(8<<30), cgroupMemoryLimit(root, self))
 	})
 
@@ -55,10 +55,10 @@ func TestCgroupMemoryLimit(t *testing.T) {
 	t.Run("v1 tightest limit along the memory controller path", func(t *testing.T) {
 		root := t.TempDir()
 		self := filepath.Join(t.TempDir(), "cgroup")
-		writeFile(t, self, "12:pids:/system.slice/sub2api.service\n9:memory:/system.slice/sub2api.service\n1:name=systemd:/system.slice/sub2api.service\n0::/system.slice/sub2api.service\n")
+		writeFile(t, self, "12:pids:/system.slice/auto2api.service\n9:memory:/system.slice/auto2api.service\n1:name=systemd:/system.slice/auto2api.service\n0::/system.slice/auto2api.service\n")
 		writeFile(t, filepath.Join(root, "memory", "memory.limit_in_bytes"), "9223372036854771712\n")
 		writeFile(t, filepath.Join(root, "memory", "system.slice", "memory.limit_in_bytes"), "9223372036854771712\n")
-		writeFile(t, filepath.Join(root, "memory", "system.slice", "sub2api.service", "memory.limit_in_bytes"), "4294967296\n")
+		writeFile(t, filepath.Join(root, "memory", "system.slice", "auto2api.service", "memory.limit_in_bytes"), "4294967296\n")
 		require.Equal(t, uint64(4<<30), cgroupMemoryLimit(root, self))
 	})
 

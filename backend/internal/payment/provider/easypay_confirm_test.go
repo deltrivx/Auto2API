@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/payment"
+	"github.com/DeltrivX/Auto2API/internal/payment"
 )
 
 func newConfirmTestEasyPay(t *testing.T, body string, status int) (*EasyPay, *atomic.Int32) {

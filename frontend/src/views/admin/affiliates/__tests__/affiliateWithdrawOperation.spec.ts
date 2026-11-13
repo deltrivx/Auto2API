@@ -36,7 +36,7 @@ describe('affiliate offline withdrawal operation identity', () => {
   })
 
   it('resumes a key stored by an earlier page and clears it after completion', () => {
-    const scope = `sub2api:admin:affiliate-withdraw:${adminId}:42:12.5`
+    const scope = `auto2api:admin:affiliate-withdraw:${adminId}:42:12.5`
     sessionStorage.setItem(scope, 'saved-withdraw-key')
 
     const resumed = prepareAffiliateWithdrawOperation(42, 12.5)

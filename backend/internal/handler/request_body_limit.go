@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
-	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
+	"github.com/DeltrivX/Auto2API/internal/config"
+	pkghttputil "github.com/DeltrivX/Auto2API/internal/pkg/httputil"
+	middleware2 "github.com/DeltrivX/Auto2API/internal/server/middleware"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )

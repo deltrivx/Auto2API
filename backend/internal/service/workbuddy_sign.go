@@ -151,6 +151,17 @@ func workBuddyChatHeaders(h http.Header, site *workBuddySite) {
 	h.Set("X-Client-Version", site.App)
 	h.Set("X-CodeBuddy-Request", "1")
 	h.Set("Content-Type", "application/json;charset=UTF-8")
+	// Origin / Referer 用带 scheme 的完整源，与 X-Domain 的纯域名分工不混。
+	//
+	// 上游 11128 的原文是「This call failed channel verification, possibly
+	// because it was not sent from an official client」——它校验的是「像不像
+	// 官方桌面端发出的请求」。AutoBuddy 的 _desktop_headers 全程带着这两个头，
+	// 缺失时同样会被判为非官方客户端。任务、图片、事件路径都已设置，
+	// 只有聊天转发这条主路径漏了，这正是 DSH/Codex/Claude 客户端反复 400 的原因。
+	if endpoint := strings.TrimRight(strings.TrimSpace(site.Endpoint), "/"); endpoint != "" {
+		h.Set("Origin", endpoint)
+		h.Set("Referer", endpoint+"/")
+	}
 }
 
 // workBuddyApplyEnterpriseHeaders 写入企业身份头。

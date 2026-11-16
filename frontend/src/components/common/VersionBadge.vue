@@ -1105,8 +1105,8 @@ onBeforeUnmount(() => {
   left: 0;
   top: 100%;
   margin-top: 0.5rem;
-  width: 24rem;
-  height: 26rem;
+  width: 16rem;
+  height: 24rem;
   max-height: 80vh;
 }
 

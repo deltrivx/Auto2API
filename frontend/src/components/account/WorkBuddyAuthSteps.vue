@@ -157,10 +157,11 @@ const channelOptions = computed<
   }
 ])
 
-// 已生成链接 / 正在轮询 / 已成功后不允许再切渠道——换了站点凭据就作废了。
-const channelLocked = computed(
-  () => !!props.auth.authUrl.value || props.auth.polling.value || confirmDone.value
-)
+// 渠道在生成链接后仍可切换：第一步选错必须能改回来。
+// handleChannelChange 会调 resetState() 清掉链接与轮询，第二步重新开始，
+// 因此不存在「旧链接配新站点」的错配。轮询进行中锁住，避免中途换渠道
+// 让在途请求写回错误的账号。
+const channelLocked = computed(() => props.auth.polling.value)
 
 const confirmDone = computed(() => !!props.auth.result?.value)
 const signedName = computed(() => props.auth.result?.value?.account_name || '')

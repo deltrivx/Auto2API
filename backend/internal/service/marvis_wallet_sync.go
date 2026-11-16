@@ -40,11 +40,14 @@ type MarvisWalletSyncService struct {
 	admin  AdminService
 	syncMu sync.Mutex
 	log    *slog.Logger
+	// refreshLocks 按账号串行化续期：上游成对轮换 token，
+	// 并发续期会让后到的请求把 refresh_token 打成废值。
+	refreshLocks *marvisRefreshLocks
 }
 
 // NewMarvisWalletSyncService 构造同步服务。
 func NewMarvisWalletSyncService(admin AdminService) *MarvisWalletSyncService {
-	return &MarvisWalletSyncService{admin: admin, log: slog.Default()}
+	return &MarvisWalletSyncService{admin: admin, log: slog.Default(), refreshLocks: newMarvisRefreshLocks()}
 }
 
 // Start 启动后台循环。
@@ -100,6 +103,20 @@ func (s *MarvisWalletSyncService) SyncOnce(ctx context.Context) {
 		acc := &accounts[i]
 		if acc.Status != StatusActive {
 			continue
+		}
+		// 临期先续期再读额度：token 过期后额度接口返回 401，
+		// 解析不到 data 字段，账号会被误判为零额度并自动停用。
+		if marvisNeedsRefresh(acc, now) {
+			mu := s.refreshLocks.get(acc.ID)
+			mu.Lock()
+			refreshed := s.refreshMarvisAccount(ctx, acc)
+			mu.Unlock()
+			if refreshed {
+				// 重新读一次，拿续期后的凭据去请求额度。
+				if fresh, err := s.admin.GetAccount(ctx, acc.ID); err == nil && fresh != nil {
+					acc = fresh
+				}
+			}
 		}
 		snapshot := s.syncAccount(ctx, acc, today)
 		if snapshot == nil {

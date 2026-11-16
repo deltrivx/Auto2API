@@ -338,6 +338,9 @@ const resetState = () => {
   addMethod.value = 'oauth'
   geminiOAuthType.value = 'code_assist'
   workbuddyOAuth.resetState()
+  // Marvis 也要清：否则关掉弹窗再打开，第二步的授权链接和回调输入还在，
+  // 用户看到的是一个已经过期的旧链接。
+  marvisOAuth.reset()
   oauthFlowRef.value?.reset()
 }
 

@@ -168,12 +168,11 @@ const loginOptions = computed<Array<{ value: MarvisLoginType; label: string; ico
 
 // 渠道按钮在「等待授权 / 已完成」期间不可切换。
 //
-// ⚠ 用 aria-disabled 而不是 disabled：原生 disabled 会让浏览器把焦点还给
-// document，于是生成链接后焦点从「微信登录」跳走。这里保留可聚焦性，
-// 只靠点击处理把动作挡掉。
-const channelLocked = computed(
-  () => props.auth.loading.value || props.auth.stage.value === 'waiting' || props.auth.stage.value === 'completed'
-)
+// 渠道选择在生成链接后依然可点：第一步选错时用户必须能改回来。
+// 切换渠道会调 auth.reset() 清掉链接与回调输入，第二步从头开始，
+// 因此不会出现「旧链接配新渠道」的错配。
+// 只在请求进行中锁住，避免连点打出多个并发请求。
+const channelLocked = computed(() => props.auth.loading.value)
 
 const generateLabel = computed(() => {
   switch (props.auth.stage.value) {

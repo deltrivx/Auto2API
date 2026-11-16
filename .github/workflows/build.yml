@@ -3,6 +3,8 @@ name: Build
 on:
   push:
     branches: [main]
+    # 标签推送触发 release job（打 tag 即发布）。
+    tags: ['v*']
   pull_request:
     branches: [main]
   workflow_dispatch:

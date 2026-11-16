@@ -31,9 +31,8 @@
         <div
           v-if="dropdownOpen"
           ref="dropdownRef"
-          class="z-50 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
+          class="version-modal z-50 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-dark-700 dark:bg-dark-800"
           :class="rollbackPanelOpen && isReleaseBuild ? 'w-[26rem]' : 'w-[24rem]'"
-          style="position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%)"
         >
           <!-- Header with refresh button -->
           <div
@@ -1099,9 +1098,21 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* 弹窗固定居中：用独立类避免被 Tailwind 工具类或转场类覆盖。
+   放在 scoped style 里，权重高于工具类。 */
+.version-modal {
+  position: fixed;
+  left: 50vw;
+  top: 50vh;
+  right: auto;
+  bottom: auto;
+  margin: 0;
+  transform: translate(-50%, -50%);
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 /* 弹窗用内联 transform 做屏幕居中，转场里不能再写 transform，

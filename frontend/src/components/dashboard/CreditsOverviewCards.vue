@@ -31,8 +31,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import {
@@ -171,24 +172,18 @@ async function load(forceSync = false) {
   marvis.value = mv
 }
 
-// 定期刷新：账号增删或额度变化后，卡片要能自己更新。
-//
-// 后端快照由后台任务每 5 分钟刷新一次，这里取同样的节奏错开半分钟读取，
-// 避免刚好卡在同步尚未完成的时间点上。
-const REFRESH_INTERVAL_MS = 5 * 60 * 1000
-let refreshTimer: ReturnType<typeof setInterval> | null = null
-
-onMounted(async () => {
-  await load()
-  refreshTimer = setInterval(() => { void load() }, REFRESH_INTERVAL_MS)
+// 定时刷新：与频道状态页、账号列表用同一套 useAutoRefresh，
+// 间隔可配置并记住用户选择。页面不可见时暂停，避免后台空转。
+useAutoRefresh({
+  storageKey: 'credits-overview-auto-refresh',
+  intervals: [30, 60, 300] as const,
+  defaultInterval: 60,
+  defaultEnabled: true,
+  onRefresh: () => load(),
+  shouldPause: () => document.hidden
 })
 
-onUnmounted(() => {
-  if (refreshTimer) {
-    clearInterval(refreshTimer)
-    refreshTimer = null
-  }
-})
+onMounted(() => { void load() })
 
 // 供「刷新」按钮调用：带上 sync=1，让后端立刻同步一轮再返回。
 defineExpose({ refresh: () => load(true) })

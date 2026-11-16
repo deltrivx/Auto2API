@@ -329,6 +329,51 @@ func workBuddySystemOn(payload map[string]any) bool {
 		msgs = nil
 	}
 
+	// tool_choice 归一化：上游字段是 Go string，传对象直接 400 code=11101。
+	//
+	// DSH / Codex / Claude 这些 Agent 客户端按 OpenAI 规范发
+	//   {"type":"auto"} / {"type":"required"} / {"type":"function","function":{...}}
+	// 原样转发会被拒。AutoBuddy 的 _upstream_body 把它压成字符串：
+	//   auto/required → 同名串；function → 函数名；none → 连同 tools/functions 一起删。
+	if tc, exists := payload["tool_choice"]; exists {
+		switch v := tc.(type) {
+		case string:
+			if strings.EqualFold(strings.TrimSpace(v), "none") {
+				delete(payload, "tool_choice")
+				delete(payload, "tools")
+				delete(payload, "functions")
+				changed = true
+			}
+		case map[string]any:
+			typ := strings.ToLower(strings.TrimSpace(fmt.Sprint(v["type"])))
+			switch typ {
+			case "none":
+				delete(payload, "tool_choice")
+				delete(payload, "tools")
+				delete(payload, "functions")
+			case "auto", "required":
+				payload["tool_choice"] = typ
+			case "function":
+				name := ""
+				if fn, ok := v["function"].(map[string]any); ok {
+					name = strings.TrimSpace(fmt.Sprint(fn["name"]))
+				} else {
+					name = strings.TrimSpace(fmt.Sprint(v["name"]))
+				}
+				if name != "" && name != "<nil>" {
+					payload["tool_choice"] = name
+				} else {
+					delete(payload, "tool_choice")
+				}
+			default:
+				delete(payload, "tool_choice")
+			}
+			changed = true
+		default:
+			delete(payload, "tool_choice")
+			changed = true
+		}
+	}
 	if v, exists := payload["max_completion_tokens"]; exists {
 		if _, hasMax := payload["max_tokens"]; !hasMax {
 			payload["max_tokens"] = v

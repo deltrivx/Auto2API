@@ -256,8 +256,13 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 	}
 	defer func() { _ = os.RemoveAll(tempDir) }()
 
-	// Download archive
-	archivePath := filepath.Join(tempDir, filepath.Base(downloadURL))
+	// Download archive.
+	//
+	// 下载文件必须与解包目标同名区分开：裸名产物（releases 里的 auto2api）
+	// 的 basename 正好等于 newBinaryPath 的文件名，两者落在同一路径时
+	// extractBinary 会「读源文件的同时 os.Create 截断它」，结果得到 0 字节
+	// 的二进制并把原文件覆盖掉。加 .download 后缀保证读写分离。
+	archivePath := filepath.Join(tempDir, filepath.Base(downloadURL)+".download")
 	if err := s.downloadFile(ctx, downloadURL, archivePath); err != nil {
 		return fmt.Errorf("download failed: %w", err)
 	}
@@ -543,18 +548,38 @@ func (s *UpdateService) extractBinary(archivePath, destPath string) error {
 
 	var reader io.Reader = f
 
+	// 按文件内容嗅探格式，而不是靠文件名后缀。
+	//
+	// 下载路径现在带 .download 后缀（避免与解包目标同路径），后缀判断会失效；
+	// 而发布产物既有裸 ELF，也有 .tar.gz/.tgz，用魔数判断最稳妥。
+	head := make([]byte, 512)
+	n, _ := io.ReadFull(f, head)
+	head = head[:n]
+	if _, err := f.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+
+	isGzip := len(head) >= 2 && head[0] == 0x1f && head[1] == 0x8b
+	isTar := len(head) >= 262 && string(head[257:262]) == "ustar"
+
 	// Handle gzip compression
-	if strings.HasSuffix(archivePath, ".gz") || strings.HasSuffix(archivePath, ".tar.gz") || strings.HasSuffix(archivePath, ".tgz") {
+	if isGzip {
 		gzr, err := gzip.NewReader(f)
 		if err != nil {
 			return err
 		}
 		defer func() { _ = gzr.Close() }()
 		reader = gzr
+		// gzip 解开后可能还是 tar：探测解压流前 512 字节。
+		peek, _ := bufio.NewReader(reader).Peek(262)
+		if len(peek) >= 262 && string(peek[257:262]) == "ustar" {
+			isTar = true
+		}
+		reader = gzr
 	}
 
 	// Handle tar archive
-	if strings.Contains(archivePath, ".tar") {
+	if isTar {
 		tr := tar.NewReader(reader)
 		for {
 			hdr, err := tr.Next()

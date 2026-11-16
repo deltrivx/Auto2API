@@ -1791,7 +1791,6 @@ func (h *AccountHandler) BatchDelete(c *gin.Context) {
 	})
 }
 
-
 // BatchRefresh handles batch refreshing account credentials
 // POST /api/v1/admin/accounts/batch-refresh
 func (h *AccountHandler) BatchRefresh(c *gin.Context) {
@@ -2640,7 +2639,18 @@ func (h *AccountHandler) respondAvailableModels(c *gin.Context, account *service
 	// 上游会随套餐与灰度下发不同的模型集合，因此这里不设固定目录，
 	// 只回报账号当前实际可用的模型。空映射表示账号尚未同步过。
 	if service.IsWorkBuddyAccount(account) {
-		response.Success(c, service.WorkBuddyAccountModels(account))
+		models := service.WorkBuddyAccountModels(account)
+		if len(models) == 0 && h.accountTestService != nil {
+			// 缓存和映射都没有（例如刚导入、或换过套餐）：现场去上游拉一次。
+			// 拉取成功会把结果写回 accounts.extra，后续请求直接命中缓存。
+			if _, err := h.accountTestService.SyncWorkBuddyUpstreamModels(c.Request.Context(), account); err != nil {
+				slog.Warn("workbuddy_available_models_live_sync_failed",
+					"account_id", account.ID, "error", err)
+			} else {
+				models = service.WorkBuddyAccountModels(account)
+			}
+		}
+		response.Success(c, models)
 		return
 	}
 

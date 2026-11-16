@@ -115,7 +115,17 @@ func (s *adminServiceImpl) GetGroupModelsListCandidates(ctx context.Context, id 
 		} else if acc.Platform != platform {
 			continue
 		}
-		for model := range acc.GetModelMapping() {
+		// WorkBuddy 账号的映射是导入时的历史快照，缓存才是上游当前下发的清单。
+		models := acc.GetModelMapping()
+		if IsWorkBuddyAccount(acc) {
+			if cached := WorkBuddyCachedModels(acc); len(cached) > 0 {
+				models = make(map[string]string, len(cached))
+				for _, m := range cached {
+					models[m.ID] = m.ID
+				}
+			}
+		}
+		for model := range models {
 			model = strings.TrimSpace(model)
 			if model == "" {
 				continue
@@ -275,10 +285,10 @@ func compositeRouteFromInput(groupID int64, input CompositeRouteInput) (*Composi
 
 func defaultModelsListCandidateIDs(platform string) []string {
 	switch platform {
-	case PlatformWorkBuddyCN:
-		return workBuddyModelIDs(workBuddyCNModels)
-	case PlatformWorkBuddyIntl:
-		return workBuddyModelIDs(workBuddyAIModels)
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl:
+		// WorkBuddy 的模型目录由上游 /v3/config 按账号下发，没有全局静态清单。
+		// 这里返回空，真实候选由下面按分组内账号的模型清单合并得出。
+		return nil
 	case PlatformOpenAI:
 		return openai.DefaultModelIDs()
 	case PlatformComposite:
@@ -290,20 +300,6 @@ func defaultModelsListCandidateIDs(platform string) []string {
 		}
 		return ids
 	}
-}
-
-// workBuddyModelIDs 提取 WorkBuddy 模型目录里的模型 ID。
-//
-// 之前 WorkBuddy 落到 default 分支，拿到的是 Claude 模型列表——分组模型
-// 候选里出现 claude-* 而实际上游只认自己的模型名。
-func workBuddyModelIDs(specs []workBuddyModelSpec) []string {
-	ids := make([]string, 0, len(specs))
-	for _, spec := range specs {
-		if id := strings.TrimSpace(spec.ID); id != "" {
-			ids = append(ids, id)
-		}
-	}
-	return ids
 }
 
 // DefaultAllowImageGenerationForPlatform reports whether new groups on the platform allow

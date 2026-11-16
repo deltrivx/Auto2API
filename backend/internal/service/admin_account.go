@@ -1884,12 +1884,9 @@ func (s *adminServiceImpl) workBuddyDefaultModelMapping(ctx context.Context, inp
 		return out
 	}
 
-	// 回落：站点内置清单。
-	out := make(map[string]string, len(site.Models))
-	for _, m := range site.Models {
-		out[m.ID] = m.ID
-	}
-	return out
+	// 拉不到就留空：宁可在账号页显示「尚未同步」，也不要把内置目录里的
+	// 过期模型名写进映射——那会让用户选中一个上游早已下线的模型。
+	return nil
 }
 
 // WorkBuddyAutoTaskAccounts 返回开启了自动积分任务的 WorkBuddy 账号。

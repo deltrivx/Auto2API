@@ -61,20 +61,6 @@ const (
 	workBuddyFieldEnterpriseID   = "enterprise_id"
 )
 
-// workBuddyModelSpec 是站点配置里的一条模型定义。
-//
-// 字段对应 magpie 的 [id, name, context, efforts, output]：
-//   - Context   是 maxInputTokens
-//   - Efforts   是该模型支持的 reasoning effort 取值；nil 表示不支持
-//   - MaxOutput 是 maxOutputTokens；0 表示交给外部目录（models.dev）决定
-type workBuddyModelSpec struct {
-	ID        string
-	Name      string
-	Context   int
-	Efforts   []string
-	MaxOutput int
-}
-
 // workBuddySite 描述一个 WorkBuddy 站点。
 type workBuddySite struct {
 	// ID 是站点标识，与平台常量对应。
@@ -99,8 +85,6 @@ type workBuddySite struct {
 	Runtime string
 	// KeysURL 是该站点生成 API Key 的页面。
 	KeysURL string
-	// Models 是站点内置的模型目录。
-	Models []workBuddyModelSpec
 	// Messages 表示该站点同时提供 Anthropic Messages 协议。
 	Messages bool
 	// NoImages 匹配该站点不接受的图片模型（国际站丢弃 glm-* 的图片）。
@@ -124,7 +108,6 @@ var workBuddyCN = workBuddySite{
 	AppName:  "WorkBuddy",
 	Runtime:  "local-agent",
 	KeysURL:  "https://www.workbuddy.cn/profile/keys",
-	Models:   workBuddyCNModels,
 	Messages: true,
 }
 
@@ -141,48 +124,8 @@ var workBuddyIntl = workBuddySite{
 	AppName:  "workbuddy-ai",
 	Runtime:  "local-agent",
 	KeysURL:  "https://www.workbuddy.ai/profile/keys",
-	Models:   workBuddyAIModels,
 	// 国际站不为 glm-* 接受图片，即使其配置声明支持。
 	NoImages: `^glm-`,
-}
-
-// workBuddyCNModels 是国内站的模型目录，取自上游 config 接口。
-var workBuddyCNModels = []workBuddyModelSpec{
-	{ID: "auto", Name: "Auto", Context: 168000},
-	{ID: "hy4-preview-f", Name: "Hy4 preview", Context: 1000000, Efforts: []string{"high"}},
-	{ID: "hy3", Name: "Hy3", Context: 192000, Efforts: []string{"low", "high"}},
-	{ID: "hy3-x", Name: "Hy3-X", Context: 192000, Efforts: []string{"low", "high"}},
-	{ID: "deepseek-v4.1-flash", Name: "Deepseek-V4.1-Flash", Context: 1000000, Efforts: []string{"none", "low", "high", "max"}, MaxOutput: 128000},
-	{ID: "glm-5.3", Name: "GLM-5.3", Context: 1000000, Efforts: []string{"low", "high", "max"}},
-	{ID: "glm-5.3-flash", Name: "GLM-5.3-Flash", Context: 1000000, Efforts: []string{"low", "high", "max"}, MaxOutput: 131072},
-	{ID: "glm-5.2", Name: "GLM-5.2", Context: 1000000, Efforts: []string{"high", "xhigh"}},
-	{ID: "glm-5.1", Name: "GLM-5.1", Context: 200000},
-	{ID: "glm-5v-turbo", Name: "GLM-5v-Turbo", Context: 200000},
-	{ID: "minimax-m3", Name: "MiniMax-M3", Context: 512000},
-	{ID: "kimi-k3-1", Name: "Kimi-K3", Context: 1000000, Efforts: []string{"low", "high", "xhigh"}},
-	{ID: "kimi-k2.7", Name: "Kimi-K2.7-Code", Context: 256000},
-	{ID: "kimi-k2.6", Name: "Kimi-K2.6", Context: 256000},
-	{ID: "deepseek-v4-pro", Name: "Deepseek-V4-Pro", Context: 1000000, Efforts: []string{"none", "high", "xhigh"}, MaxOutput: 128000},
-}
-
-// workBuddyAIModels 是国际站的模型目录。
-var workBuddyAIModels = []workBuddyModelSpec{
-	{ID: "default-model", Name: "Default", Context: 176000, MaxOutput: 24000},
-	{ID: "fast-model", Name: "Fast", Context: 200000, MaxOutput: 32000},
-	{ID: "balanced-model", Name: "Balanced", Context: 256000},
-	{ID: "primary-model", Name: "Primary", Context: 272000, MaxOutput: 72000},
-	{ID: "deep-model", Name: "Deep", Context: 176000},
-	{ID: "gpt-5.5", Name: "GPT-5.5", Context: 1000000},
-	{ID: "gpt-5.4", Name: "GPT-5.4", Context: 272000},
-	{ID: "gpt-5.3-codex", Name: "GPT-5.3-Codex", Context: 272000},
-	{ID: "gemini-3.1-pro", Name: "Gemini-3.1-Pro", Context: 400000},
-	{ID: "gemini-3.5-flash", Name: "Gemini-3.5-Flash", Context: 1000000, MaxOutput: 65536},
-	{ID: "glm-5.3", Name: "GLM-5.3", Context: 1000000, Efforts: []string{"low", "high", "max"}},
-	{ID: "glm-5.2", Name: "GLM-5.2", Context: 1000000, Efforts: []string{"high", "xhigh"}, MaxOutput: 48000},
-	{ID: "hy3", Name: "Hy3", Context: 192000, Efforts: []string{"low", "high"}, MaxOutput: 64000},
-	{ID: "kimi-k3", Name: "Kimi-K3", Context: 1000000, MaxOutput: 32000},
-	{ID: "kimi-k2.6", Name: "Kimi-K2.6", Context: 256000},
-	{ID: "minimax-m3", Name: "MiniMax-M3", Context: 512000},
 }
 
 // workBuddySiteForPlatform 按平台常量返回站点配置。
@@ -239,16 +182,6 @@ func (s *workBuddySite) workBuddyTextOnly(model string) bool {
 	return re.MatchString(model)
 }
 
-// workBuddyModelByID 在站点的静态模型目录中查找模型。
-func (s *workBuddySite) workBuddyModelByID(id string) (workBuddyModelSpec, bool) {
-	for _, m := range s.Models {
-		if m.ID == id {
-			return m, true
-		}
-	}
-	return workBuddyModelSpec{}, false
-}
-
 // IsWorkBuddyAccount 判断账号是否属于 WorkBuddy 的两个站点之一。
 func IsWorkBuddyAccount(account *Account) bool {
 	return account != nil && isWorkBuddyPlatform(account.Platform)
@@ -268,9 +201,10 @@ type workBuddyAccountModel struct {
 
 // WorkBuddyAccountModels 返回账号当前可用模型。
 //
-// 数据源是凭据里的 model_mapping：上游会按套餐与灰度下发不同的模型集合，
-// 所以不能用固定目录。映射为空时回落到站点的内置清单，
-// 保证编辑页面在账号尚未同步过的情况下仍有可选项。
+// 只认两个来源：/v3/config 的落库缓存（权威），以及凭据里的 model_mapping
+// （导入时的快照）。两者都为空时返回空列表，由调用方触发一次实时同步；
+// 不再回落到站点的内置目录——那份硬编码清单会和上游脱节（它至今还留着
+// gpt-5.5 / gemini-3.1-pro 这些已下线的名字）。
 func WorkBuddyAccountModels(account *Account) []workBuddyAccountModel {
 	if account == nil {
 		return nil
@@ -289,17 +223,8 @@ func WorkBuddyAccountModels(account *Account) []workBuddyAccountModel {
 	}
 	mapping := account.GetModelMapping()
 	if len(mapping) == 0 {
-		site := workBuddySiteForPlatform(account.Platform)
-		if site == nil {
-			return nil
-		}
-		out := make([]workBuddyAccountModel, 0, len(site.Models))
-		for _, m := range site.Models {
-			out = append(out, workBuddyAccountModel{
-				ID: m.ID, Object: "model", Type: "model", DisplayName: m.Name,
-			})
-		}
-		return out
+		// 没有缓存也没有映射：交给调用方去上游拉一次（并写回缓存）。
+		return nil
 	}
 
 	out := make([]workBuddyAccountModel, 0, len(mapping))

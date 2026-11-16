@@ -169,6 +169,38 @@ func workBuddyUnflagMessages(messages []any) bool {
 				messages = append(messages[:i], messages[i+1:]...)
 			}
 		}
+
+		// 思考流与工具参数同样会发往上游。
+		//
+		// AutoBuddy 的事故记录指出这是旧实现的盲区：tool_calls 消息的 content
+		// 常为 null，参数里的特征串会原样发出；Agent 客户端反复中招就在于只洗
+		// content。DSH 这类客户端的系统提示词与会话路径也会出现在工具参数里。
+		for _, key := range []string{"reasoning", "reasoning_content"} {
+			if v, ok := m[key].(string); ok && v != "" {
+				if next := workBuddyUnflagText(v); next != v {
+					m[key] = next
+					changed = true
+				}
+			}
+		}
+		if calls, ok := m["tool_calls"].([]any); ok {
+			for _, raw := range calls {
+				call, ok := raw.(map[string]any)
+				if !ok {
+					continue
+				}
+				fn, ok := call["function"].(map[string]any)
+				if !ok {
+					continue
+				}
+				if args, ok := fn["arguments"].(string); ok && args != "" {
+					if next := workBuddyUnflagText(args); next != args {
+						fn["arguments"] = next
+						changed = true
+					}
+				}
+			}
+		}
 	}
 	return changed
 }

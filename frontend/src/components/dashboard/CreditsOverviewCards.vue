@@ -61,16 +61,9 @@ function fmt(v: number): string {
   return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// 卡片里的数值格式化：统一千分位 + 两位小数。
-//
-// 四张卡片口径一致，量级差异交给千分位表达（9,244.00 / 7,646.00），
-// 不再对数值切换 K / M 单位——同一排卡片里混用单位会让大小难以横向比较。
-function fmtCard(v: number): string {
-  return fmt(v)
-}
-
 // 第 3、4 张卡是 Marvis 与合计，量级可达千万，用 K 压缩显示。
 // 小数位保持两位：1,234,567 → 1,234.57K，量级与精度兼顾。
+// 前两张卡直接走 fmt()，避免长数字撑破窄卡。
 function fmtCardK(v: number): string {
   return `${fmt(v / 1_000)}K`
 }

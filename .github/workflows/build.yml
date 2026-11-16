@@ -97,6 +97,9 @@ jobs:
     runs-on: ubuntu-26.04
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - name: Download artifact
         uses: actions/download-artifact@v5
         with:
@@ -107,10 +110,30 @@ jobs:
           sha256sum auto2api > auto2api.sha256
           cat auto2api.sha256
 
+      - name: Extract release notes
+        id: notes
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          # 从 CHANGELOG.md 截取 "## <tag>" 到下一个 "## " 之间的内容。
+          # 找不到时回退到一句占位说明，避免发布出空描述。
+          awk -v tag="## ${TAG}" '
+            $0 == tag { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            {
+              echo "## ${TAG}"
+              echo
+              echo "本次发布的内容请见仓库提交记录。"
+            } > release_notes.md
+          fi
+          cat release_notes.md
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             auto2api
             auto2api.sha256
-          generate_release_notes: true
+          body_path: release_notes.md

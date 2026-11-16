@@ -436,8 +436,9 @@ const getHistoryItemTitle = (item: RedeemHistoryItem) => {
 
 const formatHistoryValue = (item: RedeemHistoryItem) => {
   if (isBalanceType(item.type)) {
+    // 兑换到账的是积分，不是美元。
     const sign = item.value >= 0 ? '+' : ''
-    return `${sign}$${item.value.toFixed(2)}`
+    return `${sign}${item.value.toFixed(2)} ${t('admin.accounts.creditsUnit')}`
   } else if (isSubscriptionType(item.type)) {
     // 订阅类型显示有效天数和分组名称
     const days = item.validity_days || Math.round(item.value)

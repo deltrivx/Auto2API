@@ -11,6 +11,12 @@ import (
 const (
 	// monitorRequestTimeout 单次模型请求总超时（含 Body 读取）。
 	monitorRequestTimeout = 45 * time.Second
+	// monitorProbeConcurrency 同时探测的模型数上限。
+	//
+	// 早期是无限并发：一个监控挂 20~40 个模型就同时打 20~40 个请求。
+	// 渠道背后往往只有一两个账号（国际版更是只有单个可用账号），并发一高
+	// 全部排队，结果是满屏 30 秒超时——看起来像渠道挂了，其实只是被自己打满。
+	monitorProbeConcurrency = 3
 	// monitorPingTimeout HEAD 请求 endpoint origin 的超时。
 	monitorPingTimeout = 8 * time.Second
 	// monitorDegradedThreshold 主请求成功但耗时超过该阈值视为 degraded。

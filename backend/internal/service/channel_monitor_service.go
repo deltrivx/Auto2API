@@ -656,7 +656,20 @@ func (s *ChannelMonitorService) persistCheckResults(ctx context.Context, m *Chan
 // runChecksConcurrent 对 primary + extra 模型并发执行检测。
 // errgroup 仅用于等待，不传播错误（每个 model 失败都已打包进 CheckResult）。
 func (s *ChannelMonitorService) runChecksConcurrent(ctx context.Context, m *ChannelMonitor) []*CheckResult {
-	models := append([]string{m.PrimaryModel}, m.ExtraModels...)
+	// 去重：primary 常常同时出现在 extra 里，重复探测只会把同一渠道再打一遍。
+	models := make([]string, 0, len(m.ExtraModels)+1)
+	seen := make(map[string]struct{}, len(m.ExtraModels)+1)
+	for _, name := range append([]string{m.PrimaryModel}, m.ExtraModels...) {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		models = append(models, name)
+	}
 	results := make([]*CheckResult, len(models))
 
 	// ping 共享一次，所有模型记录同一个 ping 延迟。
@@ -671,6 +684,8 @@ func (s *ChannelMonitorService) runChecksConcurrent(ctx context.Context, m *Chan
 	}
 
 	var eg errgroup.Group
+	// 限并发：见 monitorProbeConcurrency 的注释。
+	eg.SetLimit(monitorProbeConcurrency)
 	var mu sync.Mutex
 	for i, model := range models {
 		i, model := i, model

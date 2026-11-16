@@ -31,8 +31,7 @@
         <div
           v-if="dropdownOpen"
           ref="dropdownRef"
-          class="version-modal z-50 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-dark-700 dark:bg-dark-800"
-          :class="rollbackPanelOpen && isReleaseBuild ? 'w-[26rem]' : 'w-[24rem]'"
+          class="version-modal z-50 flex flex-col overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-dark-700 dark:bg-dark-800"
         >
           <!-- Header with refresh button -->
           <div
@@ -56,7 +55,7 @@
             </button>
           </div>
 
-          <div class="p-4">
+          <div class="version-modal-body">
             <!-- Loading state -->
             <div v-if="loading" class="flex items-center justify-center py-6">
               <svg class="h-6 w-6 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24">
@@ -1098,16 +1097,40 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* 弹窗固定居中：用独立类避免被 Tailwind 工具类或转场类覆盖。
-   放在 scoped style 里，权重高于工具类。 */
+/* 弹窗固定在版本号下方（原有位置），宽高统一。
+   所有面板（初始/回退/更新）共用同一尺寸，切换时不再发生任何
+   视觉上的大小或位置变化；内容过长的面板在自己的区域内滚动。 */
 .version-modal {
-  position: fixed;
-  left: 50vw;
-  top: 50vh;
-  right: auto;
-  bottom: auto;
-  margin: 0;
-  transform: translate(-50%, -50%);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  width: 24rem;
+  height: 26rem;
+  max-height: 80vh;
+}
+
+/* 内容区独立滚动：面板切换不改变弹窗尺寸，
+   过长内容（回退版本列表、更新日志）在这里滚动。 */
+.version-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem;
+  scrollbar-width: thin;
+}
+
+.version-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.version-modal-body::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgb(0 0 0 / 0.18);
+}
+
+.version-modal-body::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .dropdown-enter-active,

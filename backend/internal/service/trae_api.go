@@ -202,7 +202,7 @@ func parseTraeModelCatalog(raw []byte) []traeModel {
 			if fn := traeStringValue(typed, "function", "function_name"); fn != "" {
 				function = fn
 			}
-			for key, value := range typed {
+			for _, value := range typed {
 				walk(value, function)
 			}
 		case []any:

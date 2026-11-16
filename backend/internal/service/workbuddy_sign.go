@@ -91,10 +91,16 @@ func workBuddySign(h http.Header, site *workBuddySite, token workBuddyToken, uid
 	h.Set("X-IDE-Type", "WorkBuddy")
 	h.Set("User-Agent", site.workBuddyCLIUserAgent())
 	h.Set("X-Requested-With", "XMLHttpRequest")
-	// 注意：不要加 X-Agent-Intent / X-Agent-Purpose / X-Agent-Type /
-	// X-Agent-Runtime。上游判据已变更——同一账号同一 token，
-	// 带这四个头 → 403 code 11140「request illegal / 账号存在异常行为」，
-	// 去掉 → 200 正常出流。这组头现在本身就是「非官方客户端」的特征。
+	// X-Agent-Intent / X-Agent-Purpose 是官方桌面端的固有头。
+	//
+	// magpie 的 sign() 原文：WorkBuddy's own client sends the whole of this on
+	// both builds（application-manifest.js: X-Agent-Purpose "conversation",
+	// X-IDE-Name/Type "WorkBuddy", X-IDE-Version, X-Product "SaaS"）；
+	// 缺了它们请求在上游的「使用端」统计里落空，且客户端形态不完整。
+	// 早期注释曾把这组头整体判为风控特征，实测与 magpie 的做法相反，
+	// 这里按 magpie 恢复。
+	h.Set("X-Agent-Intent", "craft")
+	h.Set("X-Agent-Purpose", "conversation")
 	h.Set("X-IDE-Name", "WorkBuddy")
 	h.Set("X-IDE-Version", site.App)
 
@@ -129,9 +135,16 @@ func workBuddySignKey(h http.Header, site *workBuddySite, acct *workBuddyKeyAcco
 // 对应 magpie 的 chatHeaders。这些头来自桌面端 CLI 的 OpenAI SDK 拦截器，
 // 用于把请求标记为「主对话代理」的运行环境。
 func workBuddyChatHeaders(h http.Header, site *workBuddySite) {
-	// X-Agent-Type / X-Agent-Runtime 不再发送：见 applyWorkBuddy 处的说明。
-	h.Del("X-Agent-Type")
-	h.Del("X-Agent-Runtime")
+	// X-Agent-Type / X-Agent-Runtime 由 magpie 的 chatHeaders 设置：
+	//   headers.set("X-Agent-Type", "main")
+	//   if (site.runtime) headers.set("X-Agent-Runtime", site.runtime)
+	// 它们是「主对话代理」的标记，属于官方桌面端形态的一部分。
+	h.Set("X-Agent-Type", "main")
+	if strings.TrimSpace(site.Runtime) != "" {
+		h.Set("X-Agent-Runtime", site.Runtime)
+	} else {
+		h.Del("X-Agent-Runtime")
+	}
 	// AutoBuddy 的 _upstream_headers 发的是这个多值形态，与官方桌面端一致。
 	// 只写 application/json 会少掉 text/plain 与 */*，属客户端形态差异。
 	h.Set("Accept", "application/json, text/plain, */*")

@@ -1,14 +1,18 @@
 name: Deploy
 
-# 发布新版(Release published)后自动部署到阿里云服务器并验证结果。
-# 也支持手动指定版本重新部署（workflow_dispatch）。
+# Build 工作流完成（构建 + 发布 Release 成功）后，自动部署到阿里云服务器并验证结果。
+#
+# 为什么不用 release 事件：goreleaser 用仓库自带的 GITHUB_TOKEN 发布 Release，
+# 而 GitHub 规定 GITHUB_TOKEN 触发的动作不会再触发其它工作流，release: published
+# 这条链路是永远收不到事件的（v1.0.52 实测确认）。workflow_run 没有这个限制。
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       tag:
-        description: '要部署的版本标签，如 v1.0.49；留空则部署 GitHub 最新 Release'
+        description: '要部署的版本标签，如 v1.0.52；留空则部署 GitHub 最新 Release'
         required: false
         default: ''
 
@@ -25,14 +29,20 @@ jobs:
     name: Deploy to Aliyun ECS
     runs-on: ubuntu-26.04
     timeout-minutes: 25
+    # 只在「打 tag 触发且构建成功」时自动部署；PR 构建不部署
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     steps:
       - name: Resolve target tag
         id: t
         run: |
           if [ -n "${{ github.event.inputs.tag }}" ]; then
             TAG="${{ github.event.inputs.tag }}"
-          elif [ "${{ github.event_name }}" = "release" ]; then
-            TAG="${{ github.event.release.tag_name }}"
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+            TAG="${{ github.event.workflow_run.head_branch }}"
           else
             TAG="latest"
           fi
@@ -60,6 +70,13 @@ jobs:
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" status | tee status.log
           grep -qE 'service=active' status.log
           grep -q '"status":"ok"' status.log
+          # 指定了具体版本时，部署后的运行版本必须与目标一致
+          TAG="${{ steps.t.outputs.tag }}"
+          echo "期望版本: $TAG"
+          if [ "$TAG" != "latest" ]; then
+            grep -q "current=${TAG#v}" status.log
+            echo "版本校验通过: ${TAG#v}"
+          fi
 
       - name: Summary
         if: always()

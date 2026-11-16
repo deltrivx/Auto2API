@@ -179,22 +179,51 @@ func (s *UpdateService) PerformUpdate(ctx context.Context) error {
 // verifies its checksum, and atomically swaps the running binary.
 // Shared by PerformUpdate (latest) and RollbackToVersion (specific older version).
 func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []Asset) error {
-	// Find matching archive and checksum for current platform
+	// 找到可用的二进制与校验和。
+	//
+	// 发布产物有两种命名形态：
+	//   1. 带平台后缀：auto2api_linux_amd64 / auto2api_linux_amd64.tar.gz
+	//   2. 裸名：auto2api（本仓库 CI 的产物就属这种，单平台单架构）
+	// 早期实现只按形态 1 匹配，裸名产物永远匹配不到，点「更新」会报
+	// no compatible release found。这里两种都认。
 	archiveName := s.getArchiveName()
 	var downloadURL string
 	var checksumURL string
 
 	for _, asset := range releaseAssets {
-		if strings.Contains(asset.Name, archiveName) && !strings.HasSuffix(asset.Name, ".txt") {
-			downloadURL = asset.DownloadURL
+		name := asset.Name
+		lower := strings.ToLower(name)
+		switch {
+		case strings.Contains(name, archiveName) && !strings.HasSuffix(lower, ".txt") && !strings.HasSuffix(lower, ".sha256"):
+			// 形态 1：带平台后缀的产物优先。
+			if downloadURL == "" || strings.HasSuffix(lower, ".tar.gz") || strings.HasSuffix(lower, ".zip") {
+				downloadURL = asset.DownloadURL
+			}
+		case !strings.Contains(lower, "_") && !strings.HasSuffix(lower, ".sha256") &&
+			!strings.HasSuffix(lower, ".txt") && !strings.HasSuffix(lower, ".json") && !strings.HasSuffix(lower, ".md"):
+			// 形态 2：裸名二进制。只在没有平台后缀产物时才采用。
+			if downloadURL == "" {
+				downloadURL = asset.DownloadURL
+			}
 		}
-		if asset.Name == "checksums.txt" {
+		if lower == "checksums.txt" {
 			checksumURL = asset.DownloadURL
 		}
 	}
 
 	if downloadURL == "" {
 		return fmt.Errorf("no compatible release found for %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+
+	// 裸名二进制通常配 <name>.sha256 旁挂文件，而非 checksums.txt。
+	if checksumURL == "" {
+		base := downloadURL[strings.LastIndex(downloadURL, "/")+1:]
+		for _, asset := range releaseAssets {
+			if asset.Name == base+".sha256" {
+				checksumURL = asset.DownloadURL
+				break
+			}
+		}
 	}
 
 	// SECURITY: Validate download URL is from trusted domain

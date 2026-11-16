@@ -2,7 +2,6 @@ package service
 
 import (
 	"os"
-	"log/slog"
 	"bufio"
 	"bytes"
 	"crypto/sha256"
@@ -453,17 +452,6 @@ func workBuddyNormalizeRequestBody(account *Account, body []byte) []byte {
 	out, err := json.Marshal(payload)
 	if err != nil {
 		return body
-	}
-	// 临时诊断：确认改写后的实际出站内容。
-	if strings.Contains(string(body), "coding agent powered by") {
-		prev := string(out)
-		if len(prev) > 800 {
-			prev = prev[:800]
-		}
-		slog.Warn("debug.sanitized_body",
-			"still_powered_by", strings.Contains(string(out), "powered by"),
-			"has_using", strings.Contains(string(out), "using the"),
-			"preview", prev)
 	}
 	return out
 }

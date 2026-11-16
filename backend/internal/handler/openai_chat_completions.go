@@ -51,7 +51,6 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 	}
 
 	body, err := readLenientJSONRequestBodyWithPrealloc(c.Request, h.cfg)
-	debugBody := body
 	if err != nil {
 		if handleRequestBodyReadError(c, reqLog, err) {
 			return
@@ -408,13 +407,6 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 					if !wroteFallback {
 						wroteFallback = h.ensureForwardErrorResponse(c, streamStarted)
 					}
-				}
-				{
-					pv := debugBody
-					if len(pv) > 8000 {
-						pv = pv[:8000]
-					}
-					reqLog.Warn("debug.fail_body", zap.Int("len", len(debugBody)), zap.String("body", string(pv)))
 				}
 				reqLog.Warn("openai_chat_completions.forward_failed",
 					zap.Int64("account_id", account.ID),

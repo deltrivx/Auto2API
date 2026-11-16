@@ -31,8 +31,8 @@
         <div
           v-if="dropdownOpen"
           ref="dropdownRef"
-          class="absolute left-0 z-50 mt-2 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-lg transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
-          :class="rollbackPanelOpen && isReleaseBuild ? 'w-80' : 'w-64'"
+          class="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
+          :class="rollbackPanelOpen && isReleaseBuild ? 'w-[26rem]' : 'w-[24rem]'"
         >
           <!-- Header with refresh button -->
           <div
@@ -370,13 +370,13 @@
                       type="button"
                       role="switch"
                       :aria-checked="autoDownload"
-                      class="relative h-4 w-8 flex-shrink-0 rounded-full transition-colors"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors"
                       :class="autoDownload ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'"
                       @click="toggleAutoDownload"
                     >
                       <span
-                        class="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform"
-                        :class="autoDownload ? 'translate-x-4' : 'translate-x-0.5'"
+                        class="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                        :class="autoDownload ? 'translate-x-[18px]' : 'translate-x-[2px]'"
                       />
                     </button>
                     {{ t('version.autoDownload') }}
@@ -387,13 +387,13 @@
                       type="button"
                       role="switch"
                       :aria-checked="autoInstall"
-                      class="relative h-4 w-8 flex-shrink-0 rounded-full transition-colors"
+                      class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors"
                       :class="autoInstall ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'"
                       @click="toggleAutoInstall"
                     >
                       <span
-                        class="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform"
-                        :class="autoInstall ? 'translate-x-4' : 'translate-x-0.5'"
+                        class="inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200"
+                        :class="autoInstall ? 'translate-x-[18px]' : 'translate-x-[2px]'"
                       />
                     </button>
                     {{ t('version.autoInstall') }}

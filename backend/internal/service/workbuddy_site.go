@@ -109,8 +109,13 @@ type workBuddySite struct {
 
 // workBuddyCN 是国内站配置，字段取值对照 magpie 的 SITES.workbuddy。
 //
-// 版本号 5.9.3 / 2.165.0 取自 WorkBuddy 5.9.3.42398134（2026-10-28 的更新
-// 源当前构建）。这两个值参与请求签名，改动前需确认上游仍接受旧的 UA。
+// 版本号对齐 AutoBuddy 的 DESKTOP_IDE_VERSION=5.5.6 / DESKTOP_CLI_VERSION=2.137.1。
+//
+// 原先用 5.9.3 / 2.165.0（取自当时的更新源构建），但实测同账号、同模型、
+// 同提示词下 AutoBuddy 能过、本网关返回 400 code 11128
+// 「Illegal API invocation from an unapproved channel」。
+// 上游的渠道校验按 UA 与 X-Client-Version 识别客户端形态，版本号不在其
+// 认可的桌面端集合内即判为非官方客户端；这两个值参与签名，改动需谨慎。
 var workBuddyCN = workBuddySite{
 	ID:       PlatformWorkBuddyCN,
 	Name:     "WorkBuddy",
@@ -118,8 +123,8 @@ var workBuddyCN = workBuddySite{
 	AuthID:   "workbuddy-desktop",
 	Platform: "workbuddy",
 	AI:       false,
-	App:      "5.9.3",
-	CLI:      "2.165.0",
+	App:      "5.5.6",
+	CLI:      "2.137.1",
 	AppName:  "WorkBuddy",
 	Runtime:  "local-agent",
 	KeysURL:  "https://www.workbuddy.cn/profile/keys",
@@ -135,8 +140,8 @@ var workBuddyIntl = workBuddySite{
 	AuthID:   "workbuddy-desktop-ai",
 	Platform: "workbuddy-ai",
 	AI:       true,
-	App:      "5.9.3",
-	CLI:      "2.165.0",
+	App:      "5.5.6",
+	CLI:      "2.137.1",
 	AppName:  "workbuddy-ai",
 	Runtime:  "local-agent",
 	KeysURL:  "https://www.workbuddy.ai/profile/keys",

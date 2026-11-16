@@ -267,9 +267,13 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 		return fmt.Errorf("download failed: %w", err)
 	}
 
-	// Verify checksum if available
+	// Verify checksum if available.
+	//
+	// 校验按「资产原名」比对：本地文件名带 .download 后缀（为了与解包目标
+	// 区分），直接拿它去 sha256 清单里找会报 checksum not found。
+	assetName := filepath.Base(downloadURL)
 	if checksumURL != "" {
-		if err := s.verifyChecksum(ctx, archivePath, checksumURL); err != nil {
+		if err := s.verifyChecksumFor(ctx, archivePath, assetName, checksumURL); err != nil {
 			return fmt.Errorf("checksum verification failed: %w", err)
 		}
 	}
@@ -500,6 +504,42 @@ func validateDownloadURL(rawURL string) error {
 	}
 
 	return nil
+}
+
+// verifyChecksumFor 按给定资产名在 sha256 清单里查找期望值。
+func (s *UpdateService) verifyChecksumFor(ctx context.Context, filePath, assetName, checksumURL string) error {
+	checksumData, err := s.githubClient.FetchChecksumFile(ctx, checksumURL)
+	if err != nil {
+		return fmt.Errorf("failed to download checksums: %w", err)
+	}
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = f.Close() }()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return err
+	}
+	actualHash := hex.EncodeToString(h.Sum(nil))
+	scanner := bufio.NewScanner(strings.NewReader(string(checksumData)))
+	for scanner.Scan() {
+		parts := strings.Fields(scanner.Text())
+		if len(parts) != 2 {
+			continue
+		}
+		name := strings.TrimPrefix(parts[1], "*")
+		if name == assetName || filepath.Base(name) == assetName {
+			if parts[0] == actualHash {
+				return nil
+			}
+			return fmt.Errorf("checksum mismatch: expected %s, got %s", parts[0], actualHash)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return fmt.Errorf("checksum not found for %s", assetName)
 }
 
 func (s *UpdateService) verifyChecksum(ctx context.Context, filePath, checksumURL string) error {

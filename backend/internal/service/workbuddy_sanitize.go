@@ -1,7 +1,6 @@
 package service
 
 import (
-	"os"
 	"bufio"
 	"bytes"
 	"crypto/sha256"
@@ -9,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -872,44 +872,22 @@ type workBuddyAggregatedToolCall struct {
 	Arguments string
 }
 
-// workBuddyIntlChatCapableModels 是国际站**可以用于对话**的模型 id。
-//
-// 上游 /v3/config 返回的模型列表里混着补全、NES、视频等非对话模型，
-// 直接转发它们会得到 11102 service info not found（模型无对话服务）
-// 或 11134（模型不适用该端点）。实测只有下面三个能跑 chat：
-//
-//	balanced-model  ✅
-//	default-model   ✅
-//	fast-model      ✅
-//	auto / hy3      ✅（上游内部别名，不在列表里但可用）
-//
-// 其余（auto-chat、codewise-jump、completion-1.0、enhance-1.0、
-// nes-1.x、o4-mini、primary-model、seedance-2.5、max-model）全部拒绝。
-var workBuddyIntlChatCapableModels = map[string]bool{
-	"balanced-model": true,
-	"default-model":  true,
-	"fast-model":     true,
-	"auto":           true,
-	"hy3":            true,
-}
-
 // workBuddyIntlDefaultChatModel 是无法映射时的兜底对话模型。
 const workBuddyIntlDefaultChatModel = "default-model"
 
-// workBuddyNormalizeIntlModel 把国际站的模型名收敛到可对话的 id。
+// workBuddyNormalizeIntlModel 兜底国际站的空模型名。
 //
-// 客户端可能填了列表里的任一模型（包括非对话模型），这里把它们统一
-// 换成 default-model —— 与其让用户看到 11102，不如补全/视频这类请求
-// 落到一个真正能回话的模型上。
+// 与 magpie 一致：请求里给的模型原样转发，不再按白名单改写。
+// 早期这里会把不在手写白名单里的模型全部换成 default-model，
+// 结果是用户选 gpt-6-astra / gemini-4-argon 实际跑的都是 default-model，
+// 而白名单本身早已滞后于上游目录（现在由 /v3/config 的 agents[cli] 下发）。
+// 真选到非对话模型时，上游会明确回 11102 / 11134，比静默替换成另一个模型更容易排查。
 func workBuddyNormalizeIntlModel(model string) string {
 	name := strings.TrimSpace(model)
 	if name == "" {
 		return workBuddyIntlDefaultChatModel
 	}
-	if workBuddyIntlChatCapableModels[name] {
-		return name
-	}
-	return workBuddyIntlDefaultChatModel
+	return name
 }
 
 // workBuddyUnflagEnabled 报告是否启用提示词品牌痕改写。

@@ -279,19 +279,12 @@ func WorkBuddyAccountModels(account *Account) []workBuddyAccountModel {
 	// credentials.model_mapping 是导入时的历史快照，可能包含已下线模型，
 	// 只能作为缓存缺失时的兜底。
 	if cached := WorkBuddyCachedModels(account); len(cached) > 0 {
-		// 国际站的缓存里混着补全/NES/视频模型，它们不能对话。
-		// 只对客户端暴露能跑 chat 的那几个，避免用户选到必然失败的模型。
-		if isWorkBuddyAIVariant(account.Platform) {
-			filtered := make([]workBuddyAccountModel, 0, len(cached))
-			for _, m := range cached {
-				if workBuddyIntlChatCapableModels[m.ID] {
-					filtered = append(filtered, m)
-				}
-			}
-			if len(filtered) > 0 {
-				return filtered
-			}
-		}
+		// 直接返回 /v3/config 的 agents[cli] 清单（与 magpie 同源）。
+		//
+		// 早期这里按一张手写白名单过滤「可对话模型」，白名单只留了
+		// balanced-model / default-model / fast-model / auto / hy3 —— 上游换成
+		// gpt-6-* / gemini-4-* / kimi-k3.1 之后，整张清单被过滤到只剩一个，
+		// 测试连接里自然只看得到一个模型。CLI 清单本身就是能对话的集合。
 		return cached
 	}
 	mapping := account.GetModelMapping()

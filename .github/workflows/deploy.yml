@@ -5,6 +5,10 @@ name: Deploy
 # 为什么不用 release 事件：goreleaser 用仓库自带的 GITHUB_TOKEN 发布 Release，
 # 而 GitHub 规定 GITHUB_TOKEN 触发的动作不会再触发其它工作流，release: published
 # 这条链路是永远收不到事件的（v1.0.52 实测确认）。workflow_run 没有这个限制。
+#
+# 为什么由 runner 推送产物：阿里云服务器直连 release-assets.githubusercontent.com
+# 经常超时（v1.0.54 第一次部署就因此失败），runner 的出口网络稳定，所以改成
+# runner 下载 → 校验 → SSH 流式推给服务器安装。
 on:
   workflow_run:
     workflows: ["Build"]
@@ -12,14 +16,13 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: '要部署的版本标签，如 v1.0.52；留空则部署 GitHub 最新 Release'
+        description: '要部署的版本标签，如 v1.0.54；留空则部署 GitHub 最新 Release'
         required: false
         default: ''
 
 permissions:
   contents: read
 
-# 同一时间只允许一个部署，避免并发替换二进制
 concurrency:
   group: deploy-production
   cancel-in-progress: false
@@ -44,7 +47,11 @@ jobs:
           elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             TAG="${{ github.event.workflow_run.head_branch }}"
           else
-            TAG="latest"
+            TAG=""
+          fi
+          if [ -z "$TAG" ] || [ "$TAG" = "latest" ]; then
+            TAG=$(curl -fsS "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" \
+                  | python3 -c "import json,sys;print(json.load(sys.stdin)['tag_name'])")
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "部署目标: $TAG"
@@ -57,11 +64,24 @@ jobs:
           ssh-keyscan -H -T 15 "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
           echo "已记录主机公钥:"; ssh-keygen -lf ~/.ssh/known_hosts | head -3
 
-      - name: Run remote deploy
+      - name: Download and verify release asset
+        run: |
+          TAG="${{ steps.t.outputs.tag }}"
+          BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
+          curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors -o auto2api "$BASE/auto2api"
+          curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors -o auto2api.sha256 "$BASE/auto2api.sha256"
+          EXPECT=$(awk '{print $1}' auto2api.sha256 | head -1)
+          ACTUAL=$(sha256sum auto2api | awk '{print $1}')
+          [ "$EXPECT" = "$ACTUAL" ] || { echo "::error::sha256 校验失败 $EXPECT != $ACTUAL"; exit 1; }
+          echo "sha256 校验通过: $ACTUAL"
+          echo "EXPECT=$ACTUAL" >> "$GITHUB_ENV"
+          ls -lh auto2api
+
+      - name: Push binary and install
         run: |
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=20 -o ServerAliveInterval=15 \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" "${{ steps.t.outputs.tag }}" \
-            | tee deploy.log
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "push ${{ steps.t.outputs.tag }} $EXPECT" < auto2api | tee deploy.log
           grep -q '^DEPLOY_OK' deploy.log
 
       - name: Verify service status
@@ -70,13 +90,10 @@ jobs:
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" status | tee status.log
           grep -qE 'service=active' status.log
           grep -q '"status":"ok"' status.log
-          # 指定了具体版本时，部署后的运行版本必须与目标一致
           TAG="${{ steps.t.outputs.tag }}"
           echo "期望版本: $TAG"
-          if [ "$TAG" != "latest" ]; then
-            grep -q "current=${TAG#v}" status.log
-            echo "版本校验通过: ${TAG#v}"
-          fi
+          grep -q "current=${TAG#v}" status.log
+          echo "版本校验通过: ${TAG#v}"
 
       - name: Summary
         if: always()

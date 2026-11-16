@@ -331,8 +331,17 @@ func workBuddySystemOn(payload map[string]any) bool {
 	// 说明上游拦的不是这些句子本身。改写会改变客户端语义（powered by→using），
 	// 反而可能命中别的判据。需要时用 AUTO2API_WORKBUDDY_UNFLAG=1 打开。
 	changed := false
+	// 顺序与 magpie 一致：FLAGGED 先过实时 11128 校验，
+	// hide_dsh 再处理「之后读提示词」的那一层校验（见 workbuddy_hide_dsh.go）。
 	if workBuddyUnflagEnabled() {
-		changed = workBuddyUnflagMessages(msgs)
+		if workBuddyUnflagMessages(msgs) {
+			changed = true
+		}
+	}
+	if workBuddyHideDshEnabled() {
+		if workBuddyHideDsh(payload) {
+			changed = true
+		}
 	}
 	// unflag 可能删除元素，取回最新切片。
 	msgs, ok = payload["messages"].([]any)
@@ -902,6 +911,16 @@ func workBuddyNormalizeIntlModel(model string) string {
 //
 // 默认关闭，理由见 workBuddySystemOn 中的注释。
 func workBuddyUnflagEnabled() bool {
+	// 与 magpie 一致：默认开启，只有显式设成 0/false/no 才关闭。
 	v := strings.TrimSpace(strings.ToLower(os.Getenv("AUTO2API_WORKBUDDY_UNFLAG")))
-	return v == "1" || v == "true" || v == "yes"
+	return v != "0" && v != "false" && v != "no"
+}
+
+// workBuddyHideDshEnabled 对应 magpie 的 HIDE_DSH 开关。
+//
+// 默认开启。magpie 原文：HIDE_DSH is the switch, on unless the user turns
+// it off。关闭会退回「只靠 FLAGGED」的旧状态，实测仍会被判 11128。
+func workBuddyHideDshEnabled() bool {
+	v := strings.TrimSpace(strings.ToLower(os.Getenv("AUTO2API_WORKBUDDY_HIDE_DSH")))
+	return v != "0" && v != "false" && v != "no"
 }

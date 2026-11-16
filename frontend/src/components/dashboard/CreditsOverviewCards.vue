@@ -174,7 +174,7 @@ async function load(forceSync = false) {
 
 // 定时刷新：与频道状态页、账号列表用同一套 useAutoRefresh，
 // 间隔可配置并记住用户选择。页面不可见时暂停，避免后台空转。
-useAutoRefresh({
+const autoRefresh = useAutoRefresh({
   storageKey: 'credits-overview-auto-refresh',
   intervals: [30, 60, 300] as const,
   defaultInterval: 60,
@@ -183,7 +183,11 @@ useAutoRefresh({
   shouldPause: () => document.hidden
 })
 
-onMounted(() => { void load() })
+onMounted(() => {
+  void load()
+  // useAutoRefresh 只负责管理状态，定时器要显式启动。
+  if (autoRefresh.enabled.value) autoRefresh.start()
+})
 
 // 供「刷新」按钮调用：带上 sync=1，让后端立刻同步一轮再返回。
 defineExpose({ refresh: () => load(true) })

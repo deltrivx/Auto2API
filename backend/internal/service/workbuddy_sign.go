@@ -145,9 +145,8 @@ func workBuddyChatHeaders(h http.Header, site *workBuddySite) {
 	} else {
 		h.Del("X-Agent-Runtime")
 	}
-	// AutoBuddy 的 _upstream_headers 发的是这个多值形态，与官方桌面端一致。
-	// 只写 application/json 会少掉 text/plain 与 */*，属客户端形态差异。
-	h.Set("Accept", "application/json, text/plain, */*")
+	// magpie 的 chatHeaders 用单值 application/json。
+	h.Set("Accept", "application/json")
 	h.Set("X-Stainless-Retry-Count", "0")
 	// 桌面端客户端超时为 1200 秒，且自身不做重试。
 	h.Set("X-Stainless-Timeout", "1200")

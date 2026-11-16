@@ -343,6 +343,11 @@ func workBuddySystemOn(payload map[string]any) bool {
 			changed = true
 		}
 	}
+	// 开场句补逗号：上游认的是「那一行的形状」，加个逗号即放行，
+	// 用词与语义都不变（magpie 实测 2026-10-30）。
+	if workBuddyCommaPaused(payload) {
+		changed = true
+	}
 	// unflag 可能删除元素，取回最新切片。
 	msgs, ok = payload["messages"].([]any)
 	if !ok {

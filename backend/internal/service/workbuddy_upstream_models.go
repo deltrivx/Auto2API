@@ -26,13 +26,13 @@ import (
 // 必须每次向后端询问，不能内置固定目录——内置目录会包含已下线模型，
 // 用户选中后在调用时才失败。
 //
-// /v3/config 对 User-Agent 有强校验，非 CodeBuddyIDE 的 UA 会被
-// 12403 "check ua, get coding copilot version error" 拒绝。
+// 请求身份必须与 magpie（社区权威实现）一致：用 WorkBuddy 自己的 CLI 形态读取，
+// 即 workBuddySign 写出的整套头（X-User-Id / X-Domain / X-IDE-* / WorkBuddy UA）。
+// 早期这里伪装成 CodeBuddy IDE（CodeBuddyIDE UA + X-CodeBuddy-Request），
+// 拿到的是 IDE 渠道的另一份目录：国际版缺模型，且请求被上游判为未授权渠道，
+// 表现为 11128 / 11140「request illegal」。
 
 const (
-	// workBuddyConfigUA 是 /v3/config 要求必须携带的 User-Agent。
-	workBuddyConfigUA = "CodeBuddyIDE/4.12.0 CodeBuddy/4.12.0"
-
 	// workBuddyConfigTimeout 是拉取模型目录的超时。
 	workBuddyConfigTimeout = 25 * time.Second
 )
@@ -193,10 +193,27 @@ func (s *AccountTestService) fetchWorkBuddyUpstreamModels(ctx context.Context, a
 		return nil, fmt.Errorf("workbuddy: config error %d: %s", parsed.Code, parsed.Msg)
 	}
 
-	ids := make([]string, 0, len(parsed.Data.Models))
-	seen := make(map[string]struct{}, len(parsed.Data.Models))
-	for _, m := range parsed.Data.Models {
-		id := strings.TrimSpace(m.ID)
+	// magpie 取的是 agents[name=cli].models —— 产品自己给 CLI 分配的清单，
+	// 与用户在 WorkBuddy 客户端里看到的完全一致。data.models 是站点全量目录，
+	// 混着补全/NES/视频等不可经 CLI 调用的条目，直接用会让列表「多出来」，
+	// 而 IDE 渠道拿到的那份又会「少一截」。
+	source := make([]string, 0, len(parsed.Data.Models))
+	for _, agent := range parsed.Data.Agents {
+		if strings.EqualFold(strings.TrimSpace(agent.Name), "cli") && len(agent.Models) > 0 {
+			source = agent.Models
+			break
+		}
+	}
+	if len(source) == 0 {
+		for _, m := range parsed.Data.Models {
+			source = append(source, m.ID)
+		}
+	}
+
+	ids := make([]string, 0, len(source))
+	seen := make(map[string]struct{}, len(source))
+	for _, raw := range source {
+		id := strings.TrimSpace(raw)
 		if id == "" {
 			continue
 		}
@@ -209,7 +226,7 @@ func (s *AccountTestService) fetchWorkBuddyUpstreamModels(ctx context.Context, a
 	if len(ids) == 0 {
 		return nil, fmt.Errorf("workbuddy: config returned no models (flag=%s)", parsed.Data.ConfigFlag)
 	}
-	sortStrings(ids)
+	// 保持上游顺序（magpie 同款），不再排序。
 	return ids, nil
 }
 
@@ -228,19 +245,11 @@ func (s *AccountTestService) buildWorkBuddyConfigRequest(ctx context.Context, ac
 		return nil, err
 	}
 
-	domain := strings.TrimSpace(token.Domain)
-	if domain == "" {
-		domain = strings.TrimPrefix(strings.TrimPrefix(site.Endpoint, "https://"), "http://")
-	}
-
+	// 与 magpie 的 chinaModels / intlModels 完全一致：Accept 取宽松值，
+	// 其余身份头交给 workBuddySign，不再发送 X-CodeBuddy-Request。
 	req.Header.Set("Accept", "application/json, text/plain, */*")
-	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9")
-	req.Header.Set("Authorization", "Bearer "+token.Access)
-	req.Header.Set("X-Domain", domain)
-	req.Header.Set("X-Product", "SaaS")
-	req.Header.Set("X-CodeBuddy-Request", "1")
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("User-Agent", workBuddyConfigUA)
+	req.Header.Set("Content-Type", "application/json")
+	workBuddySign(req.Header, site, token, account.workBuddyUIDOf(), account.workBuddyEnterpriseIDOf())
 	return req, nil
 }
 

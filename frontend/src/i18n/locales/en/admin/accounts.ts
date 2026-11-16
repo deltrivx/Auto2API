@@ -53,6 +53,8 @@ export default {
         channelIntl: 'International',
         loggedIn: 'Signed in',
         successHint: '{name} signed in — click Create to add the account',
+        reauthSuccessHint: '{name} signed in — click Re-Authorize to finish',
+        reauthing: 'Re-authorizing…',
       },
       marvisAuth: {
         loginQQ: 'QQ',

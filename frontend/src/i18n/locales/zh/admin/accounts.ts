@@ -53,6 +53,8 @@ export default {
         channelIntl: '国际版',
         loggedIn: '登录成功',
         successHint: '{name} 登录成功，请点击创建按钮创建账号',
+        reauthSuccessHint: '{name} 登录成功，请点击重新授权按钮完成重新授权',
+        reauthing: '重新授权中…',
       },
       marvisAuth: {
         loginQQ: 'QQ 登录',

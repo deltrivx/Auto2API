@@ -79,6 +79,7 @@
         v-if="authFlow === 'workbuddy'"
         :platform="account!.platform as 'workbuddy_cn' | 'workbuddy_intl'"
         :auth="workbuddyOAuth"
+        success-hint-key="admin.accounts.workbuddyReauth.reauthSuccessHint"
         @authorized="handleWorkBuddyConfirm"
       />
 
@@ -121,6 +122,40 @@
       <div v-if="account" class="flex justify-between gap-3">
         <button type="button" class="btn btn-secondary" @click="handleClose">
           {{ t('common.cancel') }}
+        </button>
+        <!-- WorkBuddy：第二步确认登录后，由这个按钮完成最后的保存（对应「添加账号」的「创建」） -->
+        <button
+          v-if="authFlow === 'workbuddy'"
+          type="button"
+          :disabled="!workbuddyReady || reauthSaving"
+          class="btn btn-primary"
+          @click="handleWorkBuddyReauthorize"
+        >
+          <svg
+            v-if="reauthSaving"
+            class="-ml-1 mr-2 h-4 w-4 animate-spin"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          {{
+            reauthSaving
+              ? t('admin.accounts.workbuddyReauth.reauthing')
+              : t('admin.accounts.reAuthorize')
+          }}
         </button>
         <button
           v-if="isManualInputMethod"
@@ -210,6 +245,9 @@ const oauthFlowRef = ref<OAuthFlowExposed | null>(null)
 
 // State
 const addMethod = ref<AddMethod>('oauth')
+// WorkBuddy 重新授权：第二步确认后置 true，底部「重新授权」按钮才可点
+const workbuddyReady = ref(false)
+const reauthSaving = ref(false)
 const geminiOAuthType = ref<'code_assist' | 'google_one' | 'ai_studio'>('code_assist')
 
 // Computed - check platform
@@ -239,20 +277,28 @@ const platformAccentClass = computed(() => {
 // 其余（未登记）不渲染任何授权面板，只提示该平台不支持重新授权。
 const authFlow = computed(() => platformSpec.value?.flow)
 
-// handleWorkBuddyConfirm 轮询拿到新 token 后保存凭据。
-async function handleWorkBuddyConfirm() {
+// handleWorkBuddyConfirm 第二步已确认登录：只放开底部「重新授权」按钮。
+//
+// 这里不能再调一次 waitForSignIn —— 授权结果已经在步骤组件里取到，
+// 重复等待会让流程卡在「等待授权中」，也就是这次修复的重新授权无响应问题。
+function handleWorkBuddyConfirm() {
   if (!props.account) return
-  try {
-    await workbuddyOAuth.waitForSignIn(props.account.platform as "workbuddy_cn" | "workbuddy_intl")
-  } catch (e: any) {
-    appStore.showError(e?.message || 'Authorization failed')
+  if (!workbuddyOAuth.result.value?.access_token) {
+    appStore.showError('授权结果无效，请重试')
     return
   }
+  workbuddyReady.value = true
+}
+
+// handleWorkBuddyReauthorize 用已拿到的登录态保存凭据，完成重新授权。
+async function handleWorkBuddyReauthorize() {
+  if (!props.account || reauthSaving.value) return
   const creds = workbuddyOAuth.buildCredentials()
   if (!creds) {
     appStore.showError('Authorization incomplete')
     return
   }
+  reauthSaving.value = true
   try {
     const updated = await adminAPI.accounts.update(props.account.id, { credentials: creds })
     appStore.showSuccess(t('admin.accounts.oauth.authorized'))
@@ -260,6 +306,8 @@ async function handleWorkBuddyConfirm() {
     handleClose()
   } catch (e: any) {
     appStore.showError(e?.message || 'Save failed')
+  } finally {
+    reauthSaving.value = false
   }
 }
 
@@ -337,6 +385,8 @@ watch(
 const resetState = () => {
   addMethod.value = 'oauth'
   geminiOAuthType.value = 'code_assist'
+  workbuddyReady.value = false
+  reauthSaving.value = false
   workbuddyOAuth.resetState()
   // Marvis 也要清：否则关掉弹窗再打开，第二步的授权链接和回调输入还在，
   // 用户看到的是一个已经过期的旧链接。

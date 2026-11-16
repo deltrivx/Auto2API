@@ -94,9 +94,9 @@
                       : t('admin.accounts.workbuddyReauth.confirm')
                 }}
               </button>
-              <!-- 成功后把昵称告诉用户，由他去点「创建」 -->
+              <!-- 成功后把昵称告诉用户，由他去点弹窗底部的「创建」/「重新授权」 -->
               <span v-if="confirmDone && signedName" class="ml-2 text-xs text-emerald-600 dark:text-emerald-400">
-                {{ t('admin.accounts.workbuddyReauth.successHint', { name: signedName }) }}
+                {{ t(successHintKey, { name: signedName }) }}
               </span>
             </div>
           </template>
@@ -120,10 +120,15 @@ import { useWorkBuddyOAuth } from '@/composables/useWorkBuddyOAuth'
 //
 // 与 Marvis 的组件保持同一套语义：渠道选定后锁定，授权成功只上报昵称，
 // 真正建号由用户在弹窗底部点「创建」完成。
-const props = defineProps<{
-  platform: 'workbuddy_cn' | 'workbuddy_intl'
-  auth: ReturnType<typeof useWorkBuddyOAuth>
-}>()
+const props = withDefaults(
+  defineProps<{
+    platform: 'workbuddy_cn' | 'workbuddy_intl'
+    auth: ReturnType<typeof useWorkBuddyOAuth>
+    // 授权成功后的引导文案：添加账号引导点「创建」，重新授权引导点「重新授权」
+    successHintKey?: string
+  }>(),
+  { successHintKey: 'admin.accounts.workbuddyReauth.successHint' }
+)
 const emit = defineEmits<{ authorized: []; 'channel-change': ['workbuddy_cn' | 'workbuddy_intl'] }>()
 const { t } = useI18n()
 

@@ -12,12 +12,12 @@ permissions:
 
 env:
   GO_VERSION: '1.27.4'
-  NODE_VERSION: '22'
+  NODE_VERSION: '24'
 
 jobs:
   build:
     name: Build linux/amd64
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout
@@ -87,7 +87,7 @@ jobs:
     name: Release
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Download artifact

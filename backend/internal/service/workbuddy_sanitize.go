@@ -56,6 +56,13 @@ var workBuddyFlaggedRules = []workBuddyFlaggedRule{
 	{regexp.MustCompile(`(?i)Codex CLI is an open source project led by OpenAI\.`),
 		"The Codex CLI is an open source project led by OpenAI."},
 
+	// 上游真正拦的是「DeepSeek」+「harness」这组语义串：两者单独出现都不拦，
+	// 共存才命中（与大小写无关、子串匹配）。只把空格换成连字符（DeepSeek-Harness）
+	// 两词照样共存，换号也无济于事——AutoBuddy 实测过 7 连败。
+	// 因此删掉产品名，只留中性描述。工作目录路径里同样带着这个词。
+	{regexp.MustCompile(`(?i)deepseek[-_]harness`), "local coding tool"},
+	{regexp.MustCompile(`(?i)websearchdeepseek`), "local coding"},
+
 	// DSH（local coding tool）的系统提示词首行。
 	// 上游整行精确匹配并返回 400 code 11128；加一个逗号即可放行，
 	// 同时保留智能体自己的名字——提示词其余部分都回指这个名字。

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -220,6 +222,23 @@ func (s *OpenAIGatewayService) forwardAsRawChatCompletionsWithStartTime(
 				}
 			}
 			targetURL = workBuddyConsoleChatURL(site.Endpoint)
+		}
+	}
+	// 国内版：补一个稳定派生的 conversationId。
+	//
+	// 官方桌面端每次真实对话都带这个字段，缺它时上游会按非官方客户端判定，
+	// 间歇性返回 400 code 11128 "Illegal API invocation from an unapproved
+	// channel"——同一模型时好时坏。AutoBuddy 用 machineId + messages 的
+	// md5 派生 "wb-<hash>" 补齐，这里照搬。
+	if isWorkBuddyPlatform(account.Platform) && !isWorkBuddyAIVariant(account.Platform) {
+		var reqBody map[string]any
+		if err := json.Unmarshal(upstreamBody, &reqBody); err == nil {
+			if _, ok := reqBody["conversationId"]; !ok {
+				reqBody["conversationId"] = workBuddyDeriveConversationID(account, reqBody["messages"])
+				if merged, mErr := json.Marshal(reqBody); mErr == nil {
+					upstreamBody = merged
+				}
+			}
 		}
 	}
 	// WorkBuddy 上游只接受流式请求：非流式会被直接拒绝（code 11101
@@ -818,4 +837,31 @@ type workBuddyAggToolCall struct {
 	Type      string
 	Name      string
 	Arguments strings.Builder
+}
+
+// workBuddyDeriveConversationID 为国内版请求派生稳定的 conversationId。
+//
+// 移植自 AutoBuddy relay.go 的 deriveConversationID：seed 取账号指纹的
+// machineId（无则 uid），拼上 messages 的前 512 字节做 md5，得到
+// "wb-<hash>"。同一账号对同一消息序列产生稳定值，不同请求互不冲突。
+func workBuddyDeriveConversationID(account *Account, messages any) string {
+	seed := ""
+	if fp := account.workBuddyFingerprint(); fp.MachineID != "" {
+		seed = strings.TrimSpace(fp.MachineID)
+	}
+	if seed == "" {
+		seed = strings.TrimSpace(account.workBuddyUIDOf())
+	}
+	if seed == "" {
+		seed = "wb"
+	}
+	msgJSON, err := json.Marshal(messages)
+	if err != nil {
+		msgJSON = []byte("[]")
+	}
+	if len(msgJSON) > 512 {
+		msgJSON = msgJSON[:512]
+	}
+	sum := md5.Sum([]byte(seed + "|" + string(msgJSON)))
+	return "wb-" + hex.EncodeToString(sum[:])
 }

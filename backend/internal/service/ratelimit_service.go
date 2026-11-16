@@ -594,7 +594,68 @@ func buildForbiddenErrorMessage(prefix string, upstreamMsg string, responseBody 
 
 // handle403 处理 403 Forbidden 错误。Cloudflare 1010 是请求/边缘级拦截，
 // 不应将其视为账号级故障；其他真实 403 继续按平台策略处理。
+// marvisRiskControl403Codes 是 Marvis 上游用 403 表达「风控/配额」的错误码。
+//
+// 这些码和 401 的语义完全不同：凭据是好的，只是这一刻被拦。
+// magpie 的实测记录：uskey 一个只能用两次，第 3 次起 403，等 75 秒仍是 403
+// （是配额不是频率）。把这类 403 当成认证失败去 SetError，会把一批本来健康
+// 的账号永久标成 error —— 实测 4 个账号在一次风控里全被禁，而手动逐个测试
+// 全部能正常出流。
+var marvisRiskControl403Codes = []string{
+	"4100406", // 非法请求
+	"4100405", // 风控拦截
+}
+
+// marvisIsRiskControl403 判断这个 403 是否属于「暂时被风控」而非凭据失效。
+func marvisIsRiskControl403(account *Account, responseBody []byte) bool {
+	if account == nil || account.Platform != PlatformMarvis {
+		return false
+	}
+	body := string(responseBody)
+	for _, code := range marvisRiskControl403Codes {
+		if strings.Contains(body, code) {
+			return true
+		}
+	}
+	return false
+}
+
+// setMarvisRiskCooldown 让账号在冷却期内不被调度，但不改名 status。
+//
+// 与 SetError 的区别：冷却到期后账号自动回到调度池，无需人工干预；
+// status 始终是 active，不会在列表里显示成「异常」。
+func (s *RateLimitService) setMarvisRiskCooldown(account *Account, d time.Duration) {
+	if s.accountRepo == nil || account == nil {
+		return
+	}
+	until := time.Now().Add(d)
+	reason := "Marvis 风控拦截，冷却后自动恢复"
+	ctx := context.Background()
+	if err := s.accountRepo.SetTempUnschedulable(ctx, account.ID, until, reason); err != nil {
+		slog.Warn("marvis_risk_cooldown_failed", "account_id", account.ID, "error", err)
+	}
+}
+
+// marvisRiskControlCooldown 是风控命中后的冷却时长。
+//
+// 取 90 秒：比 uskey 配额恢复的 75 秒略长，给上游一点余量；
+// 同时短到不会让账号长期缺席调度。
+const marvisRiskControlCooldown = 90 * time.Second
+
 func (s *RateLimitService) handle403(ctx context.Context, account *Account, upstreamMsg string, responseBody []byte) (shouldDisable bool) {
+	// Marvis 的风控 403 不是认证失败：短暂冷却后自动重回调度，
+	// 不能走 SetError 永久禁用。
+	if marvisIsRiskControl403(account, responseBody) {
+		slog.Warn(
+			"marvis_risk_control_403_cooldown",
+			"account_id", account.ID,
+			"cooldown_seconds", int(marvisRiskControlCooldown.Seconds()),
+			"upstream_message", upstreamMsg,
+		)
+		s.setMarvisRiskCooldown(account, marvisRiskControlCooldown)
+		return false
+	}
+
 	if isCloudflareBotBlockResponse(responseBody) {
 		slog.Warn(
 			"403_cloudflare_bot_block_skips_account_penalty",

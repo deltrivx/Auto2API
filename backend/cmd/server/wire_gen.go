@@ -332,6 +332,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 		PromptAudit:      promptService,
 		Cleanup:          v,
 		MarvisWalletSync: marvisWalletSyncService,
+		MarvisCreditSync: marvisCreditSyncService,
 	}
 	return application, nil
 }

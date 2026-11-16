@@ -174,6 +174,14 @@ func runMainServer() {
 		defer cancelMarvisSync()
 		app.MarvisWalletSync.Start(marvisSyncCtx)
 	}
+	// 仪表盘的 Marvis 汇总走独立快照：它跨账号求和，而 WalletSync 只刷新
+	// 单账号字段。此前这里没有启动，看板一直显示首次查询时的账号数，
+	// 新加的账号不会计入总额。
+	if app.MarvisCreditSync != nil {
+		marvisCreditCtx, cancelMarvisCredit := context.WithCancel(context.Background())
+		defer cancelMarvisCredit()
+		app.MarvisCreditSync.Start(marvisCreditCtx)
+	}
 	defer app.Cleanup()
 	if app.PromptAudit != nil {
 		if err := app.PromptAudit.Start(context.Background()); err != nil {

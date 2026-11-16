@@ -153,20 +153,6 @@ func (_c *AccountCreate) SetNillableLoadFactor(v *int) *AccountCreate {
 	return _c
 }
 
-// SetOwnerID sets the "owner_id" field.
-func (_c *AccountCreate) SetOwnerID(v int64) *AccountCreate {
-	_c.mutation.SetOwnerID(v)
-	return _c
-}
-
-// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
-func (_c *AccountCreate) SetNillableOwnerID(v *int64) *AccountCreate {
-	if v != nil {
-		_c.SetOwnerID(*v)
-	}
-	return _c
-}
-
 // SetPriority sets the "priority" field.
 func (_c *AccountCreate) SetPriority(v int) *AccountCreate {
 	_c.mutation.SetPriority(v)
@@ -543,10 +529,6 @@ func (_c *AccountCreate) defaults() {
 		v := account.DefaultConcurrency
 		_c.mutation.SetConcurrency(v)
 	}
-	if _, ok := _c.mutation.OwnerID(); !ok {
-		v := account.DefaultOwnerID
-		_c.mutation.SetOwnerID(v)
-	}
 	if _, ok := _c.mutation.Priority(); !ok {
 		v := account.DefaultPriority
 		_c.mutation.SetPriority(v)
@@ -613,9 +595,6 @@ func (_c *AccountCreate) check() error {
 	}
 	if _, ok := _c.mutation.Concurrency(); !ok {
 		return &ValidationError{Name: "concurrency", err: errors.New(`ent: missing required field "Account.concurrency"`)}
-	}
-	if _, ok := _c.mutation.OwnerID(); !ok {
-		return &ValidationError{Name: "owner_id", err: errors.New(`ent: missing required field "Account.owner_id"`)}
 	}
 	if _, ok := _c.mutation.Priority(); !ok {
 		return &ValidationError{Name: "priority", err: errors.New(`ent: missing required field "Account.priority"`)}
@@ -720,10 +699,6 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LoadFactor(); ok {
 		_spec.SetField(account.FieldLoadFactor, field.TypeInt, value)
 		_node.LoadFactor = &value
-	}
-	if value, ok := _c.mutation.OwnerID(); ok {
-		_spec.SetField(account.FieldOwnerID, field.TypeInt64, value)
-		_node.OwnerID = value
 	}
 	if value, ok := _c.mutation.Priority(); ok {
 		_spec.SetField(account.FieldPriority, field.TypeInt, value)
@@ -1102,24 +1077,6 @@ func (u *AccountUpsert) AddLoadFactor(v int) *AccountUpsert {
 // ClearLoadFactor clears the value of the "load_factor" field.
 func (u *AccountUpsert) ClearLoadFactor() *AccountUpsert {
 	u.SetNull(account.FieldLoadFactor)
-	return u
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (u *AccountUpsert) SetOwnerID(v int64) *AccountUpsert {
-	u.Set(account.FieldOwnerID, v)
-	return u
-}
-
-// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
-func (u *AccountUpsert) UpdateOwnerID() *AccountUpsert {
-	u.SetExcluded(account.FieldOwnerID)
-	return u
-}
-
-// AddOwnerID adds v to the "owner_id" field.
-func (u *AccountUpsert) AddOwnerID(v int64) *AccountUpsert {
-	u.Add(account.FieldOwnerID, v)
 	return u
 }
 
@@ -1668,27 +1625,6 @@ func (u *AccountUpsertOne) UpdateLoadFactor() *AccountUpsertOne {
 func (u *AccountUpsertOne) ClearLoadFactor() *AccountUpsertOne {
 	return u.Update(func(s *AccountUpsert) {
 		s.ClearLoadFactor()
-	})
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (u *AccountUpsertOne) SetOwnerID(v int64) *AccountUpsertOne {
-	return u.Update(func(s *AccountUpsert) {
-		s.SetOwnerID(v)
-	})
-}
-
-// AddOwnerID adds v to the "owner_id" field.
-func (u *AccountUpsertOne) AddOwnerID(v int64) *AccountUpsertOne {
-	return u.Update(func(s *AccountUpsert) {
-		s.AddOwnerID(v)
-	})
-}
-
-// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
-func (u *AccountUpsertOne) UpdateOwnerID() *AccountUpsertOne {
-	return u.Update(func(s *AccountUpsert) {
-		s.UpdateOwnerID()
 	})
 }
 
@@ -2453,27 +2389,6 @@ func (u *AccountUpsertBulk) UpdateLoadFactor() *AccountUpsertBulk {
 func (u *AccountUpsertBulk) ClearLoadFactor() *AccountUpsertBulk {
 	return u.Update(func(s *AccountUpsert) {
 		s.ClearLoadFactor()
-	})
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (u *AccountUpsertBulk) SetOwnerID(v int64) *AccountUpsertBulk {
-	return u.Update(func(s *AccountUpsert) {
-		s.SetOwnerID(v)
-	})
-}
-
-// AddOwnerID adds v to the "owner_id" field.
-func (u *AccountUpsertBulk) AddOwnerID(v int64) *AccountUpsertBulk {
-	return u.Update(func(s *AccountUpsert) {
-		s.AddOwnerID(v)
-	})
-}
-
-// UpdateOwnerID sets the "owner_id" field to the value that was provided on create.
-func (u *AccountUpsertBulk) UpdateOwnerID() *AccountUpsertBulk {
-	return u.Update(func(s *AccountUpsert) {
-		s.UpdateOwnerID()
 	})
 }
 

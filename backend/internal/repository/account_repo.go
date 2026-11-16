@@ -158,7 +158,6 @@ func createAccountRecord(ctx context.Context, client *dbent.Client, account *ser
 		SetExtra(normalizeJSONMap(account.Extra)).
 		SetConcurrency(account.Concurrency).
 		SetPriority(account.Priority).
-		SetOwnerID(account.OwnerID).
 		SetStatus(account.Status).
 		SetErrorMessage(account.ErrorMessage).
 		SetSchedulable(account.Schedulable).
@@ -3332,7 +3331,6 @@ func accountEntityToService(m *dbent.Account) *service.Account {
 		ProxyFallbackOriginID:   m.ProxyFallbackOriginID,
 		Concurrency:             m.Concurrency,
 		Priority:                m.Priority,
-		OwnerID:                 m.OwnerID,
 		RateMultiplier:          &rateMultiplier,
 		LoadFactor:              m.LoadFactor,
 		Status:                  m.Status,

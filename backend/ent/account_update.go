@@ -206,27 +206,6 @@ func (_u *AccountUpdate) ClearLoadFactor() *AccountUpdate {
 	return _u
 }
 
-// SetOwnerID sets the "owner_id" field.
-func (_u *AccountUpdate) SetOwnerID(v int64) *AccountUpdate {
-	_u.mutation.ResetOwnerID()
-	_u.mutation.SetOwnerID(v)
-	return _u
-}
-
-// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
-func (_u *AccountUpdate) SetNillableOwnerID(v *int64) *AccountUpdate {
-	if v != nil {
-		_u.SetOwnerID(*v)
-	}
-	return _u
-}
-
-// AddOwnerID adds value to the "owner_id" field.
-func (_u *AccountUpdate) AddOwnerID(v int64) *AccountUpdate {
-	_u.mutation.AddOwnerID(v)
-	return _u
-}
-
 // SetPriority sets the "priority" field.
 func (_u *AccountUpdate) SetPriority(v int) *AccountUpdate {
 	_u.mutation.ResetPriority()
@@ -845,12 +824,6 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.LoadFactorCleared() {
 		_spec.ClearField(account.FieldLoadFactor, field.TypeInt)
 	}
-	if value, ok := _u.mutation.OwnerID(); ok {
-		_spec.SetField(account.FieldOwnerID, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AddedOwnerID(); ok {
-		_spec.AddField(account.FieldOwnerID, field.TypeInt64, value)
-	}
 	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(account.FieldPriority, field.TypeInt, value)
 	}
@@ -1338,27 +1311,6 @@ func (_u *AccountUpdateOne) AddLoadFactor(v int) *AccountUpdateOne {
 // ClearLoadFactor clears the value of the "load_factor" field.
 func (_u *AccountUpdateOne) ClearLoadFactor() *AccountUpdateOne {
 	_u.mutation.ClearLoadFactor()
-	return _u
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (_u *AccountUpdateOne) SetOwnerID(v int64) *AccountUpdateOne {
-	_u.mutation.ResetOwnerID()
-	_u.mutation.SetOwnerID(v)
-	return _u
-}
-
-// SetNillableOwnerID sets the "owner_id" field if the given value is not nil.
-func (_u *AccountUpdateOne) SetNillableOwnerID(v *int64) *AccountUpdateOne {
-	if v != nil {
-		_u.SetOwnerID(*v)
-	}
-	return _u
-}
-
-// AddOwnerID adds value to the "owner_id" field.
-func (_u *AccountUpdateOne) AddOwnerID(v int64) *AccountUpdateOne {
-	_u.mutation.AddOwnerID(v)
 	return _u
 }
 
@@ -2009,12 +1961,6 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 	}
 	if _u.mutation.LoadFactorCleared() {
 		_spec.ClearField(account.FieldLoadFactor, field.TypeInt)
-	}
-	if value, ok := _u.mutation.OwnerID(); ok {
-		_spec.SetField(account.FieldOwnerID, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AddedOwnerID(); ok {
-		_spec.AddField(account.FieldOwnerID, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.Priority(); ok {
 		_spec.SetField(account.FieldPriority, field.TypeInt, value)

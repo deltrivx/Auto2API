@@ -105,11 +105,6 @@ func LoadFactor(v int) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldLoadFactor, v))
 }
 
-// OwnerID applies equality check predicate on the "owner_id" field. It's identical to OwnerIDEQ.
-func OwnerID(v int64) predicate.Account {
-	return predicate.Account(sql.FieldEQ(FieldOwnerID, v))
-}
-
 // Priority applies equality check predicate on the "priority" field. It's identical to PriorityEQ.
 func Priority(v int) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldPriority, v))
@@ -713,46 +708,6 @@ func LoadFactorIsNil() predicate.Account {
 // LoadFactorNotNil applies the NotNil predicate on the "load_factor" field.
 func LoadFactorNotNil() predicate.Account {
 	return predicate.Account(sql.FieldNotNull(FieldLoadFactor))
-}
-
-// OwnerIDEQ applies the EQ predicate on the "owner_id" field.
-func OwnerIDEQ(v int64) predicate.Account {
-	return predicate.Account(sql.FieldEQ(FieldOwnerID, v))
-}
-
-// OwnerIDNEQ applies the NEQ predicate on the "owner_id" field.
-func OwnerIDNEQ(v int64) predicate.Account {
-	return predicate.Account(sql.FieldNEQ(FieldOwnerID, v))
-}
-
-// OwnerIDIn applies the In predicate on the "owner_id" field.
-func OwnerIDIn(vs ...int64) predicate.Account {
-	return predicate.Account(sql.FieldIn(FieldOwnerID, vs...))
-}
-
-// OwnerIDNotIn applies the NotIn predicate on the "owner_id" field.
-func OwnerIDNotIn(vs ...int64) predicate.Account {
-	return predicate.Account(sql.FieldNotIn(FieldOwnerID, vs...))
-}
-
-// OwnerIDGT applies the GT predicate on the "owner_id" field.
-func OwnerIDGT(v int64) predicate.Account {
-	return predicate.Account(sql.FieldGT(FieldOwnerID, v))
-}
-
-// OwnerIDGTE applies the GTE predicate on the "owner_id" field.
-func OwnerIDGTE(v int64) predicate.Account {
-	return predicate.Account(sql.FieldGTE(FieldOwnerID, v))
-}
-
-// OwnerIDLT applies the LT predicate on the "owner_id" field.
-func OwnerIDLT(v int64) predicate.Account {
-	return predicate.Account(sql.FieldLT(FieldOwnerID, v))
-}
-
-// OwnerIDLTE applies the LTE predicate on the "owner_id" field.
-func OwnerIDLTE(v int64) predicate.Account {
-	return predicate.Account(sql.FieldLTE(FieldOwnerID, v))
 }
 
 // PriorityEQ applies the EQ predicate on the "priority" field.

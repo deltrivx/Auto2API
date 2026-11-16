@@ -39,8 +39,6 @@ const (
 	FieldConcurrency = "concurrency"
 	// FieldLoadFactor holds the string denoting the load_factor field in the database.
 	FieldLoadFactor = "load_factor"
-	// FieldOwnerID holds the string denoting the owner_id field in the database.
-	FieldOwnerID = "owner_id"
 	// FieldPriority holds the string denoting the priority field in the database.
 	FieldPriority = "priority"
 	// FieldRateMultiplier holds the string denoting the rate_multiplier field in the database.
@@ -142,7 +140,6 @@ var Columns = []string{
 	FieldProxyFallbackOriginID,
 	FieldConcurrency,
 	FieldLoadFactor,
-	FieldOwnerID,
 	FieldPriority,
 	FieldRateMultiplier,
 	FieldStatus,
@@ -198,8 +195,6 @@ var (
 	DefaultExtra func() map[string]interface{}
 	// DefaultConcurrency holds the default value on creation for the "concurrency" field.
 	DefaultConcurrency int
-	// DefaultOwnerID holds the default value on creation for the "owner_id" field.
-	DefaultOwnerID int64
 	// DefaultPriority holds the default value on creation for the "priority" field.
 	DefaultPriority int
 	// DefaultRateMultiplier holds the default value on creation for the "rate_multiplier" field.
@@ -298,11 +293,6 @@ func ByConcurrency(opts ...sql.OrderTermOption) OrderOption {
 // ByLoadFactor orders the results by the load_factor field.
 func ByLoadFactor(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLoadFactor, opts...).ToFunc()
-}
-
-// ByOwnerID orders the results by the owner_id field.
-func ByOwnerID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldOwnerID, opts...).ToFunc()
 }
 
 // ByPriority orders the results by the priority field.

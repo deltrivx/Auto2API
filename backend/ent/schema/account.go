@@ -100,11 +100,6 @@ func (Account) Fields() []ent.Field {
 
 		field.Int("load_factor").Optional().Nillable(),
 
-		// owner_id: 账号创建者用户 ID。
-		// 0 表示历史账号或管理员创建，归管理员所有。
-		// 普通用户只能编辑/删除自己创建的账号，他人账号只读。
-		field.Int64("owner_id").
-			Default(0),
 
 		// priority: 账户优先级，数值越小优先级越高
 		// 调度器会优先使用高优先级的账户

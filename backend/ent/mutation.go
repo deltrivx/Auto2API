@@ -2226,8 +2226,6 @@ type AccountMutation struct {
 	addconcurrency              *int
 	load_factor                 *int
 	addload_factor              *int
-	owner_id                    *int64
-	addowner_id                 *int64
 	priority                    *int
 	addpriority                 *int
 	rate_multiplier             *float64
@@ -2908,62 +2906,6 @@ func (m *AccountMutation) ResetLoadFactor() {
 	m.load_factor = nil
 	m.addload_factor = nil
 	delete(m.clearedFields, account.FieldLoadFactor)
-}
-
-// SetOwnerID sets the "owner_id" field.
-func (m *AccountMutation) SetOwnerID(i int64) {
-	m.owner_id = &i
-	m.addowner_id = nil
-}
-
-// OwnerID returns the value of the "owner_id" field in the mutation.
-func (m *AccountMutation) OwnerID() (r int64, exists bool) {
-	v := m.owner_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldOwnerID returns the old "owner_id" field's value of the Account entity.
-// If the Account object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountMutation) OldOwnerID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldOwnerID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldOwnerID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldOwnerID: %w", err)
-	}
-	return oldValue.OwnerID, nil
-}
-
-// AddOwnerID adds i to the "owner_id" field.
-func (m *AccountMutation) AddOwnerID(i int64) {
-	if m.addowner_id != nil {
-		*m.addowner_id += i
-	} else {
-		m.addowner_id = &i
-	}
-}
-
-// AddedOwnerID returns the value that was added to the "owner_id" field in this mutation.
-func (m *AccountMutation) AddedOwnerID() (r int64, exists bool) {
-	v := m.addowner_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetOwnerID resets all changes to the "owner_id" field.
-func (m *AccountMutation) ResetOwnerID() {
-	m.owner_id = nil
-	m.addowner_id = nil
 }
 
 // SetPriority sets the "priority" field.
@@ -4073,7 +4015,7 @@ func (m *AccountMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AccountMutation) Fields() []string {
-	fields := make([]string, 0, 31)
+	fields := make([]string, 0, 30)
 	if m.created_at != nil {
 		fields = append(fields, account.FieldCreatedAt)
 	}
@@ -4109,9 +4051,6 @@ func (m *AccountMutation) Fields() []string {
 	}
 	if m.load_factor != nil {
 		fields = append(fields, account.FieldLoadFactor)
-	}
-	if m.owner_id != nil {
-		fields = append(fields, account.FieldOwnerID)
 	}
 	if m.priority != nil {
 		fields = append(fields, account.FieldPriority)
@@ -4199,8 +4138,6 @@ func (m *AccountMutation) Field(name string) (ent.Value, bool) {
 		return m.Concurrency()
 	case account.FieldLoadFactor:
 		return m.LoadFactor()
-	case account.FieldOwnerID:
-		return m.OwnerID()
 	case account.FieldPriority:
 		return m.Priority()
 	case account.FieldRateMultiplier:
@@ -4270,8 +4207,6 @@ func (m *AccountMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldConcurrency(ctx)
 	case account.FieldLoadFactor:
 		return m.OldLoadFactor(ctx)
-	case account.FieldOwnerID:
-		return m.OldOwnerID(ctx)
 	case account.FieldPriority:
 		return m.OldPriority(ctx)
 	case account.FieldRateMultiplier:
@@ -4400,13 +4335,6 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLoadFactor(v)
-		return nil
-	case account.FieldOwnerID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetOwnerID(v)
 		return nil
 	case account.FieldPriority:
 		v, ok := value.(int)
@@ -4551,9 +4479,6 @@ func (m *AccountMutation) AddedFields() []string {
 	if m.addload_factor != nil {
 		fields = append(fields, account.FieldLoadFactor)
 	}
-	if m.addowner_id != nil {
-		fields = append(fields, account.FieldOwnerID)
-	}
 	if m.addpriority != nil {
 		fields = append(fields, account.FieldPriority)
 	}
@@ -4574,8 +4499,6 @@ func (m *AccountMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedConcurrency()
 	case account.FieldLoadFactor:
 		return m.AddedLoadFactor()
-	case account.FieldOwnerID:
-		return m.AddedOwnerID()
 	case account.FieldPriority:
 		return m.AddedPriority()
 	case account.FieldRateMultiplier:
@@ -4609,13 +4532,6 @@ func (m *AccountMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddLoadFactor(v)
-		return nil
-	case account.FieldOwnerID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddOwnerID(v)
 		return nil
 	case account.FieldPriority:
 		v, ok := value.(int)
@@ -4792,9 +4708,6 @@ func (m *AccountMutation) ResetField(name string) error {
 		return nil
 	case account.FieldLoadFactor:
 		m.ResetLoadFactor()
-		return nil
-	case account.FieldOwnerID:
-		m.ResetOwnerID()
 		return nil
 	case account.FieldPriority:
 		m.ResetPriority()

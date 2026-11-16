@@ -1400,6 +1400,7 @@ export default {
       },
       // OAuth flow
       oauth: {
+        authorized: '授权成功',
         marvis: { title: 'Marvis 账号授权' },
         workbuddy: {
           title: 'WorkBuddy 账号授权'

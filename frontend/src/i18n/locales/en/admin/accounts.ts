@@ -1291,6 +1291,7 @@ export default {
       },
       // OAuth flow
       oauth: {
+        authorized: 'Authorised',
         marvis: { title: 'Marvis account sign-in' },
         workbuddy: {
           title: 'WorkBuddy Authorization'

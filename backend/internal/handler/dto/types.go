@@ -226,8 +226,6 @@ type Account struct {
 	Concurrency             int                            `json:"concurrency"`
 	LoadFactor              *int                           `json:"load_factor,omitempty"`
 	Priority                int                            `json:"priority"`
-	// OwnerID 是创建者用户 ID；0 表示历史/管理员账号。
-	OwnerID            int64      `json:"owner_id"`
 	RateMultiplier     float64    `json:"rate_multiplier"`
 	Status             string     `json:"status"`
 	ErrorMessage       string     `json:"error_message"`
@@ -356,7 +354,6 @@ type AccountListItem struct {
 	Concurrency             int        `json:"concurrency"`
 	LoadFactor              *int       `json:"load_factor,omitempty"`
 	Priority                int        `json:"priority"`
-	OwnerID                 int64      `json:"owner_id"`
 	RateMultiplier          float64    `json:"rate_multiplier"`
 	Status                  string     `json:"status"`
 	ErrorMessage            string     `json:"error_message"`

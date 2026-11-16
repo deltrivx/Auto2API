@@ -121,42 +121,6 @@ func currentAccountUser(c *gin.Context) (userID int64, isAdmin bool, ok bool) {
 	return userID, isAdmin, true
 }
 
-// requireOwnership 校验当前用户能否完整管理该账号。
-//
-// 管理员放行；普通用户只能管理自己创建的账号（owner_id 匹配）。
-// 校验失败时已写好响应，调用方直接 return。
-func (h *AccountHandler) requireOwnership(c *gin.Context, accountID int64) bool {
-	userID, isAdmin, ok := currentAccountUser(c)
-	if !ok {
-		response.Unauthorized(c, "未登录")
-		return false
-	}
-	if isAdmin {
-		return true
-	}
-	acc, err := h.adminService.GetAccount(c.Request.Context(), accountID)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return false
-	}
-	if !service.CanManageAccount(acc, userID, false) {
-		response.Forbidden(c, "无权限")
-		return false
-	}
-	return true
-}
-
-// sanitizeForViewer 按当前用户身份脱敏账号凭证。
-func sanitizeForViewer(c *gin.Context, acc *service.Account) {
-	userID, isAdmin, ok := currentAccountUser(c)
-	if !ok {
-		return
-	}
-	if !service.CanManageAccount(acc, userID, isAdmin) {
-		service.SanitizeAccountCredentials(acc)
-	}
-}
-
 type CreateAccountRequest struct {
 	Name                    string         `json:"name" binding:"required"`
 	Notes                   *string        `json:"notes"`
@@ -174,8 +138,6 @@ type CreateAccountRequest struct {
 	AutoPauseOnExpired      *bool          `json:"auto_pause_on_expired"`
 	ProbeEnabled            *bool          `json:"upstream_billing_probe_enabled"`
 	ConfirmMixedChannelRisk *bool          `json:"confirm_mixed_channel_risk"` // 用户确认混合渠道风险
-	// OwnerID 由服务端按当前登录用户填写，客户端传值会被覆盖。
-	OwnerID int64 `json:"-"`
 }
 
 // UpdateAccountRequest represents update account request
@@ -829,12 +791,6 @@ func (h *AccountHandler) List(c *gin.Context) {
 				accountResponse.GroupIDs = filterSimpleModeGroupIDs(accountResponse.GroupIDs, simpleModeCompositeServiceGroupIDs(acc))
 			}
 		}
-		// 他人账号的凭证脱敏：普通用户可查看但看不到 access_token 真值。
-		// owner_id 归当前用户或当前是管理员时保留明文。
-		if viewerID, viewerIsAdmin, ok := currentAccountUser(c); ok &&
-			!service.CanManageAccount(acc, viewerID, viewerIsAdmin) {
-			accountResponse.Credentials = service.MaskCredentials(acc.Credentials)
-		}
 
 		item := AccountWithConcurrency{
 			Account:            accountResponse,
@@ -1055,9 +1011,6 @@ func (h *AccountHandler) Create(c *gin.Context) {
 
 	// 记录创建者：普通用户创建的账号归其所有，可完整管理。
 	// 所有创建者都记录自己的 ID（含管理员）：归属清晰，便于审计。
-	if uid, _, ok := currentAccountUser(c); ok && uid > 0 {
-		req.OwnerID = uid
-	}
 
 	// 确定是否跳过混合渠道检查
 	skipCheck := req.ConfirmMixedChannelRisk != nil && *req.ConfirmMixedChannelRisk
@@ -1068,7 +1021,6 @@ func (h *AccountHandler) Create(c *gin.Context) {
 
 	result, err := executeAdminIdempotent(c, "admin.accounts.create", req, service.DefaultWriteIdempotencyTTL(), func(ctx context.Context) (any, error) {
 		account, execErr := h.adminService.CreateAccount(ctx, &service.CreateAccountInput{
-			OwnerID:               req.OwnerID,
 			Name:                  req.Name,
 			Notes:                 req.Notes,
 			Platform:              req.Platform,

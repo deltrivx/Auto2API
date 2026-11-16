@@ -71,7 +71,7 @@ export const useAdminSettingsStore = defineStore('adminSettings', () => {
 
       // 支付开关来自系统设置的 payment_enabled，不再请求 /admin/payment/config
       // ——该接口在后端并不存在，每次加载都会打一条 401。
-      paymentEnabled.value = String((settings as Record<string, unknown>).payment_enabled ?? '') === 'true'
+      paymentEnabled.value = settings.payment_enabled === true
       writeCachedBool('payment_enabled_cached', paymentEnabled.value)
 
       loaded.value = true

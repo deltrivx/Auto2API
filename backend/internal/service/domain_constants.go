@@ -44,7 +44,10 @@ const (
 	PlatformWorkBuddyCN   = domain.PlatformWorkBuddyCN
 	PlatformWorkBuddyIntl = domain.PlatformWorkBuddyIntl
 	// PlatformMarvis 是腾讯 Marvis 的模型网关（QQ / 微信 OAuth 登录）。
-	PlatformMarvis    = domain.PlatformMarvis
+	PlatformMarvis = domain.PlatformMarvis
+	// PlatformTraeCN / PlatformTraeIntl 是 Trae 的两个站点（浏览器 OAuth 登录）。
+	PlatformTraeCN    = domain.PlatformTraeCN
+	PlatformTraeIntl  = domain.PlatformTraeIntl
 	PlatformComposite = domain.PlatformComposite
 	// PlatformKiro is retained for unsupported-platform threshold tests and legacy
 	// account rows. Scheduling-threshold evaluation never pauses kiro accounts.

@@ -39,6 +39,8 @@ var platformList = []PlatformSpec{
 	{ID: PlatformWorkBuddyCN, DisplayName: "WorkBuddy 国内版", Gateway: PlatformGatewayOpenAI},
 	{ID: PlatformWorkBuddyIntl, DisplayName: "WorkBuddy 国际版", Gateway: PlatformGatewayOpenAI},
 	{ID: PlatformMarvis, DisplayName: "腾讯 Marvis", Gateway: PlatformGatewayOpenAI},
+	{ID: PlatformTraeCN, DisplayName: "Trae 国内版", Gateway: PlatformGatewayOpenAI},
+	{ID: PlatformTraeIntl, DisplayName: "Trae 国际版", Gateway: PlatformGatewayOpenAI},
 }
 
 var platformIndex = func() map[string]int {

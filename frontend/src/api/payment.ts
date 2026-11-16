@@ -5,6 +5,7 @@
 
 import { apiClient } from './client'
 import type {
+  PaymentConfig,
   SubscriptionPlan,
   MethodLimitsResponse,
   CheckoutInfoResponse,
@@ -23,6 +24,11 @@ export interface PublicOrderVerifyResult {
 }
 
 export const paymentAPI = {
+  /** 支付配置。路径是 /payment/config（用户侧），不是 admin 前缀。 */
+  getConfig() {
+    return apiClient.get<PaymentConfig>('/payment/config')
+  },
+
   /** Get available subscription plans */
   getPlans() {
     return apiClient.get<SubscriptionPlan[]>('/payment/plans')

@@ -11,24 +11,28 @@ import type { PaymentConfig, PaymentOrder, SubscriptionPlan, CreateOrderRequest 
 export const usePaymentStore = defineStore('payment', () => {
   // ==================== State ====================
 
-  /** Payment configuration from backend */
+  /**
+   * 支付配置，来自用户侧 /payment/config。
+   *
+   * admin 前缀下没有这个接口——之前误删时把路径当成了不存在的接口，
+   * 实际 401 只是因为设置页在登录前就发起了请求。
+   */
   const config = ref<PaymentConfig | null>(null)
+  const configLoading = ref(false)
+  const configLoaded = ref(false)
+  let configPromise: Promise<PaymentConfig | null> | null = null
+
   /** Currently active order (for payment flow) */
   const currentOrder = ref<PaymentOrder | null>(null)
   /** Available subscription plans */
   const plans = ref<SubscriptionPlan[]>([])
 
-  const configLoading = ref(false)
-  const configLoaded = ref(false)
-  let configPromise: Promise<PaymentConfig | null> | null = null
-
   // ==================== Actions ====================
 
-  /** Fetch payment configuration */
+  /** 拉取支付配置（带缓存与并发去重）。 */
   async function fetchConfig(force = false): Promise<PaymentConfig | null> {
     if (configLoaded.value && !force) return config.value
     if (configPromise) return configPromise
-
     configPromise = loadConfig()
     return configPromise
   }
@@ -95,11 +99,11 @@ export const usePaymentStore = defineStore('payment', () => {
 
   return {
     config,
-    currentOrder,
-    plans,
     configLoading,
     configLoaded,
     fetchConfig,
+    currentOrder,
+    plans,
     fetchPlans,
     createOrder,
     pollOrderStatus,

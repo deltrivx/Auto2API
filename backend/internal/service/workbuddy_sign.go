@@ -140,6 +140,17 @@ func workBuddyChatHeaders(h http.Header, site *workBuddySite) {
 	h.Set("X-Stainless-Arch", workBuddySDKArch())
 	h.Set("X-Stainless-Runtime", "node")
 	h.Set("X-Stainless-Runtime-Version", workBuddyNodeVersion)
+	// 官方桌面端字节级对齐所需的四项。
+	//
+	// AutoBuddy 的记录：这三项此前缺失，是 11128「Illegal API invocation
+	// from an unapproved channel」间歇性触发的直接原因——同样的账号和模型
+	// 在 AutoBuddy 上能过、在 Auto2API 上被拦，差别就在这几个头。
+	// Content-Type 必须带 charset，缺了同样按非官方客户端判定。
+	h.Set("X-Client-Platform", "desktop")
+	h.Set("X-Client-Product", "workbuddy-desktop")
+	h.Set("X-Client-Version", site.App)
+	h.Set("X-CodeBuddy-Request", "1")
+	h.Set("Content-Type", "application/json;charset=UTF-8")
 }
 
 // workBuddyApplyEnterpriseHeaders 写入企业身份头。

@@ -19,9 +19,9 @@
           ({{ t('payment.orders.fee') }} {{ row.fee_rate }}%)
         </span>
         <div v-if="row.amount !== row.pay_amount || (row.bonus_amount ?? 0) > 0" class="text-xs text-gray-500">
-          {{ t('payment.orders.creditedAmount') }}: {{ creditedAmountSymbol }}{{ row.amount.toFixed(2) }}
+          {{ t('payment.orders.creditedAmount') }}: {{ row.amount.toFixed(2) }} {{ t('admin.accounts.creditsUnit') }}
           <span v-if="(row.bonus_amount ?? 0) > 0" class="ml-1 text-amber-600 dark:text-amber-400">
-            ({{ t('payment.orders.bonusIncluded', { amount: creditedAmountSymbol + (row.bonus_amount ?? 0).toFixed(2) }) }})
+            ({{ t('payment.orders.bonusIncluded', { amount: (row.bonus_amount ?? 0).toFixed(2) + ' ' + t('admin.accounts.creditsUnit') }) }})
           </span>
         </div>
       </div>
@@ -59,8 +59,6 @@ const props = defineProps<{
 }>()
 
 function formatDate(dateStr: string) { return new Date(dateStr).toLocaleString() }
-
-const creditedAmountSymbol = currencySymbol('USD')
 
 function paymentAmountSymbol(order: PaymentOrder): string {
   return currencySymbol(order.currency)

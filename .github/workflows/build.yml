@@ -72,7 +72,7 @@ jobs:
           go build \
             -tags embed \
             -trimpath \
-            -ldflags "-s -w -X main.Version=${APP_VERSION}" \
+            -ldflags "-s -w -X main.Version=${APP_VERSION} -X main.BuildType=release" \
             -o ../auto2api \
             ./cmd/server
 

@@ -56,17 +56,22 @@ jobs:
           echo "frontend dist:"
           ls -la backend/internal/web/dist | head -20
 
+      - name: Resolve version
+        id: version
+        run: echo "value=$(./scripts/resolve-version.sh)" >> "$GITHUB_OUTPUT"
+
       - name: Build backend
         working-directory: backend
         env:
           CGO_ENABLED: '0'
           GOOS: linux
           GOARCH: amd64
+          APP_VERSION: ${{ steps.version.outputs.value }}
         run: |
           go build \
             -tags embed \
             -trimpath \
-            -ldflags "-s -w -X main.Version=${GITHUB_REF_NAME}" \
+            -ldflags "-s -w -X main.Version=${APP_VERSION}" \
             -o ../auto2api \
             ./cmd/server
 

@@ -240,6 +240,5 @@ WorkBuddy 的私有模型（`auto`、`balanced-model`、`codewise-*` 等）不�
 
 ## 致谢
 
-- [AutoBuddy](https://github.com/DeltrivX/AutoBuddy) — 账号池调度与巡检的思路上游
 - [LiteLLM](https://github.com/BerriAI/litellm) — 通用模型价格数据
 - [Simple Icons](https://simpleicons.org/) — 平台标识

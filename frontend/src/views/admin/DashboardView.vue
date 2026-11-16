@@ -590,16 +590,17 @@ const formatNumber = (value: number | null | undefined): string => {
   return toFiniteNumber(value).toLocaleString()
 }
 
+// 积分/消费金额统一保留两位小数。
+//
+// 千位以上改用 K 单位，避免长数字挤占卡片宽度；两位小数在 K 之后仍然保留，
+// 小到 0.00 也照常显示，不再按量级切换精度——同一排卡片的数字精度必须一致，
+// 否则 1.234 和 0.1234 混在一起很难横向比较。
 const formatCost = (value: number | null | undefined): string => {
   const safeValue = toFiniteNumber(value)
-  if (safeValue >= 1000) {
+  if (Math.abs(safeValue) >= 1000) {
     return (safeValue / 1000).toFixed(2) + 'K'
-  } else if (safeValue >= 1) {
-    return safeValue.toFixed(2)
-  } else if (safeValue >= 0.01) {
-    return safeValue.toFixed(3)
   }
-  return safeValue.toFixed(4)
+  return safeValue.toFixed(2)
 }
 
 const formatDuration = (ms: number): string => {

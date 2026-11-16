@@ -69,6 +69,12 @@ function fmtCard(v: number): string {
   return fmt(v)
 }
 
+// 第 3、4 张卡是 Marvis 与合计，量级可达千万，用 K 压缩显示。
+// 小数位保持两位：1,234,567 → 1,234.57K，量级与精度兼顾。
+function fmtCardK(v: number): string {
+  return `${fmt(v / 1_000)}K`
+}
+
 // 两个快照都到齐才算就绪：只到一半会让第 4 张卡短暂显示偏小的合计数。
 const ready = computed(() => {
   const wb = snap.value
@@ -124,7 +130,7 @@ const cards = computed<Card[]>(() => {
     {
       key: 'marvis',
       label: t('admin.accounts.creditsMarvis'),
-      value: fmtCard(mvTotal),
+      value: fmtCardK(mvTotal),
       hint: t('admin.accounts.creditsMarvisAvailableHint'),
       icon: 'clock',
       color: 'text-cyan-600 dark:text-cyan-400',
@@ -133,7 +139,7 @@ const cards = computed<Card[]>(() => {
     {
       key: 'all',
       label: t('admin.accounts.creditsAllPlatforms'),
-      value: fmtCard(wbTotal + mvTotal),
+      value: fmtCardK(wbTotal + mvTotal),
       hint: t('admin.accounts.creditsAllPlatformsHint'),
       icon: 'grid',
       color: 'text-amber-600 dark:text-amber-400',

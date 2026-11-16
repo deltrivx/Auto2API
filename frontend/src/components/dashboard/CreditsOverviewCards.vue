@@ -61,19 +61,11 @@ function fmt(v: number): string {
   return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// 卡片里的数值格式化。
+// 卡片里的数值格式化：统一千分位 + 两位小数。
 //
-// Marvis 额度是千万级，直接铺开会在移动端两列窄卡里被截断。改用 M（百万）
-// 作单位：20,000,000 → 20.00M，只需 6 个字符，360px 下也放得下。
-// 低于 100 万仍显示完整千分位数，避免小数值被压缩得看不出量级。
-const K_THRESHOLD = 1_000
-
-function trim(v: number, digits = 2): string {
-  return v.toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits })
-}
-
+// 四张卡片口径一致，量级差异交给千分位表达（9,244.00 / 7,646.00），
+// 不再对数值切换 K / M 单位——同一排卡片里混用单位会让大小难以横向比较。
 function fmtCard(v: number): string {
-  if (Math.abs(v) >= K_THRESHOLD) return `${trim(v / 1_000)}K`
   return fmt(v)
 }
 
@@ -143,7 +135,7 @@ const cards = computed<Card[]>(() => {
       label: t('admin.accounts.creditsAllPlatforms'),
       value: fmtCard(wbTotal + mvTotal),
       hint: t('admin.accounts.creditsAllPlatformsHint'),
-      icon: 'trophy',
+      icon: 'grid',
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-900/20'
     }

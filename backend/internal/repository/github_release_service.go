@@ -179,6 +179,29 @@ func (c *githubReleaseClient) FetchRecentReleases(ctx context.Context, repo stri
 }
 
 func (c *githubReleaseClient) DownloadFile(ctx context.Context, url, dest string, maxSize int64) error {
+	// 下载与连接可能因链路抖动失败（实测 release-assets 偶发
+	// "dial tcp ...: i/o timeout"，同一 URL 换一次就成功）。
+	// 这里按退避重试，重试期间重新走完整的请求与文件创建流程。
+	const attempts = 3
+	var lastErr error
+	for i := 0; i < attempts; i++ {
+		if i > 0 {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(time.Duration(i) * 2 * time.Second):
+			}
+		}
+		if err := c.downloadFileOnce(ctx, url, dest, maxSize); err != nil {
+			lastErr = err
+			continue
+		}
+		return nil
+	}
+	return fmt.Errorf("download failed after %d attempts: %w", attempts, lastErr)
+}
+
+func (c *githubReleaseClient) downloadFileOnce(ctx context.Context, url, dest string, maxSize int64) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err

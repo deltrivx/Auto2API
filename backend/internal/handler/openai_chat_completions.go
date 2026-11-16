@@ -51,7 +51,6 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 	}
 
 	body, err := readLenientJSONRequestBodyWithPrealloc(c.Request, h.cfg)
-	debugRequestBody := body
 	if err != nil {
 		if handleRequestBodyReadError(c, reqLog, err) {
 			return
@@ -409,20 +408,12 @@ func (h *OpenAIGatewayHandler) ChatCompletions(c *gin.Context) {
 						wroteFallback = h.ensureForwardErrorResponse(c, streamStarted)
 					}
 				}
-				{
-					preview := debugRequestBody
-					if len(preview) > 6000 {
-						preview = preview[:6000]
-					}
-					reqLog.Warn("openai_chat_completions.forward_failed",
-						zap.Int64("account_id", account.ID),
-						zap.Bool("fallback_error_response_written", wroteFallback),
-						zap.Bool("upstream_error_response_already_written", upstreamErrorAlreadyCommunicated),
-						zap.Error(err),
-						zap.Int("request_body_len", len(debugRequestBody)),
-						zap.String("request_body", string(preview)),
-					)
-				}
+				reqLog.Warn("openai_chat_completions.forward_failed",
+					zap.Int64("account_id", account.ID),
+					zap.Bool("fallback_error_response_written", wroteFallback),
+					zap.Bool("upstream_error_response_already_written", upstreamErrorAlreadyCommunicated),
+					zap.Error(err),
+				)
 				submitChatUsage(result)
 				return
 			}

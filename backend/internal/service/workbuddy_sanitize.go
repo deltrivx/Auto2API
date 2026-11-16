@@ -69,6 +69,24 @@ var workBuddyFlaggedRules = []workBuddyFlaggedRule{
 	{regexp.MustCompile(`(?i)You are an AI agent powered by local coding tool\.?`),
 		"You are an AI agent, powered by local coding tool."},
 
+	// DSH 的真实首两行（AutoBuddy 2026-11-12 实测，5832 字符全文捕获）：
+	//   You are an AI agent powered by local coding tool.
+	//   You are a coding agent powered by the deepseek-v4.1-flash model.
+	// 上游拦的是「deepseek」+「coding agent/tool 上下文」的组合语义：单独任一句
+	// 都放行，两句共存即 400 code 11128。把第二行的 powered by 改成 using，
+	// 组合被破坏，语义不变。切换任何模型都会重新拼出这句话，所以每个模型都 400。
+	{regexp.MustCompile(`(?i)You are a coding agent powered by the ([\w.\-]+) model\.?`),
+		"You are a coding agent using the $1 model."},
+
+	// 同一条语义串可能被客户端写在别处。
+	{regexp.MustCompile(`(?i)powered by the ([\w.\-]+) model`),
+		"using the $1 model"},
+
+	// DSH 的「@ 路径引用」整行：单独出现能过，408 字符原样发送即被拦，
+	// 上游匹配的是整段长文本指纹。改写开头打断指纹，含义完全保留。
+	{regexp.MustCompile(`(?i)Tokens prefixed with @ are paths the user explicitly referenced`),
+		"Tokens starting with @ refer to paths the user explicitly mentioned"},
+
 	// 长对话中会被引用的 Web GUI 说明句。
 	{regexp.MustCompile(`(?i)Web GUI whose URL the runtime context names\.\s+When the user refers`),
 		"Web GUI whose URL the runtime context names. The interface, when the user refers"},

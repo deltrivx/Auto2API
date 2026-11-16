@@ -874,6 +874,17 @@ func (s *OpenAIGatewayService) handleCompatErrorResponse(
 	}
 
 	upstreamMsg := strings.TrimSpace(extractUpstreamErrorMessage(body))
+	// 上游对内容审查失败往往返回空 body，客户端只看到 "Upstream error: 400"，
+	// 定位不到是哪段内容触发。这里把原始 body 与请求体摘要打进日志。
+	if resp.StatusCode == http.StatusBadRequest {
+		fields := []zap.Field{
+			zap.String("upstream_body", truncateString(string(body), 1024)),
+		}
+		if account != nil {
+			fields = append(fields, zap.Int64("account_id", account.ID))
+		}
+		logger.L().Warn("openai upstream 400", fields...)
+	}
 	if upstreamMsg == "" {
 		upstreamMsg = fmt.Sprintf("Upstream error: %d", resp.StatusCode)
 	}

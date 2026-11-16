@@ -19,6 +19,7 @@ type AdminHandlers struct {
 	// 不再注入到 AdminHandlers。
 	WorkBuddyOAuth         *admin.WorkBuddyOAuthHandler
 	MarvisOAuth            *admin.MarvisOAuthHandler
+	TraeOAuth              *admin.TraeOAuthHandler
 	WorkBuddyTask          *admin.WorkBuddyTaskHandler
 	Proxy                  *admin.ProxyHandler
 	Redeem                 *admin.RedeemHandler

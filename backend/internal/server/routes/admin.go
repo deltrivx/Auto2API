@@ -466,6 +466,19 @@ func registerWorkBuddyOAuthRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		marvis.GET("/accounts/:id/wallet", h.Admin.MarvisOAuth.Wallet)
 		marvis.GET("/accounts/:id/discover-models", h.Admin.MarvisOAuth.DiscoverModels)
 	}
+
+	// Trae：与 Marvis 同一条接入路径——授权页只接受 127.0.0.1 回调，
+	// 服务器收不到，所以由用户把地址栏里的回调地址粘贴回来换登录态。
+	trae := admin.Group("/trae")
+	{
+		trae.POST("/oauth/auth-url", h.Admin.TraeOAuth.GenerateAuthURL)
+		trae.POST("/oauth/callback", h.Admin.TraeOAuth.CompleteAuth)
+		trae.GET("/accounts/:id/models", h.Admin.TraeOAuth.Models)
+		trae.GET("/accounts/:id/credits", h.Admin.TraeOAuth.Credits)
+		trae.GET("/accounts/:id/device", h.Admin.TraeOAuth.Device)
+		trae.POST("/accounts/:id/device", h.Admin.TraeOAuth.RotateDevice)
+		trae.POST("/accounts/:id/refresh", h.Admin.TraeOAuth.Refresh)
+	}
 }
 
 func registerProxyRoutes(admin *gin.RouterGroup, h *handler.Handlers, stepUpAuth middleware.StepUpAuthMiddleware) {

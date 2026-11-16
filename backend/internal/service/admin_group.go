@@ -116,9 +116,10 @@ func (s *adminServiceImpl) GetGroupModelsListCandidates(ctx context.Context, id 
 			continue
 		}
 		// WorkBuddy 账号的映射是导入时的历史快照，缓存才是上游当前下发的清单。
+		accPtr := &acc
 		models := acc.GetModelMapping()
-		if IsWorkBuddyAccount(acc) {
-			if cached := WorkBuddyCachedModels(acc); len(cached) > 0 {
+		if IsWorkBuddyAccount(accPtr) {
+			if cached := WorkBuddyCachedModels(accPtr); len(cached) > 0 {
 				models = make(map[string]string, len(cached))
 				for _, m := range cached {
 					models[m.ID] = m.ID

@@ -31,8 +31,9 @@
         <div
           v-if="dropdownOpen"
           ref="dropdownRef"
-          class="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
+          class="z-50 overflow-hidden whitespace-normal rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-200 dark:border-dark-700 dark:bg-dark-800"
           :class="rollbackPanelOpen && isReleaseBuild ? 'w-[26rem]' : 'w-[24rem]'"
+          style="position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%)"
         >
           <!-- Header with refresh button -->
           <div
@@ -1103,10 +1104,11 @@ onBeforeUnmount(() => {
   transition: all 0.2s ease;
 }
 
+/* 弹窗用内联 transform 做屏幕居中，转场里不能再写 transform，
+   否则会覆盖居中偏移把弹窗推到视口外。只做淡入淡出。 */
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: scale(0.95) translateY(-4px);
 }
 
 .rollback-enter-active,

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Auto2API Admin"
+  short_description: "Manage Auto2API admin accounts and settings"
+  default_prompt: "Use $auto2api-admin to inspect and manage Auto2API backend accounts safely."
+
+policy:
+  allow_implicit_invocation: true

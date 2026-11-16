@@ -1,0 +1,475 @@
+<template>
+  <div>
+    <!-- Multi-select Dropdown -->
+    <div class="relative mb-3">
+      <div
+        @click="toggleDropdown"
+        class="cursor-pointer rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-dark-500 dark:bg-dark-700"
+      >
+        <div class="grid grid-cols-2 gap-1.5">
+          <span
+            v-for="model in modelValue"
+            :key="model"
+            class="inline-flex items-center justify-between gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-dark-600 dark:text-gray-300"
+          >
+            <span class="flex items-center gap-1 truncate">
+              <ModelIcon :model="model" size="14px" />
+              <span class="truncate">{{ model }}</span>
+            </span>
+            <button
+              type="button"
+              @click.stop="removeModel(model)"
+              class="shrink-0 rounded-full hover:bg-gray-200 dark:hover:bg-dark-500"
+            >
+              <Icon name="x" size="xs" class="h-3.5 w-3.5" :stroke-width="2" />
+            </button>
+          </span>
+        </div>
+        <div class="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 dark:border-dark-600">
+          <span class="text-xs text-gray-400">{{ t('admin.accounts.modelCount', { count: modelValue.length }) }}</span>
+          <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+      <!-- Dropdown List -->
+      <div
+        v-if="showDropdown"
+        class="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-600 dark:bg-dark-700"
+      >
+        <div class="sticky top-0 border-b border-gray-200 bg-white p-2 dark:border-dark-600 dark:bg-dark-700">
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="input w-full text-sm"
+            :placeholder="t('admin.accounts.searchModels')"
+            @click.stop
+          />
+        </div>
+        <div class="max-h-52 overflow-auto">
+          <template v-for="group in groupedModels" :key="group.letter">
+            <!-- 首字母分组标记：模型多时便于快速定位 -->
+            <div
+              class="sticky top-0 z-10 bg-gray-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:bg-dark-800 dark:text-dark-400"
+            >
+              {{ group.letter }}
+            </div>
+          <div
+            v-for="model in group.models"
+            :key="model.value"
+            data-testid="model-option"
+            class="group flex items-center hover:bg-gray-100 dark:hover:bg-dark-600"
+          >
+            <button
+              type="button"
+              data-testid="select-model"
+              class="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-sm"
+              @click="toggleModel(model.value)"
+            >
+              <span
+                :class="[
+                  'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                  modelValue.includes(model.value)
+                    ? 'border-primary-500 bg-primary-500 text-white'
+                    : 'border-gray-300 dark:border-dark-500'
+                ]"
+              >
+                <svg v-if="modelValue.includes(model.value)" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+              <ModelIcon :model="model.value" size="18px" />
+              <span class="truncate text-gray-900 dark:text-white">{{ model.value }}</span>
+            </button>
+            <button
+              type="button"
+              data-testid="copy-model-id"
+              class="mr-2 rounded p-1.5 text-gray-400 opacity-70 transition-colors hover:bg-gray-200 hover:text-primary-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 group-hover:opacity-100 dark:text-gray-500 dark:hover:bg-dark-500 dark:hover:text-primary-400"
+              :title="`${t('common.copy')} ${model.value}`"
+              :aria-label="`${t('common.copy')} ${model.value}`"
+              @click="copyModelId(model.value)"
+            >
+              <Icon name="copy" size="sm" />
+            </button>
+          </div>
+          </template>
+          <div v-if="filteredModels.length === 0" class="px-3 py-4 text-center text-sm text-gray-500">
+            {{ t('admin.accounts.noMatchingModels') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-4 flex flex-wrap gap-2">
+      <button
+        type="button"
+        @click="fillRelated"
+        class="rounded-lg border border-blue-200 px-3 py-1.5 text-sm text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/30"
+      >
+        {{ t('admin.accounts.fillRelatedModels') }}
+      </button>
+      <button
+        v-if="canSyncUpstream && showSyncButton"
+        type="button"
+        data-testid="sync-upstream-models"
+        @click="syncUpstreamModels"
+        :disabled="isSyncingUpstream"
+        class="rounded-lg border border-emerald-200 px-3 py-1.5 text-sm text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
+      >
+        {{ isSyncingUpstream ? t('admin.accounts.syncUpstreamModelsLoading') : t('admin.accounts.syncUpstreamModels') }}
+      </button>
+      <button
+        type="button"
+        @click="clearAll"
+        class="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
+      >
+        {{ t('admin.accounts.clearAllModels') }}
+      </button>
+    </div>
+
+    <!-- Custom Model Input -->
+    <div class="mb-3">
+      <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.accounts.customModelName') }}</label>
+      <div class="flex gap-2">
+        <input
+          v-model="customModel"
+          type="text"
+          class="input flex-1"
+          :placeholder="t('admin.accounts.enterCustomModelName')"
+          @keydown.enter.prevent="handleEnter"
+          @compositionstart="isComposing = true"
+          @compositionend="isComposing = false"
+        />
+        <button
+          type="button"
+          @click="addCustom"
+          class="rounded-lg bg-primary-50 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50"
+        >
+          {{ t('admin.accounts.addModel') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useAppStore } from '@/stores/app'
+import { accountsAPI } from '@/api/admin/accounts'
+import type { SyncUpstreamPreviewParams } from '@/api/admin/accounts'
+import { useClipboard } from '@/composables/useClipboard'
+import ModelIcon from '@/components/common/ModelIcon.vue'
+import Icon from '@/components/icons/Icon.vue'
+import { allModels, getModelsByPlatform } from '@/composables/useModelWhitelist'
+import { supportsUpstreamModelSync } from '@/constants/platformCatalog'
+import { extractApiErrorMessage } from '@/utils/apiError'
+
+const { t } = useI18n()
+
+const props = withDefaults(defineProps<{
+  modelValue: string[]
+  modelMappings?: { from: string; to: string }[]
+  platform?: string
+  platforms?: string[]
+  accountId?: number
+  syncCredentials?: {
+    platform: string
+    type: string
+    base_url?: string
+    api_key: string
+  }
+  showSyncButton?: boolean
+}>(), { showSyncButton: true })
+
+const emit = defineEmits<{
+  'update:modelValue': [value: string[]]
+  'upstream-synced': []
+  'upstream-sync-finished': []
+}>()
+
+const appStore = useAppStore()
+const { copyToClipboard } = useClipboard()
+
+const showDropdown = ref(false)
+const searchQuery = ref('')
+const customModel = ref('')
+const isComposing = ref(false)
+const isSyncingUpstream = ref(false)
+let upstreamSyncVersion = 0
+
+watch(
+  () => props.accountId,
+  () => {
+    upstreamSyncVersion += 1
+    isSyncingUpstream.value = false
+  }
+)
+
+onUnmounted(() => {
+  upstreamSyncVersion += 1
+})
+
+const normalizedPlatforms = computed(() => {
+  const rawPlatforms =
+    props.platforms && props.platforms.length > 0
+      ? props.platforms
+      : props.platform
+        ? [props.platform]
+        : []
+
+  return Array.from(
+    new Set(
+      rawPlatforms
+        .map(platform => platform?.trim())
+        .filter((platform): platform is string => Boolean(platform))
+    )
+  )
+})
+
+const canSyncUpstream = computed(() => {
+  if (props.accountId) {
+    if (normalizedPlatforms.value.length === 0) return true
+    return normalizedPlatforms.value.some(supportsUpstreamModelSync)
+  }
+  if (props.syncCredentials) {
+    return supportsUpstreamModelSync(props.syncCredentials.platform)
+  }
+  return false
+})
+
+// 从后端取回该账号实际可用的模型。
+//
+// WorkBuddy 两个站点的模型由上游按套餐与灰度下发，前端没有静态目录；
+// 账号型选择器（带 accountId）因此以 /admin/accounts/{id}/models 为准。
+// 其它平台仍在本地目录里查，保持原有行为。
+const remoteModels = ref<{ value: string; label: string }[]>([])
+
+// 这些平台的模型清单来自后端账号目录（不是本地静态表）：
+// WorkBuddy 由 /v3/config 下发，Marvis 是固定的槽位表。
+// 走远程目录才能让「同步最新支持模型」与「清除所有模型」真正有数据可操作。
+const REMOTE_CATALOG_PLATFORMS = ['workbuddy_cn', 'workbuddy_intl', 'marvis']
+const usesRemoteCatalog = computed(
+  () =>
+    !!props.accountId &&
+    normalizedPlatforms.value.some(p => REMOTE_CATALOG_PLATFORMS.includes(p))
+)
+
+async function loadRemoteModels() {
+  if (!props.accountId || !usesRemoteCatalog.value) {
+    remoteModels.value = []
+    return
+  }
+  try {
+    const models = await accountsAPI.getAvailableModels(props.accountId)
+    remoteModels.value = models.map((m: any) => ({
+      value: String(m.id ?? m),
+      label: String(m.display_name || m.id || m)
+    }))
+  } catch {
+    remoteModels.value = []
+  }
+}
+
+watch(
+  [() => props.accountId, () => normalizedPlatforms.value.join(',')],
+  () => { void loadRemoteModels() },
+  { immediate: true }
+)
+
+// immediate 的 watch 在 props 尚未填充时可能取不到平台，
+// 挂载后再补一次，确保账号型选择器一定拿到模型列表。
+onMounted(() => { void loadRemoteModels() })
+
+const availableOptions = computed(() => {
+  // 账号型 + 远程目录：直接用后端返回的模型。
+  if (usesRemoteCatalog.value) {
+    return remoteModels.value
+  }
+
+  if (normalizedPlatforms.value.length === 0) {
+    return allModels
+  }
+
+  const allowedModels = new Set<string>()
+  for (const platform of normalizedPlatforms.value) {
+    for (const model of getModelsByPlatform(platform)) {
+      allowedModels.add(model)
+    }
+  }
+
+  return allModels.filter(model => allowedModels.has(model.value))
+})
+
+// 按首字母分组，供下拉列表显示分组标记。
+//
+// 模型数量多时（WorkBuddy 常见 40+），平铺列表很难定位；
+// 分组后可以快速跳到某个字母段。非字母开头的归入 #。
+const groupedModels = computed(() => {
+  const buckets = new Map<string, { value: string; label: string }[]>()
+  for (const model of filteredModels.value) {
+    const first = model.value.trim().charAt(0).toUpperCase()
+    const letter = /[A-Z]/.test(first) ? first : '#'
+    const list = buckets.get(letter)
+    if (list) {
+      list.push(model)
+    } else {
+      buckets.set(letter, [model])
+    }
+  }
+  return Array.from(buckets.entries())
+    .sort((a, b) => {
+      // # 排在最后
+      if (a[0] === '#') return 1
+      if (b[0] === '#') return -1
+      return a[0].localeCompare(b[0])
+    })
+    .map(([letter, models]) => ({ letter, models }))
+})
+
+const filteredModels = computed(() => {
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return availableOptions.value
+  return availableOptions.value.filter(
+    m => m.value.toLowerCase().includes(query) || m.label.toLowerCase().includes(query)
+  )
+})
+
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+  if (!showDropdown.value) searchQuery.value = ''
+}
+
+const removeModel = (model: string) => {
+  emit('update:modelValue', props.modelValue.filter(m => m !== model))
+}
+
+const toggleModel = (model: string) => {
+  if (props.modelValue.includes(model)) {
+    removeModel(model)
+  } else {
+    emit('update:modelValue', [...props.modelValue, model])
+  }
+}
+
+const copyModelId = async (model: string) => {
+  await copyToClipboard(model)
+}
+
+const addCustom = () => {
+  const model = customModel.value.trim()
+  if (!model) return
+  if (props.modelValue.includes(model)) {
+    appStore.showInfo(t('admin.accounts.modelExists'))
+    return
+  }
+  const conflict = props.modelMappings?.find(mapping => mapping.from.trim() === model && mapping.to.trim() && mapping.to.trim() !== model)
+  if (conflict) {
+    appStore.showInfo(t('admin.accounts.modelMappingConflict', { from: model, to: conflict.to.trim() }))
+    return
+  }
+  emit('update:modelValue', [...props.modelValue, model])
+  customModel.value = ''
+}
+
+const handleEnter = () => {
+  if (!isComposing.value) addCustom()
+}
+
+// 「同步最新支持模型」：把选择**重置**为当前最新可用的全量模型。
+//
+// 与「同步上游支持的模型」的分工：
+//   · 本按钮 = 覆盖。丢掉旧选择，改为当前可用集合，用来清理已下线模型。
+//   · 同步上游 = 增量。只把上游新增的模型并入，保留用户已有选择。
+// 两者都读同一份官方目录（/v3/config 缓存），语义不同。
+const fillRelated = () => {
+  const next = availableOptions.value.map(o => o.value)
+  if (next.length === 0) return
+  emit('update:modelValue', next)
+}
+
+const syncUpstreamModels = async () => {
+  if (isSyncingUpstream.value || !canSyncUpstream.value) return
+
+  const syncVersion = upstreamSyncVersion
+  const accountId = props.accountId
+  const previewCredentials = props.syncCredentials
+  const isCurrentSync = () => syncVersion === upstreamSyncVersion
+  isSyncingUpstream.value = true
+  try {
+    let result
+    if (accountId) {
+      result = await accountsAPI.syncUpstreamModels(accountId)
+    } else if (previewCredentials) {
+      result = await accountsAPI.syncUpstreamModelsPreview(previewCredentials as SyncUpstreamPreviewParams)
+    } else {
+      return
+    }
+    if (!isCurrentSync()) return
+
+    if (result.discovery_source === 'configured_fallback') {
+      appStore.showWarning(t('admin.accounts.grokModelDiagnostics.configuredFallback'))
+      return
+    }
+
+    const upstreamModels = result.models.map(model => model.trim()).filter(Boolean)
+    if (upstreamModels.length === 0) {
+      appStore.showInfo(t('admin.accounts.syncUpstreamModelsEmpty'))
+      return
+    }
+
+    if (!accountId) {
+      emit('upstream-synced')
+    }
+
+    const newModels = [...props.modelValue]
+    let addedCount = 0
+    for (const model of upstreamModels) {
+      if (!newModels.includes(model)) {
+        newModels.push(model)
+        addedCount += 1
+      }
+    }
+
+    emit('update:modelValue', newModels)
+    const warnings = result.warnings ?? []
+    const hasPartialMetadata = warnings.some(
+      warning => warning.code === 'upstream_model_metadata_partial'
+    )
+    const hasIncompleteMetadata = warnings.some(
+      warning => warning.code === 'upstream_model_metadata_incomplete'
+    )
+    if (hasIncompleteMetadata) {
+      appStore.showWarning(t('admin.accounts.syncUpstreamModelsMetadataIncomplete'))
+      return
+    }
+    if (addedCount > 0) {
+      appStore.showSuccess(t('admin.accounts.syncUpstreamModelsSuccess', { count: addedCount, total: upstreamModels.length }))
+    } else {
+      appStore.showInfo(t('admin.accounts.syncUpstreamModelsNoChanges', { count: upstreamModels.length }))
+    }
+    if (hasPartialMetadata) {
+      appStore.showWarning(t('admin.accounts.syncUpstreamModelsMetadataPartial'))
+    }
+  } catch (error) {
+    if (!isCurrentSync()) return
+    const message = extractApiErrorMessage(error, t('admin.accounts.syncUpstreamModelsFailed'))
+    appStore.showError(t('admin.accounts.syncUpstreamModelsError', { message }))
+  } finally {
+    if (isCurrentSync()) {
+      isSyncingUpstream.value = false
+      if (accountId) {
+        emit('upstream-sync-finished')
+      }
+    }
+  }
+}
+
+defineExpose({ syncUpstreamModels, isSyncingUpstream })
+
+const clearAll = () => {
+  emit('update:modelValue', [])
+}
+
+</script>

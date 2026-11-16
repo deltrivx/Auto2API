@@ -1,0 +1,203 @@
+package service
+
+import "crypto/sha256"
+
+// WorkBuddy 硬件画像的维度取值表。
+//
+// 画像不再是「若干个固定条目」，而是由各维度独立取值后组合：
+// 维度独立相乘后组合空间达到数万量级，账号再多也不会撞号，同时每个组合
+// 都是一台说得通的真实机器（CPU 与核心数、内存、GPU 自洽）。
+//
+// 所有取值来自真实在售配置：
+//   - Apple Silicon 各代 M 系列的官方核心数/内存档位
+//   - Intel 12/13/14 代与 AMD Zen3/Zen4 的常见零售 SKU
+//   - 与 CPU 档次匹配的独立显卡
+//   - 常见分辨率
+
+// workBuddyOSFamily 是设备家族。
+type workBuddyOSFamily string
+
+const (
+	workBuddyOSMac     workBuddyOSFamily = "mac"
+	workBuddyOSWindows workBuddyOSFamily = "win"
+)
+
+// workBuddyCPUSpec 是一个 CPU 型号及其自洽的核心数/内存档位。
+type workBuddyCPUSpec struct {
+	Model string
+	// Cores 是该型号的可选核心数（Apple 为统一核心数，Intel/AMD 为同档位）。
+	Cores []int
+	// Memory 是该档次机器的常见内存容量（GB）。
+	Memory []int
+	// GPU 是与该 CPU 搭配合理的显卡。
+	GPU []string
+}
+
+// workBuddyMacVersions 是 macOS 的主要版本。
+//
+// 只列仍在支持窗口内的版本；过老版本会被上游看出异常。
+var workBuddyMacVersions = []string{
+	"14.2", "14.5", "14.6.1", "15.0", "15.1", "15.2", "15.3",
+}
+
+// workBuddyWindowsVersions 是 Windows 10/11 的常见 build 号。
+var workBuddyWindowsVersions = []string{
+	"10.0.19045", // Win10 22H2
+	"10.0.22621", // Win11 22H2
+	"10.0.22631", // Win11 23H2
+	"10.0.26100", // Win11 24H2
+}
+
+// workBuddyMacCPUs 是按代际排列的 Apple Silicon。
+//
+// 核心数与内存取自官方配置表；内存为统一内存，GPU 共享。
+var workBuddyMacCPUs = []workBuddyCPUSpec{
+	{Model: "Apple M1", Cores: []int{8}, Memory: []int{8, 16}, GPU: []string{"Apple M1 / 共享内存"}},
+	{Model: "Apple M2", Cores: []int{8}, Memory: []int{8, 16, 24}, GPU: []string{"Apple M2 / 共享内存"}},
+	{Model: "Apple M3", Cores: []int{8}, Memory: []int{8, 16, 24}, GPU: []string{"Apple M3 / 共享内存"}},
+	{Model: "Apple M3 Pro", Cores: []int{11, 12}, Memory: []int{18, 36}, GPU: []string{"Apple M3 Pro / 共享内存"}},
+	{Model: "Apple M4", Cores: []int{8, 10}, Memory: []int{16, 24, 32}, GPU: []string{"Apple M4 / 共享内存"}},
+	{Model: "Apple M4 Pro", Cores: []int{12, 14}, Memory: []int{24, 48}, GPU: []string{"Apple M4 Pro / 共享内存"}},
+	{Model: "Apple M4 Max", Cores: []int{14, 16}, Memory: []int{36, 64}, GPU: []string{"Apple M4 Max / 共享内存"}},
+}
+
+// workBuddyWindowsCPUs 是 Intel 12/13/14 代与 AMD Zen3/Zen4 的常见零售型号。
+//
+// GPU 与 CPU 档次匹配：i5/R5 配中端卡，i7/R7 配 4060/4070，i9/R9 配 4070 以上。
+var workBuddyWindowsCPUs = []workBuddyCPUSpec{
+	{Model: "Intel Core i5-12400", Cores: []int{6}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 3060 / 12 GB"}},
+	{Model: "Intel Core i5-13400", Cores: []int{10}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 3060 / 12 GB", "Intel UHD Graphics 730 / 共享内存"}},
+	{Model: "Intel Core i5-14400F", Cores: []int{10}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 4060 / 8 GB"}},
+	{Model: "Intel Core i7-12700", Cores: []int{12}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 3060 / 12 GB"}},
+	{Model: "Intel Core i7-13700F", Cores: []int{16}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4060 Ti / 8 GB"}},
+	{Model: "Intel Core i7-14700F", Cores: []int{20}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB"}},
+	{Model: "Intel Core i9-13900K", Cores: []int{24}, Memory: []int{32, 64, 128}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB", "NVIDIA GeForce RTX 4080 / 16 GB"}},
+	{Model: "AMD Ryzen 5 5600X", Cores: []int{6}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 3060 / 12 GB", "AMD Radeon RX 6600 / 8 GB"}},
+	{Model: "AMD Ryzen 7 5800X3D", Cores: []int{8}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 4060 / 8 GB"}},
+	{Model: "AMD Ryzen 7 7800X3D", Cores: []int{8}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB"}},
+	{Model: "AMD Ryzen 9 5950X", Cores: []int{16}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB", "AMD Radeon RX 6800 XT / 16 GB"}},
+	{Model: "AMD Ryzen 9 7950X", Cores: []int{16}, Memory: []int{32, 64, 128}, GPU: []string{"NVIDIA GeForce RTX 4080 / 16 GB"}},
+}
+
+// workBuddyMacDisks 是 Mac 的常见存储容量。
+var workBuddyMacDisks = []int{256, 512, 1024, 2048}
+
+// workBuddyWindowsDisks 是 Windows 的常见存储容量。
+var workBuddyWindowsDisks = []int{512, 1024, 2048, 4096}
+
+// workBuddyMacScreens 是 MacBook / iMac 的常见分辨率。
+var workBuddyMacScreens = []string{
+	"2560x1600", // MacBook Pro 14
+	"3024x1964", // MacBook Pro 14 M3+
+	"3456x2234", // MacBook Pro 16
+	"2880x1864", // MacBook Air 15
+	"4480x2520", // Studio Display
+}
+
+// workBuddyWindowsScreens 是常见的桌面分辨率。
+var workBuddyWindowsScreens = []string{
+	"1920x1080",
+	"2560x1440",
+	"3440x1440", // 带鱼屏
+	"3840x2160",
+}
+
+// workBuddyChromeVersions 是参与 UA 派生的 Chrome 主版本号。
+//
+// 只取仍在广泛使用的区间；过老版本会与「刚安装客户端」的判断冲突。
+var workBuddyChromeVersions = []int{125, 126, 127, 128, 129, 130, 131}
+
+// workBuddyDeriveProfile 从 key 与盐派生一个自洽的硬件画像。
+//
+// 每个维度独立取值：OS 族决定后续所有取值的候选表，CPU 决定核心数、
+// 内存与显卡的可选集，保证组合出来是一台说得通的机器——不会出现
+// 「M4 Max 配 8GB 内存」或「i9 配 8GB」这种真实中不存在的搭配。
+//
+// salt 用于撞号后重新派生：同样的 key 加不同盐得到不同画像。
+func workBuddyDeriveProfile(key string, salt int) workBuddyFingerprintProfile {
+	h := workBuddySHA256([]byte("wb-fp:" + key + "#" + itoa(salt)))
+
+	family := workBuddyOSMac
+	if workBuddyPick16(h, 0, 2) == 0 {
+		family = workBuddyOSWindows
+	}
+
+	var cpus []workBuddyCPUSpec
+	var versions []string
+	var disks []int
+	var screens []string
+	if family == workBuddyOSMac {
+		cpus = workBuddyMacCPUs
+		versions = workBuddyMacVersions
+		disks = workBuddyMacDisks
+		screens = workBuddyMacScreens
+	} else {
+		cpus = workBuddyWindowsCPUs
+		versions = workBuddyWindowsVersions
+		disks = workBuddyWindowsDisks
+		screens = workBuddyWindowsScreens
+	}
+
+	// 用 16 位整数取模：单字节只有 256 种取值，对 len=7 这类表会产生
+	// 明显的取模偏差（256 % 7 = 4，前 4 个值多出现一次），使组合分布不均。
+	cpu := cpus[workBuddyPick16(h, 1, len(cpus))]
+	cores := cpu.Cores[workBuddyPick16(h, 3, len(cpu.Cores))]
+	memory := cpu.Memory[workBuddyPick16(h, 5, len(cpu.Memory))]
+	gpu := cpu.GPU[workBuddyPick16(h, 7, len(cpu.GPU))]
+	osVersion := versions[workBuddyPick16(h, 9, len(versions))]
+	disk := disks[workBuddyPick16(h, 11, len(disks))]
+	screen := screens[workBuddyPick16(h, 13, len(screens))]
+	chrome := workBuddyChromeVersions[workBuddyPick16(h, 15, len(workBuddyChromeVersions))]
+
+	profile := workBuddyFingerprintProfile{
+		CPUCores:   cores,
+		MemorySize: memory,
+		GPU:        gpu,
+		Disk:       disk,
+		Screen:     screen,
+		CPUModel:   cpu.Model,
+		OSVersion:  osVersion,
+		IDEVersion: "5.5.6",
+	}
+	if family == workBuddyOSMac {
+		profile.OS = "MacIntel"
+		profile.Arch = "arm64"
+		profile.UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
+			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + itoa(chrome) + ".0.0.0 Safari/537.36"
+	} else {
+		profile.OS = "Win32"
+		profile.Arch = "x64"
+		profile.UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + itoa(chrome) + ".0.0.0 Safari/537.36"
+	}
+	return profile
+}
+
+// workBuddyFingerprintCombinations 返回组合空间大小的下界，用于自检。
+func workBuddyFingerprintCombinations() int {
+	mac := len(workBuddyMacCPUs) * len(workBuddyMacVersions) * len(workBuddyMacDisks) * len(workBuddyMacScreens)
+	win := len(workBuddyWindowsCPUs) * len(workBuddyWindowsVersions) * len(workBuddyWindowsDisks) * len(workBuddyWindowsScreens)
+	return (mac + win) * len(workBuddyChromeVersions)
+}
+
+// workBuddySHA256 返回 SHA-256 摘要，供维度派生使用。
+func workBuddySHA256(b []byte) []byte {
+	sum := sha256.Sum256(b)
+	return sum[:]
+}
+
+// workBuddyPick16 用摘要中的两个连续字节组成 16 位整数后取模。
+//
+// 单字节 256 种取值对 len=7/9 这类长度会产生取模偏差，导致某些档位被
+// 显著高估；16 位（65536）把偏差压到可忽略。
+func workBuddyPick16(h []byte, offset, n int) int {
+	if n <= 0 || len(h) < 32 {
+		return 0
+	}
+	// 对每对字节再做一次混合：相邻摘要字节存在相关性，直接拼接取模会让
+	// 不同 key 落到同一档位的概率远高于均匀分布。
+	lo := int(h[offset%len(h)])
+	hi := int(h[(offset+1)%len(h)])
+	v := (hi<<8 | lo) ^ (offset * 0x9E37)
+	return v % n
+}

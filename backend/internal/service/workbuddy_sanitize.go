@@ -1,0 +1,785 @@
+package service
+
+import (
+	"bufio"
+	"bytes"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"regexp"
+	"strconv"
+	"strings"
+)
+
+// WorkBuddy 出站请求的品牌痕迹清洗与消息规范化。
+//
+// 移植自 magpie 的 packages/workbuddy（FLAGGED / unflag / withSystem /
+// asReasoning / withoutSignedThinking）并合并了 AutoBuddy 的 sanitize.py。
+//
+// 背景：WorkBuddy 上游会对请求内容做识别，命中特定表述时直接拒绝
+// （错误码 11128 "Illegal API"）。主流智能体（Claude Code、Codex CLI、
+// 以及本系统自身的 DSH）都会在系统提示词里写明自己的身份，把请求发给
+// WorkBuddy 会被判为「非本家客户端」。
+//
+// 处理分两层：
+//  1. 品牌痕迹改写（flagged）：把被拒绝的原文替换为等价但可放行的表述。
+//     magpie 注释里记录了实测结论——WorkBuddy 对某些句子整行精确匹配，
+//     因此改动一个标点即可放行，不必删除整句语义。
+//  2. 消息规范化（systemOn）：字段名与结构对齐上游期望的形态
+//     （developer→system、max_completion_tokens→max_tokens、
+//     reasoning_content→reasoning、补齐 system 首条）。
+
+// workBuddyFlaggedRule 是一条品牌痕迹改写规则。
+type workBuddyFlaggedRule struct {
+	re   *regexp.Regexp
+	repl string
+}
+
+// workBuddyFlaggedRules 是上游会拒绝的表述及其放行改写。
+//
+// 顺序有意义：先整段剥离计费头，再改写信封句。
+var workBuddyFlaggedRules = []workBuddyFlaggedRule{
+	// Anthropic 计费头整段剥离。
+	{regexp.MustCompile(`(?i)x-anthropic-billing-header:[^\n]*\n?`), ""},
+
+	// Claude Code 身份句：去掉 "for Claude" 后缀即可放行。
+	{regexp.MustCompile(`(?i)You are Claude Code, Anthropic['’]s official CLI for Claude`),
+		"You are Claude Code, Anthropic's CLI for Claude"},
+
+	// Claude Code 的 PR 提示：改写括号内的说明。
+	{regexp.MustCompile(`(?i)Main branch \(you will usually use this for PRs\)`),
+		"Main branch (usually the base for PRs)"},
+
+	// Codex CLI 项目介绍句：改写主语。
+	{regexp.MustCompile(`(?i)Codex CLI is an open source project led by OpenAI\.`),
+		"The Codex CLI is an open source project led by OpenAI."},
+
+	// DSH（local coding tool）的系统提示词首行。
+	// 上游整行精确匹配并返回 400 code 11128；加一个逗号即可放行，
+	// 同时保留智能体自己的名字——提示词其余部分都回指这个名字。
+	{regexp.MustCompile(`(?i)You are an AI agent powered by local coding tool\.?`),
+		"You are an AI agent, powered by local coding tool."},
+
+	// 长对话中会被引用的 Web GUI 说明句。
+	{regexp.MustCompile(`(?i)Web GUI whose URL the runtime context names\.\s+When the user refers`),
+		"Web GUI whose URL the runtime context names. The interface, when the user refers"},
+}
+
+// workBuddyUnflagText 对单段文本应用全部改写规则。
+func workBuddyUnflagText(text string) string {
+	if text == "" {
+		return text
+	}
+	for _, r := range workBuddyFlaggedRules {
+		text = r.re.ReplaceAllString(text, r.repl)
+	}
+	return text
+}
+
+// workBuddyUnflagMessages 改写 messages 中的品牌痕迹。
+//
+// 返回是否发生了改动。空白的 system 消息在改写后会被整条移除——
+// 留着空行同样可能触发上游校验。
+func workBuddyUnflagMessages(messages []any) bool {
+	changed := false
+	// 从后往前遍历，便于在删除元素时保持索引正确。
+	for i := len(messages) - 1; i >= 0; i-- {
+		m, ok := messages[i].(map[string]any)
+		if !ok {
+			continue
+		}
+		role, _ := m["role"].(string)
+
+		switch content := m["content"].(type) {
+		case string:
+			next := workBuddyUnflagText(content)
+			if next == content {
+				continue
+			}
+			changed = true
+			if strings.TrimSpace(next) != "" || role != "system" {
+				m["content"] = next
+			} else {
+				// 改写后成为空白的 system 消息直接删除。
+				messages = append(messages[:i], messages[i+1:]...)
+			}
+		case []any:
+			parts := make([]any, 0, len(content))
+			here := false
+			for _, raw := range content {
+				p, ok := raw.(map[string]any)
+				if !ok {
+					parts = append(parts, raw)
+					continue
+				}
+				text, ok := p["text"].(string)
+				if !ok {
+					parts = append(parts, p)
+					continue
+				}
+				next := workBuddyUnflagText(text)
+				if next == text {
+					parts = append(parts, p)
+					continue
+				}
+				here = true
+				if strings.TrimSpace(next) != "" {
+					cp := make(map[string]any, len(p))
+					for k, v := range p {
+						cp[k] = v
+					}
+					cp["text"] = next
+					parts = append(parts, cp)
+				}
+			}
+			if !here {
+				continue
+			}
+			changed = true
+			if len(parts) > 0 || role != "system" {
+				m["content"] = parts
+			} else {
+				messages = append(messages[:i], messages[i+1:]...)
+			}
+		}
+	}
+	return changed
+}
+
+// workBuddyReasoningOf 从 assistant 消息中提取思考文本。
+//
+// 兼容两种来源：reasoning_content 字符串，或 reasoning_details 数组。
+func workBuddyReasoningOf(m map[string]any) string {
+	if s, ok := m["reasoning_content"].(string); ok && s != "" {
+		return s
+	}
+	if details, ok := m["reasoning_details"].([]any); ok {
+		var b strings.Builder
+		for _, d := range details {
+			dm, ok := d.(map[string]any)
+			if !ok {
+				continue
+			}
+			if t, ok := dm["text"].(string); ok {
+				b.WriteString(t)
+			} else if s, ok := dm["summary"].(string); ok {
+				b.WriteString(s)
+			}
+		}
+		return b.String()
+	}
+	return ""
+}
+
+// workBuddyAsReasoning 把 reasoning_content / reasoning_details 归一到 reasoning 字段。
+//
+// WorkBuddy 上游只认 reasoning。归一后删掉旧字段，避免上游看到多余键。
+func workBuddyAsReasoning(messages []any) bool {
+	changed := false
+	for _, raw := range messages {
+		m, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if role, _ := m["role"].(string); role != "assistant" {
+			continue
+		}
+		_, hasContent := m["reasoning_content"]
+		_, hasDetails := m["reasoning_details"]
+		if !hasContent && !hasDetails {
+			continue
+		}
+		text := workBuddyReasoningOf(m)
+		if text != "" {
+			if cur, ok := m["reasoning"].(string); !ok || cur == "" {
+				m["reasoning"] = text
+			}
+		}
+		delete(m, "reasoning_content")
+		delete(m, "reasoning_details")
+		changed = true
+	}
+	return changed
+}
+
+// workBuddyWithoutSignedThinking 移除 assistant 消息中带签名的 thinking 块。
+//
+// 签名由上游生成，跨请求回传时校验会失败并导致 400；去掉整块比传错更安全。
+// 返回改动后的 body 与是否发生改动。
+func workBuddyWithoutSignedThinking(payload map[string]any) (map[string]any, int) {
+	msgs, ok := payload["messages"].([]any)
+	if !ok {
+		return payload, 0
+	}
+	dropped := 0
+	for _, raw := range msgs {
+		m, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if role, _ := m["role"].(string); role != "assistant" {
+			continue
+		}
+		content, ok := m["content"].([]any)
+		if !ok {
+			continue
+		}
+		kept := make([]any, 0, len(content))
+		for _, p := range content {
+			pm, ok := p.(map[string]any)
+			if !ok {
+				kept = append(kept, p)
+				continue
+			}
+			if t, _ := pm["type"].(string); t == "thinking" {
+				continue
+			}
+			kept = append(kept, p)
+		}
+		if len(kept) == len(content) {
+			continue
+		}
+		dropped += len(content) - len(kept)
+		if len(kept) == 0 {
+			kept = []any{map[string]any{"type": "text", "text": ""}}
+		}
+		m["content"] = kept
+	}
+	return payload, dropped
+}
+
+// workBuddySystemOn 把请求体规范化为 WorkBuddy 上游期望的形态。
+//
+// 做四件事：
+//   - 字段改名：max_completion_tokens → max_tokens
+//   - 角色归一：developer → system
+//   - 思考归一：reasoning_content/details → reasoning
+//   - 补齐首条 system 消息
+//
+// 返回是否有改动。
+func workBuddySystemOn(payload map[string]any) bool {
+	msgs, ok := payload["messages"].([]any)
+	if !ok || len(msgs) == 0 {
+		return false
+	}
+	changed := workBuddyUnflagMessages(msgs)
+	// unflag 可能删除元素，取回最新切片。
+	msgs, ok = payload["messages"].([]any)
+	if !ok {
+		msgs = nil
+	}
+
+	if v, exists := payload["max_completion_tokens"]; exists {
+		if _, hasMax := payload["max_tokens"]; !hasMax {
+			payload["max_tokens"] = v
+		}
+		delete(payload, "max_completion_tokens")
+		changed = true
+	}
+
+	for _, raw := range msgs {
+		m, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if role, _ := m["role"].(string); role == "developer" {
+			m["role"] = "system"
+			changed = true
+		}
+	}
+
+	if workBuddyAsReasoning(msgs) {
+		changed = true
+	}
+
+	if len(msgs) > 0 {
+		first, _ := msgs[0].(map[string]any)
+		role, _ := first["role"].(string)
+		if role != "system" {
+			payload["messages"] = append([]any{map[string]any{
+				"role":    "system",
+				"content": "You are a helpful assistant.",
+			}}, msgs...)
+			changed = true
+		}
+	}
+	return changed
+}
+
+// workBuddyNormalizeRequestBody 对出站请求体做完整规范化。
+//
+// 处理顺序与 magpie 一致：先清品牌痕迹与字段形态，再剥离带签名的 thinking。
+// 解析失败时原样返回——规范化是尽力而为，不能因格式异常阻断请求。
+func workBuddyNormalizeRequestBody(account *Account, body []byte) []byte {
+	if account == nil || !isWorkBuddyPlatform(account.Platform) {
+		return body
+	}
+	if len(body) == 0 {
+		return body
+	}
+
+	var payload map[string]any
+	if err := decodeOpenAIJSONUseNumber(body, &payload); err != nil {
+		return body
+	}
+
+	changed := workBuddySystemOn(payload)
+	var dropped int
+	payload, dropped = workBuddyWithoutSignedThinking(payload)
+	if dropped > 0 {
+		changed = true
+	}
+	if !changed {
+		return body
+	}
+
+	out, err := json.Marshal(payload)
+	if err != nil {
+		return body
+	}
+	return out
+}
+
+// workBuddyConversationKey 从请求体派生会话键。
+//
+// 用于会话粘性：同一段对话的每一次请求都要落到同一账号。
+// 优先用客户端给出的会话标识；没有时退化为「最后一轮未回答的用户提问」。
+func workBuddyConversationKey(payload map[string]any) string {
+	if payload == nil {
+		return ""
+	}
+	msgs, ok := payload["messages"].([]any)
+	if !ok {
+		return ""
+	}
+	parts := workBuddyTurnParts(msgs)
+	if len(parts) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("turn:")
+	for _, p := range parts {
+		b.WriteString(p)
+		b.WriteString("|")
+	}
+	return b.String()
+}
+
+// workBuddyTurnParts 提取「最后一轮尚未被回答的用户提问」的特征串。
+//
+// 从后往前找第一条用户消息；若它已被助手回答（后面有 assistant 或
+// tool 结果），说明这一轮已结束，不再作为会话标识。
+func workBuddyTurnParts(msgs []any) []string {
+	for i := len(msgs) - 1; i >= 0; i-- {
+		m, ok := msgs[i].(map[string]any)
+		if !ok {
+			continue
+		}
+		if role, _ := m["role"].(string); role != "user" {
+			continue
+		}
+		if workBuddyAnsweredBefore(msgs, i) {
+			continue
+		}
+		sig := workBuddySignatureParts(m["content"])
+		if len(sig) == 0 {
+			return nil
+		}
+		out := make([]string, 0, len(sig)+1)
+		out = append(out, "u"+itoa(i)+":")
+		out = append(out, sig...)
+		return out
+	}
+	return nil
+}
+
+// workBuddyAnsweredBefore 判断第 i 条消息之前是否已有助手答复。
+func workBuddyAnsweredBefore(msgs []any, i int) bool {
+	if cur, ok := msgs[i].(map[string]any); ok && workBuddyHasBlock(cur, "tool_result") {
+		return true
+	}
+	j := i - 1
+	for j >= 0 {
+		m, _ := msgs[j].(map[string]any)
+		if role, _ := m["role"].(string); role != "system" {
+			break
+		}
+		j--
+	}
+	if j < 0 {
+		return false
+	}
+	prev, ok := msgs[j].(map[string]any)
+	if !ok {
+		return false
+	}
+	role, _ := prev["role"].(string)
+	switch role {
+	case "tool":
+		return true
+	case "user":
+		return workBuddyHasBlock(prev, "tool_result")
+	case "assistant":
+		if calls, ok := prev["tool_calls"].([]any); ok && len(calls) > 0 {
+			return true
+		}
+		return workBuddyHasBlock(prev, "tool_use")
+	}
+	return false
+}
+
+// workBuddyHasBlock 判断消息 content 中是否含指定类型的块。
+func workBuddyHasBlock(m map[string]any, blockType string) bool {
+	parts, ok := m["content"].([]any)
+	if !ok {
+		return false
+	}
+	for _, p := range parts {
+		pm, ok := p.(map[string]any)
+		if !ok {
+			continue
+		}
+		if t, _ := pm["type"].(string); t == blockType {
+			return true
+		}
+	}
+	return false
+}
+
+// workBuddySignatureParts 提取消息内容的特征片段。
+//
+// 纯文本直接取原文；非文本块（图片、工具调用等）取其内容的哈希前缀，
+// 这样同一段对话即使换了序列化方式也能得到相同签名。
+func workBuddySignatureParts(content any) []string {
+	switch c := content.(type) {
+	case string:
+		if c == "" {
+			return nil
+		}
+		return []string{c}
+	case []any:
+		out := make([]string, 0, len(c))
+		for _, p := range c {
+			pm, ok := p.(map[string]any)
+			if !ok {
+				continue
+			}
+			t, _ := pm["type"].(string)
+			if t == "" || t == "text" {
+				if txt, ok := pm["text"].(string); ok && txt != "" {
+					out = append(out, txt)
+				}
+				continue
+			}
+			if t == "tool_result" || t == "tool-result" {
+				continue
+			}
+			// 其它块用哈希占位，避免把大段二进制塞进签名。
+			raw, err := json.Marshal(pm)
+			if err != nil {
+				continue
+			}
+			out = append(out, "["+t+":"+workBuddyShortHash(raw)+"]")
+		}
+		return out
+	}
+	return nil
+}
+
+// workBuddyShortHash 返回 8 位十六进制摘要。
+func workBuddyShortHash(b []byte) string {
+	sum := sha256Sum(b)
+	const hexChars = "0123456789abcdef"
+	out := make([]byte, 0, 8)
+	for i := 0; i < 4; i++ {
+		out = append(out, hexChars[sum[i]>>4], hexChars[sum[i]&0x0f])
+	}
+	return string(out)
+}
+
+// sha256Sum 返回 SHA-256 摘要。
+func sha256Sum(b []byte) []byte {
+	sum := sha256.Sum256(b)
+	return sum[:]
+}
+
+// itoa 是 strconv.Itoa 的短别名，避免与业务变量名冲突。
+func itoa(n int) string { return strconv.Itoa(n) }
+
+// workBuddyStripUnsupportedFields 移除 WorkBuddy 上游不认识的顶层字段。
+//
+// 这些字段来自 Anthropic→OpenAI 转换后的产物（parallel_tool_calls、
+// reasoning_effort 等），WorkBuddy 的 /v2/chat/completions 会直接 400。
+func workBuddyStripUnsupportedFields(body []byte) []byte {
+	if len(body) == 0 {
+		return body
+	}
+	var payload map[string]any
+	if err := decodeOpenAIJSONUseNumber(body, &payload); err != nil {
+		return body
+	}
+	// 逐个删除：这些键在 WorkBuddy 上游都是未知字段。
+	//
+	// reasoning_effort / reasoning 不在此列：上游 /v2/chat/completions 接受
+	// 这两个字段（实测返回 200 并正常吐出 reasoning_content），模型的
+	// Efforts 声明也依赖它们。早先一刀切剥离，导致推理强度控制失效。
+	for _, key := range []string{
+		"parallel_tool_calls",
+		"store",
+		"metadata",
+		"service_tier",
+		"prompt_cache_key",
+		"stream_options",
+		"logprobs",
+		"top_logprobs",
+		"prediction",
+		"modalities",
+		"audio",
+		"response_format",
+		"seed",
+		"logit_bias",
+		"user",
+	} {
+		delete(payload, key)
+	}
+	out, err := json.Marshal(payload)
+	if err != nil {
+		return body
+	}
+	return out
+}
+
+// workBuddyForceStream 把请求体强制设为流式。
+//
+// WorkBuddy 的 /v2/chat/completions 只支持流式，非流式请求会被
+// code 11101 拒绝。同时打开 include_usage 才能拿到 token 用量。
+func workBuddyForceStream(body []byte) ([]byte, error) {
+	if len(body) == 0 {
+		return body, nil
+	}
+	var payload map[string]any
+	if err := decodeOpenAIJSONUseNumber(body, &payload); err != nil {
+		return body, nil
+	}
+	payload["stream"] = true
+	payload["stream_options"] = map[string]any{"include_usage": true}
+	out, err := json.Marshal(payload)
+	if err != nil {
+		return body, err
+	}
+	return out, nil
+}
+
+// aggregateWorkBuddySSEToChatCompletion 把 WorkBuddy 的 SSE 流聚合成一个
+// 标准 chat.completion 响应，供非流式客户端使用。
+//
+// WorkBuddy 的 /v2/chat/completions 只支持流式；当客户端要非流式时，必须
+// 把逐块 delta 拼回完整 message（content、tool_calls、usage），否则下游
+// 按 JSON 解析会失败。
+func aggregateWorkBuddySSEToChatCompletion(resp *http.Response) (*http.Response, error) {
+	if resp == nil || resp.Body == nil {
+		return nil, fmt.Errorf("workbuddy: empty upstream response")
+	}
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
+
+	var (
+		id, model string
+		created   int64
+		content   strings.Builder
+		reasoning strings.Builder
+		toolCalls = map[int]*workBuddyAggregatedToolCall{}
+		toolOrder []int
+		usage     map[string]any
+		finish    string
+	)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		if payload == "" || payload == "[DONE]" {
+			continue
+		}
+		var chunk struct {
+			ID      string         `json:"id"`
+			Model   string         `json:"model"`
+			Created int64          `json:"created"`
+			Usage   map[string]any `json:"usage"`
+			Choices []struct {
+				FinishReason string `json:"finish_reason"`
+				Delta        struct {
+					Content          string `json:"content"`
+					ReasoningContent string `json:"reasoning_content"`
+					ToolCalls        []struct {
+						Index    int    `json:"index"`
+						ID       string `json:"id"`
+						Type     string `json:"type"`
+						Function struct {
+							Name      string `json:"name"`
+							Arguments string `json:"arguments"`
+						} `json:"function"`
+					} `json:"tool_calls"`
+				} `json:"delta"`
+			} `json:"choices"`
+		}
+		if err := json.Unmarshal([]byte(payload), &chunk); err != nil {
+			continue
+		}
+		if chunk.ID != "" && id == "" {
+			id = chunk.ID
+		}
+		if chunk.Model != "" && model == "" {
+			model = chunk.Model
+		}
+		if chunk.Created != 0 && created == 0 {
+			created = chunk.Created
+		}
+		if len(chunk.Usage) > 0 {
+			usage = chunk.Usage
+		}
+		if len(chunk.Choices) == 0 {
+			continue
+		}
+		choice := chunk.Choices[0]
+		if choice.FinishReason != "" {
+			finish = choice.FinishReason
+		}
+		content.WriteString(choice.Delta.Content)
+		reasoning.WriteString(choice.Delta.ReasoningContent)
+		for _, tc := range choice.Delta.ToolCalls {
+			cur, ok := toolCalls[tc.Index]
+			if !ok {
+				cur = &workBuddyAggregatedToolCall{}
+				toolCalls[tc.Index] = cur
+				toolOrder = append(toolOrder, tc.Index)
+			}
+			if tc.ID != "" && cur.ID == "" {
+				cur.ID = tc.ID
+			}
+			if tc.Type != "" && cur.Type == "" {
+				cur.Type = tc.Type
+			}
+			if tc.Function.Name != "" && cur.Name == "" {
+				cur.Name = tc.Function.Name
+			}
+			cur.Arguments += tc.Function.Arguments
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("workbuddy: read upstream stream: %w", err)
+	}
+
+	message := map[string]any{"role": "assistant", "content": content.String()}
+	if reasoning.Len() > 0 {
+		message["reasoning_content"] = reasoning.String()
+	}
+	if len(toolOrder) > 0 {
+		calls := make([]any, 0, len(toolOrder))
+		for _, idx := range toolOrder {
+			tc := toolCalls[idx]
+			if tc == nil || tc.Name == "" {
+				continue
+			}
+			typ := tc.Type
+			if typ == "" {
+				typ = "function"
+			}
+			calls = append(calls, map[string]any{
+				"id":   tc.ID,
+				"type": typ,
+				"function": map[string]any{
+					"name":      tc.Name,
+					"arguments": tc.Arguments,
+				},
+			})
+		}
+		if len(calls) > 0 {
+			message["tool_calls"] = calls
+			if finish == "" {
+				finish = "tool_calls"
+			}
+		}
+	}
+	if finish == "" {
+		finish = "stop"
+	}
+
+	out := map[string]any{
+		"id":      id,
+		"object":  "chat.completion",
+		"created": created,
+		"model":   model,
+		"choices": []any{map[string]any{
+			"index":         0,
+			"message":       message,
+			"finish_reason": finish,
+		}},
+	}
+	if usage != nil {
+		out["usage"] = usage
+	}
+	raw, err := json.Marshal(out)
+	if err != nil {
+		return nil, err
+	}
+
+	// 用聚合后的 JSON 替换 body，保留原响应头与状态码。
+	resp.Body = io.NopCloser(bytes.NewReader(raw))
+	resp.ContentLength = int64(len(raw))
+	resp.Header.Set("Content-Length", strconv.Itoa(len(raw)))
+	resp.Header.Set("Content-Type", "application/json")
+	return resp, nil
+}
+
+// workBuddyAggregatedToolCall 是拼接中的单个工具调用。
+type workBuddyAggregatedToolCall struct {
+	ID        string
+	Type      string
+	Name      string
+	Arguments string
+}
+
+// workBuddyIntlChatCapableModels 是国际站**可以用于对话**的模型 id。
+//
+// 上游 /v3/config 返回的模型列表里混着补全、NES、视频等非对话模型，
+// 直接转发它们会得到 11102 service info not found（模型无对话服务）
+// 或 11134（模型不适用该端点）。实测只有下面三个能跑 chat：
+//
+//	balanced-model  ✅
+//	default-model   ✅
+//	fast-model      ✅
+//	auto / hy3      ✅（上游内部别名，不在列表里但可用）
+//
+// 其余（auto-chat、codewise-jump、completion-1.0、enhance-1.0、
+// nes-1.x、o4-mini、primary-model、seedance-2.5、max-model）全部拒绝。
+var workBuddyIntlChatCapableModels = map[string]bool{
+	"balanced-model": true,
+	"default-model":  true,
+	"fast-model":     true,
+	"auto":           true,
+	"hy3":            true,
+}
+
+// workBuddyIntlDefaultChatModel 是无法映射时的兜底对话模型。
+const workBuddyIntlDefaultChatModel = "default-model"
+
+// workBuddyNormalizeIntlModel 把国际站的模型名收敛到可对话的 id。
+//
+// 客户端可能填了列表里的任一模型（包括非对话模型），这里把它们统一
+// 换成 default-model —— 与其让用户看到 11102，不如补全/视频这类请求
+// 落到一个真正能回话的模型上。
+func workBuddyNormalizeIntlModel(model string) string {
+	name := strings.TrimSpace(model)
+	if name == "" {
+		return workBuddyIntlDefaultChatModel
+	}
+	if workBuddyIntlChatCapableModels[name] {
+		return name
+	}
+	return workBuddyIntlDefaultChatModel
+}

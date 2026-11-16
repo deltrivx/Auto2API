@@ -1,0 +1,33 @@
+[Unit]
+Description=Auto2API - AI API Gateway Platform
+Documentation=https://github.com/Wei-Shaw/auto2api
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=auto2api
+Group=auto2api
+WorkingDirectory=/opt/auto2api
+ExecStart=/opt/auto2api/auto2api
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=auto2api
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/auto2api
+
+# Environment - Server configuration
+# Modify these values to change listen address and port
+Environment=GIN_MODE=release
+Environment=SERVER_HOST=0.0.0.0
+Environment=SERVER_PORT=8080
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,62 @@
+{
+  "platforms": [
+    {
+      "id": "workbuddy_cn",
+      "display_name": "WorkBuddy 国内版",
+      "gateway": "openai",
+      "cn_provider": false,
+      "multi_protocol": {
+        "default_mode": "payg",
+        "routing": "by_inbound",
+        "modes": [
+          {
+            "mode": "payg",
+            "base_urls": {
+              "chat_completions": "https://copilot.tencent.com/v2"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "workbuddy_intl",
+      "display_name": "WorkBuddy 国际版",
+      "gateway": "openai",
+      "cn_provider": false,
+      "multi_protocol": {
+        "default_mode": "payg",
+        "routing": "by_inbound",
+        "modes": [
+          {
+            "mode": "payg",
+            "base_urls": {
+              "chat_completions": "https://www.workbuddy.ai/v2"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "marvis",
+      "display_name": "腾讯 Marvis",
+      "gateway": "openai",
+      "cn_provider": false,
+      "multi_protocol": {
+        "default_mode": "payg",
+        "routing": "by_inbound",
+        "modes": [
+          {
+            "mode": "payg",
+            "base_urls": {
+              "chat_completions": "https://copilot.tencent.com/v2"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "composite_precedence": [
+    "workbuddy_cn",
+    "workbuddy_intl"
+  ]
+}

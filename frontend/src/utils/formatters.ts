@@ -13,5 +13,5 @@ export function formatCacheTokens(tokens: number): string {
  */
 export function formatMultiplier(val: number): string {
   if (val < 0.0001) return val.toPrecision(2)
-  return val.toFixed(4).replace(/(\.\d{2}\d*?)0+$/, '$1')
+  return val.toFixed(2).replace(/(\.\d{2}\d*?)0+$/, '$1')
 }

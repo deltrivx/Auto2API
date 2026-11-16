@@ -511,15 +511,13 @@ const toFiniteNumber = (value: unknown): number => {
   return Number.isFinite(numberValue) ? numberValue : 0
 }
 
+// 成本统一两位小数，千位以上用 K。与仪表盘卡片同一口径，
+// 避免同一页面里 1.23 和 0.0004 两种精度并存。
 const formatCost = (value: number | null | undefined): string => {
   const safeValue = toFiniteNumber(value)
-  if (safeValue >= 1000) {
+  if (Math.abs(safeValue) >= 1000) {
     return (safeValue / 1000).toFixed(2) + 'K'
-  } else if (safeValue >= 1) {
-    return safeValue.toFixed(2)
-  } else if (safeValue >= 0.01) {
-    return safeValue.toFixed(3)
   }
-  return safeValue.toFixed(4)
+  return safeValue.toFixed(2)
 }
 </script>

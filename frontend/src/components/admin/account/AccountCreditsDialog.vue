@@ -184,7 +184,7 @@ function shortName(name: string): string {
 function formatValue(v: number): string {
   if (v >= 1e4) return (v / 1e4).toFixed(2) + '万'
   if (v >= 1) return v.toFixed(2)
-  return v.toFixed(4)
+  return v.toFixed(2)
 }
 
 function groupDot(g: { kind: string; name: string }): string {

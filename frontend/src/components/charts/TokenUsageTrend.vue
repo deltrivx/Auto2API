@@ -223,6 +223,6 @@ const formatCost = (value: number): string => {
   } else if (value >= 0.01) {
     return value.toFixed(3)
   }
-  return value.toFixed(4)
+  return value.toFixed(2)
 }
 </script>

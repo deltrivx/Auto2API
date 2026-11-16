@@ -262,6 +262,6 @@ const formatCost = (value: number | null | undefined): string => {
   } else if (safeValue >= 0.01) {
     return safeValue.toFixed(3)
   }
-  return safeValue.toFixed(4)
+  return safeValue.toFixed(2)
 }
 </script>

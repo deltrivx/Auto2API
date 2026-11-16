@@ -53,5 +53,5 @@ defineProps<{
   loading: boolean
 }>()
 const { t } = useI18n()
-const formatCost = (c: number) => c.toFixed(4)
+const formatCost = (c: number) => c.toFixed(2)
 </script>

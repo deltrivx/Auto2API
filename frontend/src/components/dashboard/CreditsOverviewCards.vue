@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
@@ -145,12 +145,13 @@ const cards = computed<Card[]>(() => {
 //
 // 首次无数据时带 sync=1 让后端同步跑一轮再返回，否则仪表盘会先显示
 // 骨架条，用户以为功能坏了。两个请求并发，不串行等。
-async function load() {
+async function load(forceSync = false) {
   const [wb, mv] = await Promise.all([
     (async () => {
       try {
-        let s = await getWorkBuddyCreditSnapshot(false)
-        if (s.accounts.length === 0) s = await getWorkBuddyCreditSnapshot(true)
+        // 账号数为 0 说明还是空快照：强制同步一次，免得停在骨架条上。
+        let s = await getWorkBuddyCreditSnapshot(forceSync)
+        if (s.accounts.length === 0 && !forceSync) s = await getWorkBuddyCreditSnapshot(true)
         return s
       } catch {
         return null
@@ -158,8 +159,8 @@ async function load() {
     })(),
     (async () => {
       try {
-        let s = await getMarvisCreditSnapshot(false)
-        if (s.accounts.length === 0) s = await getMarvisCreditSnapshot(true)
+        let s = await getMarvisCreditSnapshot(forceSync)
+        if (s.accounts.length === 0 && !forceSync) s = await getMarvisCreditSnapshot(true)
         return s
       } catch {
         return null
@@ -170,5 +171,25 @@ async function load() {
   marvis.value = mv
 }
 
-onMounted(load)
+// 定期刷新：账号增删或额度变化后，卡片要能自己更新。
+//
+// 后端快照由后台任务每 5 分钟刷新一次，这里取同样的节奏错开半分钟读取，
+// 避免刚好卡在同步尚未完成的时间点上。
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+onMounted(async () => {
+  await load()
+  refreshTimer = setInterval(() => { void load() }, REFRESH_INTERVAL_MS)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
+})
+
+// 供「刷新」按钮调用：带上 sync=1，让后端立刻同步一轮再返回。
+defineExpose({ refresh: () => load(true) })
 </script>

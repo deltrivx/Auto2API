@@ -24,11 +24,6 @@ export interface PublicOrderVerifyResult {
 }
 
 export const paymentAPI = {
-  /** Get payment configuration (enabled types, limits, etc.) */
-  getConfig() {
-    return apiClient.get<PaymentConfig>('/payment/config')
-  },
-
   /** Get available subscription plans */
   getPlans() {
     return apiClient.get<SubscriptionPlan[]>('/payment/plans')

@@ -292,67 +292,113 @@
               </div>
 
               <!-- Priority 4: Update available for release build - show update button -->
-              <div v-else-if="hasUpdate && isReleaseBuild" class="space-y-2">
-                <!-- Update info card -->
-                <div
-                  class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/50 dark:bg-amber-900/20"
-                >
-                <div
-                  class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50"
-                >
-                  <Icon
-                    name="download"
-                    size="sm"
-                    :stroke-width="2"
-                    class="text-amber-600 dark:text-amber-400"
-                  />
-                </div>
+              <div v-else-if="hasUpdate && isReleaseBuild" class="space-y-3">
+                <!-- 顶部：环形进度 + 版本与状态文案 -->
+                <div class="flex items-center gap-4">
+                  <!-- 环形进度：未开始时是下载图标，下载中按百分比画弧，完成后是勾 -->
+                  <div class="relative h-16 w-16 flex-shrink-0">
+                    <svg class="h-16 w-16 -rotate-90" viewBox="0 0 64 64">
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r="28"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="5"
+                        class="text-gray-200 dark:text-dark-600"
+                      />
+                      <circle
+                        v-if="downloadPercent > 0"
+                        cx="32"
+                        cy="32"
+                        r="28"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="5"
+                        stroke-linecap="round"
+                        class="text-primary-500 transition-all duration-300"
+                        :stroke-dasharray="ringCircumference"
+                        :stroke-dashoffset="ringOffset"
+                      />
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <span v-if="downloadPercent > 0 && downloadPercent < 100" class="text-xs font-semibold text-primary-600 dark:text-primary-400">
+                        {{ downloadPercent }}%
+                      </span>
+                      <Icon v-else-if="downloadPercent >= 100" name="check" size="sm" :stroke-width="2.5" class="text-green-500" />
+                      <Icon v-else name="download" size="sm" :stroke-width="2" class="text-gray-400" />
+                    </div>
+                  </div>
+
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium text-amber-700 dark:text-amber-300">
-                      {{ t('version.updateAvailable') }}
+                    <!-- 第一行：新版版本号 -->
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                      {{ t('version.newVersion') }} v{{ latestVersion }}
                     </p>
-                    <p class="text-xs text-amber-600/70 dark:text-amber-400/70">
-                      v{{ latestVersion }}
+                    <!-- 第二行：副标题显示进度或状态 -->
+                    <p class="mt-0.5 text-xs text-gray-500 dark:text-dark-400">
+                      {{ statusSubtitle }}
                     </p>
                   </div>
                 </div>
 
-                <!-- Update button -->
+                <!-- 更新日志：可滚动 -->
+                <div
+                  v-if="releaseNotes"
+                  class="max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs leading-5 whitespace-pre-wrap text-gray-600 dark:border-dark-600 dark:bg-dark-700/50 dark:text-dark-300"
+                >{{ releaseNotes }}</div>
+
+                <!-- 错误提示 -->
+                <div
+                  v-if="updateError"
+                  class="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-600 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400"
+                >{{ updateError }}</div>
+
+                <!-- 主按钮：文案随状态变化 -->
                 <button
                   @click="handleUpdate"
-                  :disabled="updating"
+                  :disabled="updating || downloading"
                   class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg v-if="updating" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    ></circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  <Icon v-else name="download" size="sm" :stroke-width="2" />
-                  {{ updating ? t('version.updating') : t('version.updateNow') }}
+                  {{ primaryButtonText }}
                 </button>
 
-                <!-- View release link -->
-                <a
-                  v-if="releaseInfo?.html_url && releaseInfo.html_url !== '#'"
-                  :href="releaseInfo.html_url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center justify-center gap-1 text-xs text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-dark-200"
-                >
-                  {{ t('version.viewChangelog') }}
-                  <Icon name="externalLink" size="xs" :stroke-width="2" />
-                </a>
+                <!-- 底部两个开关 -->
+                <div class="flex items-center justify-between border-t border-gray-100 pt-2.5 dark:border-dark-700">
+                  <label class="flex cursor-pointer items-center gap-2 text-xs text-gray-600 dark:text-dark-300">
+                    <button
+                      type="button"
+                      role="switch"
+                      :aria-checked="autoDownload"
+                      class="relative h-4 w-8 flex-shrink-0 rounded-full transition-colors"
+                      :class="autoDownload ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'"
+                      @click="toggleAutoDownload"
+                    >
+                      <span
+                        class="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform"
+                        :class="autoDownload ? 'translate-x-4' : 'translate-x-0.5'"
+                      />
+                    </button>
+                    {{ t('version.autoDownload') }}
+                  </label>
+
+                  <label class="flex cursor-pointer items-center gap-2 text-xs text-gray-600 dark:text-dark-300">
+                    <button
+                      type="button"
+                      role="switch"
+                      :aria-checked="autoInstall"
+                      class="relative h-4 w-8 flex-shrink-0 rounded-full transition-colors"
+                      :class="autoInstall ? 'bg-primary-500' : 'bg-gray-300 dark:bg-dark-600'"
+                      @click="toggleAutoInstall"
+                    >
+                      <span
+                        class="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform"
+                        :class="autoInstall ? 'translate-x-4' : 'translate-x-0.5'"
+                      />
+                    </button>
+                    {{ t('version.autoInstall') }}
+                  </label>
+                </div>
               </div>
 
               <!-- Priority 5: Up to date - GitHub link + version rollback -->
@@ -638,7 +684,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
@@ -683,6 +729,16 @@ const displayVersion = computed(() => {
 const latestVersion = computed(() => appStore.latestVersion)
 const hasUpdate = computed(() => appStore.hasUpdate)
 const releaseInfo = computed(() => appStore.releaseInfo)
+
+// 更新日志正文：Release body，去掉 Markdown 标题行后作为纯文本展示。
+const releaseNotes = computed(() => {
+  const body = (releaseInfo.value as { body?: string } | null)?.body || ''
+  return body
+    .split('\n')
+    .filter((line) => !/^#+\s/.test(line.trim()))
+    .join('\n')
+    .trim()
+})
 const buildType = computed(() => appStore.buildType)
 
 // Update process states (local to this component)
@@ -694,6 +750,57 @@ const updateSuccess = ref(false)
 const restartCountdown = ref(0)
 // Distinguishes the success + restart panel between update and rollback flows
 const successKind = ref<'update' | 'rollback'>('update')
+
+// ── 在线升级面板状态 ────────────────────────────────────────────────
+// 下载进度 0-100；100 表示已下载完成、待安装。
+const downloadPercent = ref(0)
+const downloading = ref(false)
+const installed = ref(false)
+// 两个开关持久化到 localStorage，用户设一次即可。
+const autoDownload = ref(localStorage.getItem('update-auto-download') === '1')
+const autoInstall = ref(localStorage.getItem('update-auto-install') === '1')
+
+// 环形进度参数：半径 28 → 周长 2πr。
+const ringCircumference = 2 * Math.PI * 28
+const ringOffset = computed(
+  () => ringCircumference * (1 - Math.min(100, Math.max(0, downloadPercent.value)) / 100)
+)
+
+// 第二行副标题：按阶段显示进度与说明。
+const statusSubtitle = computed(() => {
+  if (updateError.value) return t('version.statusFailed')
+  if (installed.value) return t('version.statusInstalled')
+  if (downloadPercent.value >= 100) return t('version.statusReadyInstall')
+  if (downloading.value) return t('version.statusDownloading', { percent: downloadPercent.value })
+  if (downloadPercent.value > 0) return t('version.statusPaused', { percent: downloadPercent.value })
+  return t('version.statusIdle')
+})
+
+// 主按钮文案：开始更新 → 下载中 → 安装更新 → 已安装。
+const primaryButtonText = computed(() => {
+  if (installed.value) return t('version.installed')
+  if (downloadPercent.value >= 100) return t('version.installUpdate')
+  if (downloading.value) return t('version.downloading', { percent: downloadPercent.value })
+  return t('version.startUpdate')
+})
+
+function toggleAutoDownload() {
+  autoDownload.value = !autoDownload.value
+  localStorage.setItem('update-auto-download', autoDownload.value ? '1' : '0')
+  if (autoDownload.value && hasUpdate.value && downloadPercent.value === 0) {
+    void startDownload()
+  }
+}
+
+function toggleAutoInstall() {
+  autoInstall.value = !autoInstall.value
+  localStorage.setItem('update-auto-install', autoInstall.value ? '1' : '0')
+  if (autoInstall.value && autoDownload.value) {
+    autoDownload.value = false
+    localStorage.setItem('update-auto-download', '0')
+    if (hasUpdate.value && downloadPercent.value === 0) void startDownload()
+  }
+}
 
 // Rollback states
 const rollbackPanelOpen = ref(false)
@@ -759,26 +866,71 @@ async function refreshVersion(force = true) {
   await appStore.fetchVersion(force)
 }
 
-async function handleUpdate() {
-  if (updating.value) return
+// 后端只暴露一个「下载并替换」的接口，进度无法逐块上报。
+// 这里用一个收敛到 90% 的假进度让用户看到动效，接口返回后再补到 100%，
+// 失败则停在当前值并把错误显示出来——真实结果始终以接口返回为准。
+let progressTimer: ReturnType<typeof setInterval> | null = null
 
+function stopProgress() {
+  if (progressTimer) {
+    clearInterval(progressTimer)
+    progressTimer = null
+  }
+}
+
+function startProgress() {
+  stopProgress()
+  downloadPercent.value = 0
+  downloading.value = true
+  progressTimer = setInterval(() => {
+    const cur = downloadPercent.value
+    if (cur >= 90) return
+    // 越接近 90 增幅越小，形成自然的减速感。
+    const step = Math.max(1, Math.round((90 - cur) / 12))
+    downloadPercent.value = Math.min(90, cur + step)
+  }, 400)
+}
+
+// 下载并替换二进制。返回是否成功。
+async function startDownload(): Promise<boolean> {
+  if (downloading.value || updating.value) return false
   updating.value = true
   updateError.value = ''
   updateSuccess.value = false
+  installed.value = false
+  startProgress()
 
   try {
     const result = await performUpdate()
+    stopProgress()
+    downloadPercent.value = 100
+    downloading.value = false
     successKind.value = 'update'
     updateSuccess.value = true
     needRestart.value = result.need_restart
-    // Clear version cache to reflect update completed
+    installed.value = true
     appStore.clearVersionCache()
+    return true
   } catch (error: unknown) {
+    stopProgress()
+    downloading.value = false
     const err = error as { response?: { data?: { message?: string } }; message?: string }
     updateError.value = err.response?.data?.message || err.message || t('version.updateFailed')
+    return false
   } finally {
     updating.value = false
   }
+}
+
+// 主按钮：未下载则开始下载；已下载则走安装（后端已在下载阶段完成替换）。
+async function handleUpdate() {
+  if (updating.value || downloading.value) return
+  if (downloadPercent.value >= 100) {
+    // 已经替换完成，只需重启服务生效。
+    installed.value = true
+    return
+  }
+  await startDownload()
 }
 
 function resetRollbackState() {
@@ -917,6 +1069,20 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
+// 自动下载：有新版且开关打开时自动开始下载。
+// autoInstall 勾选时等价于「自动下载 + 自动安装」，所以也走这里
+// （后端下载阶段即完成替换，勾选 autoInstall 即自动装好）。
+watch(
+  () => hasUpdate.value,
+  (yes) => {
+    if (!yes || !isAdmin.value) return
+    if (!autoDownload.value && !autoInstall.value) return
+    if (downloadPercent.value > 0 || downloading.value || updating.value) return
+    void startDownload()
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   if (isAdmin.value) {
     // Use cached version if available, otherwise fetch
@@ -927,6 +1093,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  stopProgress()
 })
 </script>
 

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"os"
 	"log/slog"
 	"bufio"
 	"bytes"
@@ -70,6 +71,11 @@ var workBuddyFlaggedRules = []workBuddyFlaggedRule{
 	{regexp.MustCompile(`(?i)You are an AI agent powered by local coding tool\.?`),
 		"You are an AI agent, powered by local coding tool."},
 
+	// 以下三条来自 AutoBuddy 的记录，但**实测 AutoBuddy 并不依赖它们过审**：
+	// 直接调用它的 sanitize_messages，对同样的 DSH 文本返回原样（未改写），
+	// 请求照样通过。保留规则但由 workBuddyChannelSanitizeEnabled 控制开关，
+	// 默认关闭——改写一旦改变客户端语义反而可能触发新的判据。
+	//
 	// DSH 的真实首两行（AutoBuddy 2026-11-12 实测，5832 字符全文捕获）：
 	//   You are an AI agent powered by local coding tool.
 	//   You are a coding agent powered by the deepseek-v4.1-flash model.
@@ -322,7 +328,13 @@ func workBuddySystemOn(payload map[string]any) bool {
 	if !ok || len(msgs) == 0 {
 		return false
 	}
-	changed := workBuddyUnflagMessages(msgs)
+	// 内容改写默认关闭：AutoBuddy 实测对同样的 DSH 文本返回原样仍能过审，
+	// 说明上游拦的不是这些句子本身。改写会改变客户端语义（powered by→using），
+	// 反而可能命中别的判据。需要时用 AUTO2API_WORKBUDDY_UNFLAG=1 打开。
+	changed := false
+	if workBuddyUnflagEnabled() {
+		changed = workBuddyUnflagMessages(msgs)
+	}
 	// unflag 可能删除元素，取回最新切片。
 	msgs, ok = payload["messages"].([]any)
 	if !ok {
@@ -896,4 +908,12 @@ func workBuddyNormalizeIntlModel(model string) string {
 		return name
 	}
 	return workBuddyIntlDefaultChatModel
+}
+
+// workBuddyUnflagEnabled 报告是否启用提示词品牌痕改写。
+//
+// 默认关闭，理由见 workBuddySystemOn 中的注释。
+func workBuddyUnflagEnabled() bool {
+	v := strings.TrimSpace(strings.ToLower(os.Getenv("AUTO2API_WORKBUDDY_UNFLAG")))
+	return v == "1" || v == "true" || v == "yes"
 }

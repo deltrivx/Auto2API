@@ -349,6 +349,8 @@ type Application struct {
 	CreditSync *service.WorkBuddyCreditSyncService
 	// MarvisWalletSync 定时把腾讯 Marvis 的令牌额度写进账号 extra。
 	MarvisWalletSync *service.MarvisWalletSyncService
+	// MarvisCreditSync 定时汇总 Marvis 各账号额度，供仪表盘读取。
+	MarvisCreditSync *service.MarvisCreditSyncService
 }
 
 func providePrivacyClientFactory() service.PrivacyClientFactory {

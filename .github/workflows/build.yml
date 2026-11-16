@@ -59,7 +59,7 @@ jobs:
 
       - name: Resolve version
         id: version
-        run: echo "value=$(./scripts/resolve-version.sh)" >> "$GITHUB_OUTPUT"
+        run: echo "value=$(./backend/scripts/resolve-version.sh)" >> "$GITHUB_OUTPUT"
 
       - name: Build backend
         working-directory: backend

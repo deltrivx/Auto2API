@@ -71,7 +71,6 @@ export const adminAPI = {
   payment: adminPaymentAPI,
   affiliates: affiliatesAPI,
   riskControl: riskControlAPI,
-  compliance:
   audit: auditAPI
 }
 

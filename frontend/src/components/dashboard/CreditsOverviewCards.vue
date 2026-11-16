@@ -85,7 +85,7 @@ type Card = {
   value: string
   hint: string
   platform?: 'workbuddy_cn' | 'marvis'
-  icon?: 'chart' | 'trophy' | 'clock'
+  icon?: 'chart' | 'trophy' | 'clock' | 'grid'
   color: string
   bg: string
 }

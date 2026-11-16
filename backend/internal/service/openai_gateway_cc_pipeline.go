@@ -253,7 +253,10 @@ func (s *OpenAIGatewayService) sendCCUpstreamRequest(
 	// WorkBuddy 两个站点要求一组桌面客户端身份头，缺少会被前置网关拒绝
 	// （User-Agent 不含 WorkBuddy/<version> 时返回业务错误 10085）。
 	// 这里必须在透传白名单与 UA 收敛之后应用，否则会被后续步骤覆盖。
-	applyWorkBuddyHeaders(account, upstreamReq.Header)
+	// 带 body 的版本额外写会话头（X-Conversation-ID /
+	// X-Conversation-Request-ID / X-Conversation-Message-ID），
+	// 官方桌面端每次对话都带，缺失会被渠道校验判为非官方客户端。
+	applyWorkBuddyHeadersWithBody(account, upstreamReq.Header, body)
 	// Marvis 的鉴权方式是四个 Ual-Access-* 头 + 每次现签的设备指纹，
 	// 不是 Bearer。必须放在 UA 收敛与透传之后，否则会被覆盖。
 	applyMarvisHeaders(account, upstreamReq.Header)

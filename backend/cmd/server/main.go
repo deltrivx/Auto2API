@@ -182,6 +182,14 @@ func runMainServer() {
 		defer cancelMarvisCredit()
 		app.MarvisCreditSync.Start(marvisCreditCtx)
 	}
+	// 渠道监控的定时打点。
+	//
+	// 这里此前没有启动：监控记录建好了、界面上也有开关，但 runner 从未跑起来，
+	// last_checked_at 一直停在启用那一刻（实测停在 15:00，八小时后仍未更新），
+	// 界面就显示成异常。runner 内部按每个监控自己的 interval 调度。
+	if app.ChannelMonitorRunner != nil {
+		app.ChannelMonitorRunner.Start()
+	}
 	defer app.Cleanup()
 	if app.PromptAudit != nil {
 		if err := app.PromptAudit.Start(context.Background()); err != nil {

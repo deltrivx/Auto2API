@@ -328,11 +328,12 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	userPlatformQuotaUsageFlusher := service.ProvideUserPlatformQuotaUsageFlusher(configConfig, billingCache, serviceUserPlatformQuotaRepository, timingWheelService)
 	v := provideCleanup(client, redisClient, opsMetricsCollector, opsAggregationService, opsAlertEvaluatorService, opsCleanupService, opsScheduledReportService, opsSystemLogSink, opsService, opsIngressRejectAggregator, apiKeyService, authCacheInvalidationWorker, schedulerSnapshotService, tokenRefreshService, accountExpiryService, openAICodexVersionSyncService, claudeCodeVersionSyncService, proxyExpiryService, subscriptionExpiryService, usageCleanupService, idempotencyCleanupService, pricingService, emailQueueService, billingCacheService, usageRecordWorkerPool, balanceNotifyService, digestSessionStore, subscriptionService, oAuthService, openAIOAuthService, openAIGatewayService, scheduledTestRunnerService, backupService, paymentOrderExpiryService, channelMonitorRunner, channelMonitorV2Aggregator, userPlatformQuotaUsageFlusher, upstreamBillingProbeService, auditLogService, openAIQuotaAutoResetService, promptService)
 	application := &Application{
-		Server:           httpServer,
-		PromptAudit:      promptService,
-		Cleanup:          v,
-		MarvisWalletSync: marvisWalletSyncService,
-		MarvisCreditSync: marvisCreditSyncService,
+		Server:               httpServer,
+		PromptAudit:          promptService,
+		Cleanup:              v,
+		MarvisWalletSync:     marvisWalletSyncService,
+		MarvisCreditSync:     marvisCreditSyncService,
+		ChannelMonitorRunner: channelMonitorRunner,
 	}
 	return application, nil
 }
@@ -351,6 +352,9 @@ type Application struct {
 	MarvisWalletSync *service.MarvisWalletSyncService
 	// MarvisCreditSync 定时汇总 Marvis 各账号额度，供仪表盘读取。
 	MarvisCreditSync *service.MarvisCreditSyncService
+	// ChannelMonitorRunner 按各监控的 interval 定期打点上游，
+	// 缺了它监控列表的 last_checked_at 会一直停在启用那一刻。
+	ChannelMonitorRunner *service.ChannelMonitorRunner
 }
 
 func providePrivacyClientFactory() service.PrivacyClientFactory {

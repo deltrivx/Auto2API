@@ -135,7 +135,9 @@ async function load() {
         account_id: m.account_id,
         account: m.account,
         platform: m.platform,
-        total: m.total,
+        // 账号列表这一格要显示「还剩多少」，不是「总额」。
+        // WorkBuddy 分支算的也是可用量（total - used），这里保持一致。
+        total: m.available ?? Math.max(0, (m.total ?? 0) - (m.used ?? 0)),
         groups: m.groups ?? [],
         package_name: m.package_name,
         is_paid_user: m.is_paid_user,

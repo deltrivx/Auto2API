@@ -434,11 +434,12 @@ func MarvisFingerprintView(account *Account) map[string]any {
 	out["guid"] = credsView.GUID
 	out["openid"] = credsView.OpenID
 	out["login_type"] = credsView.LoginType
-	// UA 取画像里的那台机器；画像缺失的老账号退回协议 UA。
+	// Marvis 的 UA 不是浏览器 UA，也不是画像的一部分。
+	//
+	// magpie-marvis 插件的 CLIENT 常量写死了 "AsyncOpenAI/Python 2.32.0"：
+	// 这是模型网关的准入条件，换成任何浏览器 UA 都会被风控拦（4100404）。
+	// 因此这里不走画像，恒为该常量。
 	out["ua"] = MarvisClientUA
-	if ua := str("ua"); ua != "" {
-		out["ua"] = ua
-	}
 	out["ide_version"] = MarvisClientVersion
 	out["persisted"] = marvisFingerprintOfCredentials(creds) != nil
 	// 扩维字段：与 WorkBuddy / Trae 同名，弹窗共用同一套行。

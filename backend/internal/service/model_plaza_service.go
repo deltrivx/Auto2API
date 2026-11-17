@@ -398,6 +398,19 @@ func (s *ModelPlazaService) lookupOfficialPricing(ctx context.Context, modelName
 			result = nil
 		}
 	}
+	// 价格表没命中时用积分档位表兜底。
+	//
+	// 计费侧对 Marvis / Trae 按统一积分档位补算（见 openai_gateway_usage.go），
+	// 但它们的模型大多不在价格表里。这里必须用同一张档位表，否则广场显示「-」或
+	// 沿用旧美元价，而实际按档位扣积分，展示与扣费会对不上。
+	if result == nil {
+		if inPer1M, outPer1M, _, matched := creditTierFor(modelName); matched {
+			result = &PlazaOfficialPricing{
+				InputPrice:  nonZeroPtr(inPer1M / 1_000_000),
+				OutputPrice: nonZeroPtr(outPer1M / 1_000_000),
+			}
+		}
+	}
 	memo[modelName] = result
 	return result
 }

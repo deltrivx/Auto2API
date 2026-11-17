@@ -131,13 +131,14 @@
         <button type="button" class="btn btn-secondary" @click="handleClose">
           {{ t('common.cancel') }}
         </button>
-        <!-- WorkBuddy：第二步确认登录后，由这个按钮完成最后的保存（对应「添加账号」的「创建」） -->
+        <!-- 三个平台统一：步骤组件只「拿到登录态」，真正的保存由用户点这个按钮完成
+             （对应「添加账号」里用户点「创建」）。避免完成授权即自动提交。 -->
         <button
-          v-if="authFlow === 'workbuddy'"
+          v-if="authFlow === 'workbuddy' || authFlow === 'marvis' || authFlow === 'trae'"
           type="button"
-          :disabled="!workbuddyReady || reauthSaving"
+          :disabled="!reauthReady || reauthSaving"
           class="btn btn-primary"
-          @click="handleWorkBuddyReauthorize"
+          @click="handleReauthorize"
         >
           <svg
             v-if="reauthSaving"
@@ -256,8 +257,8 @@ const oauthFlowRef = ref<OAuthFlowExposed | null>(null)
 
 // State
 const addMethod = ref<AddMethod>('oauth')
-// WorkBuddy 重新授权：第二步确认后置 true，底部「重新授权」按钮才可点
-const workbuddyReady = ref(false)
+// 授权步骤已拿到登录态：底部「重新授权」按钮才可点
+const reauthReady = ref(false)
 const reauthSaving = ref(false)
 const geminiOAuthType = ref<'code_assist' | 'google_one' | 'ai_studio'>('code_assist')
 
@@ -291,14 +292,14 @@ const authFlow = computed(() => platformSpec.value?.flow)
 // handleWorkBuddyConfirm 第二步已确认登录：只放开底部「重新授权」按钮。
 //
 // 这里不能再调一次 waitForSignIn —— 授权结果已经在步骤组件里取到，
-// 重复等待会让流程卡在「等待授权中」，也就是这次修复的重新授权无响应问题。
+// 重复等待会让流程卡在「等待授权中」。
 function handleWorkBuddyConfirm() {
   if (!props.account) return
   if (!workbuddyOAuth.result.value?.access_token) {
     appStore.showError('授权结果无效，请重试')
     return
   }
-  workbuddyReady.value = true
+  reauthReady.value = true
 }
 
 // handleWorkBuddyReauthorize 用已拿到的登录态保存凭据，完成重新授权。
@@ -323,34 +324,38 @@ async function handleWorkBuddyReauthorize() {
 }
 
 
-// handleMarvisConfirm 用回调地址换取新登录态后保存凭据。
-async function handleMarvisConfirm() {
+// handleMarvisConfirm 只标记就绪：保存交给底部「重新授权」按钮。
+function handleMarvisConfirm() {
   const signed = marvisOAuth.result.value
   if (!signed?.credentials?.access_token) {
     appStore.showError('Authorization incomplete')
     return
   }
-  if (!props.account) return
-  try {
-    const updated = await adminAPI.accounts.update(props.account.id, {
-      credentials: signed.credentials
-    })
-    appStore.showSuccess(t('admin.accounts.oauth.authorized'))
-    emit('reauthorized', updated as unknown as Account)
-    handleClose()
-  } catch (e: any) {
-    appStore.showError(e?.message || 'Save failed')
-  }
+  reauthReady.value = true
 }
 
-// handleTraeConfirm 用服务端组装好的凭据完成重新授权。
-async function handleTraeConfirm() {
-  if (!props.account) return
+// handleTraeConfirm 只标记就绪：保存交给底部「重新授权」按钮。
+function handleTraeConfirm() {
   const creds = traeOAuth.result?.value?.credentials
   if (!creds?.access_token) {
     appStore.showError('Authorization incomplete')
     return
   }
+  reauthReady.value = true
+}
+
+// handleReauthorize 是三个平台共用的最后一步：用户点按钮才写回账号。
+async function handleReauthorize() {
+  if (!props.account || reauthSaving.value) return
+  let creds: Record<string, unknown> | null = null
+  if (authFlow.value === 'workbuddy') creds = workbuddyOAuth.buildCredentials()
+  else if (authFlow.value === 'marvis') creds = (marvisOAuth.result.value?.credentials as Record<string, unknown>) ?? null
+  else if (authFlow.value === 'trae') creds = (traeOAuth.result.value?.credentials as Record<string, unknown>) ?? null
+  if (!creds || !creds.access_token) {
+    appStore.showError('Authorization incomplete')
+    return
+  }
+  reauthSaving.value = true
   try {
     const updated = await adminAPI.accounts.update(props.account.id, { credentials: creds })
     appStore.showSuccess(t('admin.accounts.oauth.authorized'))
@@ -358,6 +363,8 @@ async function handleTraeConfirm() {
     handleClose()
   } catch (e: any) {
     appStore.showError(e?.message || 'Save failed')
+  } finally {
+    reauthSaving.value = false
   }
 }
 
@@ -414,7 +421,7 @@ watch(
 const resetState = () => {
   addMethod.value = 'oauth'
   geminiOAuthType.value = 'code_assist'
-  workbuddyReady.value = false
+  reauthReady.value = false
   reauthSaving.value = false
   workbuddyOAuth.resetState()
   // Marvis 也要清：否则关掉弹窗再打开，第二步的授权链接和回调输入还在，

@@ -95,25 +95,6 @@
               </div>
             </div>
           </div>
-
-          <!-- 全平台积分：三平台积分总和 + 各自今日消费 -->
-          <div class="card p-4">
-            <div class="flex items-center gap-3">
-              <div class="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
-                <Icon name="grid" size="md" class="text-amber-600 dark:text-amber-400" :stroke-width="2" />
-              </div>
-              <div class="min-w-0">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {{ t('admin.dashboard.allPlatformCredits') }}
-                </p>
-                <p class="text-xl font-bold text-amber-600 dark:text-amber-400">
-                  {{ creditsTotalText }}
-                  <span class="ml-1 text-sm font-normal text-gray-400">{{ t('admin.accounts.creditsUnit') }}</span>
-                </p>
-                <p class="text-xs text-gray-400" :title="platformTodayText">{{ platformTodayText }}</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Row 2: Token Stats -->
@@ -371,11 +352,6 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import Icon from '@/components/icons/Icon.vue'
 import CreditsOverviewCards from '@/components/dashboard/CreditsOverviewCards.vue'
-import {
-  getMarvisCreditSnapshot,
-  getTraeCreditSnapshot,
-  getWorkBuddyCreditSnapshot
-} from '@/api/admin/workbuddy'
 import DateRangePicker from '@/components/common/DateRangePicker.vue'
 import Select from '@/components/common/Select.vue'
 import ModelDistributionChart from '@/components/charts/ModelDistributionChart.vue'
@@ -411,40 +387,6 @@ const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
 const stats = ref<DashboardStats | null>(null)
 const loading = ref(false)
 
-// 全平台积分卡：与第三行四张积分卡同源，保证两处口径一致。
-const creditSnapshots = ref<{ wb: number; mv: number; tr: number; mvToday: number; trToday: number } | null>(null)
-
-const loadCreditSnapshots = async () => {
-  const [wb, mv, tr] = await Promise.all([
-    getWorkBuddyCreditSnapshot(true).catch(() => null),
-    getMarvisCreditSnapshot(true).catch(() => null),
-    getTraeCreditSnapshot(true).catch(() => null)
-  ])
-  creditSnapshots.value = {
-    wb: wb?.total_credits ?? 0,
-    mv: mv?.total_credits ?? 0,
-    tr: tr?.total_credits ?? 0,
-    mvToday: mv?.today_used ?? 0,
-    trToday: tr?.today_used ?? 0
-  }
-}
-
-const creditsTotalText = computed(() => {
-  const c = creditSnapshots.value
-  if (!c) return '—'
-  return (c.wb + c.mv + c.tr).toLocaleString('zh-CN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
-})
-
-const platformTodayText = computed(() => {
-  const c = creditSnapshots.value
-  if (!c) return '—'
-  const n = (v: number) =>
-    v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  return `WorkBuddy：${n(c.wb)} · Marvis：${n(c.mvToday)} · Trae：${n(c.trToday)}`
-})
 const chartsLoading = ref(false)
 const userTrendLoading = ref(false)
 const rankingLoading = ref(false)
@@ -815,7 +757,6 @@ const loadChartData = async () => {
 }
 
 onMounted(() => {
-  void loadCreditSnapshots()
   void refreshBatchImageAccess()
   loadDashboardStats()
 })

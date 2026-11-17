@@ -102,9 +102,11 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 		if cErr != nil {
 			row.Error = cErr.Error()
 		} else if credits != nil {
-			row.Total = credits.Limit
-			row.Used = credits.Used
-			row.Available = credits.Limit - credits.Used
+			// 按展示口径折算成积分：国际站 1 美元 = 100 积分，国内站本身就是积分。
+			limitPts, usedPts := TraeCreditsAsPoints(credits)
+			row.Total = limitPts
+			row.Used = usedPts
+			row.Available = limitPts - usedPts
 			if row.Available < 0 {
 				row.Available = 0
 			}

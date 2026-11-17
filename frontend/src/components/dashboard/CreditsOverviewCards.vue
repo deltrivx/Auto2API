@@ -146,7 +146,8 @@ const cards = computed<Card[]>(() => {
     {
       key: 'trae',
       label: t('admin.accounts.creditsTraeTotal'),
-      value: fmtK(trTotal),
+      // Trae 不用 K 缩写，直接两位小数完整显示。
+      value: fmt(trTotal),
       hint: `${t('admin.accounts.cardTodayUsed')}: ${fmt(trTodayUsed)} ${unit.value}`,
       platform: 'trae_cn',
       color: 'text-amber-600 dark:text-amber-400',

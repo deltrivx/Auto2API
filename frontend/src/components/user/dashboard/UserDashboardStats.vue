@@ -60,13 +60,8 @@
           <p class="text-xl font-bold text-purple-600 dark:text-purple-400" :title="`${t('dashboard.actual')}: ${formatCost(stats?.today_actual_cost || 0)} / ${t('dashboard.standard')}: ${formatCost(stats?.today_cost || 0)}`">
             {{ formatCost(stats?.today_actual_cost || 0) }}<span class="ml-1 text-sm font-normal text-gray-400">{{ t('admin.accounts.creditsUnit') }}</span>
           </p>
-          <!-- 第二行：全平台积分总和（WorkBuddy + Marvis + Trae），与第三行卡片同源 -->
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ t('dashboard.allPlatformCredits') }}: {{ creditsTotalText }}
-          </p>
-          <!-- 第三行：三个平台各自的今日消费 -->
-          <p class="text-xs text-gray-400" :title="platformTodayTitle">
-            {{ platformTodayText }}
+            {{ t('common.total') }}: {{ formatCost(stats?.total_actual_cost || 0) }} {{ t('admin.accounts.creditsUnit') }}
           </p>
         </div>
       </div>
@@ -238,7 +233,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import CreditsOverviewCards from '@/components/dashboard/CreditsOverviewCards.vue'
-import { getMarvisCreditSnapshot, getTraeCreditSnapshot, getWorkBuddyCreditSnapshot } from '@/api/admin/workbuddy'
 import type { PlatformDashboardStats, UserDashboardStats as UserStatsType } from '@/api/usage'
 import type { PlatformQuotaItem } from '@/types'
 
@@ -405,43 +399,6 @@ const formatBalance = (b: number) =>
 const formatNumber = (n: number) => n.toLocaleString()
 // 积分统一两位小数，与管理端仪表盘口径一致。
 const formatCost = (c: number) => c.toFixed(2)
-
-// 全平台积分与今日消费：与第三行四卡同源，保证两处口径一致。
-const creditSnapshots = ref<{ wb: number; mvTotal: number; mvToday: number; trTotal: number; trToday: number } | null>(null)
-
-const loadCreditSnapshots = async () => {
-  const [wb, mv, tr] = await Promise.all([
-    getWorkBuddyCreditSnapshot(true).catch(() => null),
-    getMarvisCreditSnapshot(true).catch(() => null),
-    getTraeCreditSnapshot(true).catch(() => null)
-  ])
-  creditSnapshots.value = {
-    wb: wb?.total_credits ?? 0,
-    mvTotal: mv?.total_credits ?? 0,
-    mvToday: mv?.today_used ?? 0,
-    trTotal: tr?.total_credits ?? 0,
-    trToday: tr?.today_used ?? 0
-  }
-}
-
-/** 全平台积分总和，两位小数。 */
-const creditsTotalText = computed(() => {
-  const c = creditSnapshots.value
-  if (!c) return '—'
-  const total = c.wb + c.mvTotal + c.trTotal
-  return total.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-})
-
-/** 三个平台今日消费，两位小数。 */
-const platformTodayText = computed(() => {
-  const c = creditSnapshots.value
-  if (!c) return '—'
-  const n = (v: number) => v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  return `WorkBuddy：${n(c.wb)} · Marvis：${n(c.mvToday)} · Trae：${n(c.trToday)}`
-})
-const platformTodayTitle = computed(() => platformTodayText.value)
-
-onMounted(() => { void loadCreditSnapshots() })
 const formatTokens = (t: number) => {
   if (t >= 1_000_000) return `${(t / 1_000_000).toFixed(1)}M`
   if (t >= 1000) return `${(t / 1000).toFixed(1)}K`

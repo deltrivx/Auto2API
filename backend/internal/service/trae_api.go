@@ -363,13 +363,19 @@ func traeSumDollars(raw []byte) (float64, float64, bool) {
 	return limit, used, false
 }
 
-// TraeCreditsAsPoints 把额度按展示口径折算成积分。
+// traeUSDToCredits 是国际站「美元 → 积分」的展示折算率。
 //
-// 产品口径：Auto2API 内所有平台都按积分显示；国际站原生是美元，
-// 约定 1 美元 = 1 积分（仅单位换算，不改上游计费）。
+// 产品口径：Auto2API 内所有平台都按积分显示。国际站原生按美元计费，
+// 展示时 1 美元 = 100 积分（仅换算，不改上游计费）。国内站本身就是积分，不折算。
+const traeUSDToCredits = 100
+
+// TraeCreditsAsPoints 把额度按展示口径折算成积分。
 func TraeCreditsAsPoints(c *TraeCredits) (limit, used float64) {
 	if c == nil {
 		return 0, 0
+	}
+	if c.NativeUnit == traeUnitUSD {
+		return c.Limit * traeUSDToCredits, c.Used * traeUSDToCredits
 	}
 	return c.Limit, c.Used
 }

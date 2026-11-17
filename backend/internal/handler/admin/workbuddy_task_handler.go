@@ -533,7 +533,9 @@ func (h *WorkBuddyTaskHandler) traeCreditsDetail(c *gin.Context, account *servic
 		})
 		return
 	}
-	remaining := credits.Limit - credits.Used
+	// 展示口径统一为积分：国际站 1 美元 = 100 积分，国内站原样。
+	limitPts, usedPts := service.TraeCreditsAsPoints(credits)
+	remaining := limitPts - usedPts
 	if remaining < 0 {
 		remaining = 0
 	}
@@ -547,8 +549,8 @@ func (h *WorkBuddyTaskHandler) traeCreditsDetail(c *gin.Context, account *servic
 		"groups": []gin.H{{
 			"kind":   "credits",
 			"name":   "积分",
-			"used":   credits.Used,
-			"total":  credits.Limit,
+			"used":   usedPts,
+			"total":  limitPts,
 			"remain": remaining,
 		}},
 		"packages": []any{},

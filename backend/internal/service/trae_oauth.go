@@ -446,8 +446,8 @@ func traeExchangeToken(ctx context.Context, client *http.Client, site *traeSite,
 	var lastErr error
 	// 国内站：设备绑定续期（SOLO 客户端优先，IDE 兜底）。
 	if site.ID == PlatformTraeCN {
-		for _, clientID := range []string{traeChatClientID, traeOAuthClientID} {
-			result, err := traeExchangeDeviceBound(ctx, client, authHost, token, clientID)
+		for _, as := range traeCNDeviceExchangeClients {
+			result, err := traeExchangeDeviceBound(ctx, client, authHost, token, as)
 			if err == nil {
 				return result, nil
 			}
@@ -464,46 +464,73 @@ func traeExchangeToken(ctx context.Context, client *http.Client, site *traeSite,
 	return nil, err
 }
 
+// traeDeviceExchangeClient 是一次设备绑定续期里声明的客户端身份。
+type traeDeviceExchangeClient struct {
+	ClientID string
+	Platform string // SOLO_PC / IDE_PC
+	Version  string
+}
+
+// traeCNDeviceExchangeClients 与 Trae 客户端一致：先 SOLO，再 IDE。
+var traeCNDeviceExchangeClients = []traeDeviceExchangeClient{
+	{ClientID: traeChatClientID, Platform: "SOLO_PC", Version: "0.1.64"},
+	{ClientID: traeOAuthClientID, Platform: "IDE_PC", Version: "3.3.99"},
+}
+
 // traeExchangeDeviceBound 走国内站的设备绑定续期。
-func traeExchangeDeviceBound(ctx context.Context, client *http.Client, authHost string, token traeToken, clientID string) (*traeRefreshResult, error) {
+//
+// 请求体严格对齐 Trae 客户端（见 magpie 插件的 boundExchange）：
+// DeviceProof 是对象 {Signature, Timestamp, Nonce}，ClientSecret 为空串，
+// DeviceInfo 带完整的设备画像，并附 IDEVersion。
+func traeExchangeDeviceBound(ctx context.Context, client *http.Client, authHost string, token traeToken, as traeDeviceExchangeClient) (*traeRefreshResult, error) {
 	timestamp := time.Now().Unix()
 	nonce, err := traeRandomHex(16)
 	if err != nil {
 		return nil, err
 	}
-	proof, err := token.Device.signTraeDeviceProof(http.MethodPost, traeRefreshPathCN, clientID, token.Refresh, timestamp, nonce)
+	signature, err := token.Device.signTraeDeviceProof(http.MethodPost, traeRefreshPathCN, as.ClientID, token.Refresh, timestamp, nonce)
 	if err != nil {
 		return nil, err
 	}
 	body := map[string]any{
-		"ClientID":     clientID,
+		"ClientID":     as.ClientID,
+		"ClientSecret": "",
 		"RefreshToken": token.Refresh,
 		"DeviceInfo": map[string]any{
-			"DeviceID":  token.Device.DeviceID,
-			"MachineID": token.Device.MachineID,
-			"PublicKey": token.Device.PublicKeyPEM,
+			"DeviceID":        token.Device.DeviceID,
+			"MachineID":       token.Device.MachineID,
+			"PlatformCode":    as.Platform,
+			"DeviceType":      "PC",
+			"DeviceName":      "",
+			"DeviceModel":     "",
+			"ClientVersion":   as.Version,
+			"DevicePublicKey": token.Device.PublicKeyPEM,
+			"DeviceBrand":     token.Device.DeviceBrand,
+			"DeviceCPU":       "AMD",
+			"OSInfo":          "Windows",
+			"OSVersion":       "10.0.22631",
 		},
-		"DeviceProof":  proof,
-		"Timestamp":    timestamp,
-		"Nonce":        nonce,
-		"ClientSecret": "-",
+		"DeviceProof": map[string]any{
+			"Signature": signature,
+			"Timestamp": timestamp,
+			"Nonce":     nonce,
+		},
+		"IDEVersion": as.Version,
 	}
 	return traePostExchange(ctx, client, strings.TrimRight(authHost, "/")+traeRefreshPathCN, body, token.Refresh)
 }
 
 // traeExchangeCloudIDE 走 cloudide 续期（国际站与国内站兜底）。
+//
+// 请求体与插件一致：只带 ClientID / RefreshToken / ClientSecret / UserID，
+// 不带设备信息 —— 带上反而会被 passport 拒（"[passport] No valid result from
+// schedule processing"）。
 func traeExchangeCloudIDE(ctx context.Context, client *http.Client, authHost string, token traeToken) (*traeRefreshResult, error) {
 	body := map[string]any{
 		"ClientID":     token.ClientID,
 		"RefreshToken": token.Refresh,
 		"ClientSecret": "-",
-	}
-	if token.Device != nil {
-		body["DeviceInfo"] = map[string]any{
-			"DeviceID":  token.Device.DeviceID,
-			"MachineID": token.Device.MachineID,
-			"PublicKey": token.Device.PublicKeyPEM,
-		}
+		"UserID":       "",
 	}
 	return traePostExchange(ctx, client, strings.TrimRight(authHost, "/")+traeRefreshPathCloudIDE, body, token.Refresh)
 }

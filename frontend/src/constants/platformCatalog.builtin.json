@@ -53,10 +53,24 @@
           }
         ]
       }
+    },
+    {
+      "id": "trae_cn",
+      "display_name": "Trae 国内版",
+      "gateway": "openai",
+      "cn_provider": false
+    },
+    {
+      "id": "trae_intl",
+      "display_name": "Trae 国际版",
+      "gateway": "openai",
+      "cn_provider": false
     }
   ],
   "composite_precedence": [
     "workbuddy_cn",
-    "workbuddy_intl"
+    "workbuddy_intl",
+    "trae_cn",
+    "trae_intl"
   ]
 }

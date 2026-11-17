@@ -24,6 +24,8 @@ export type Platform =
   | 'cline'
   | 'workbuddy_cn'
   | 'workbuddy_intl'
+  | 'trae_cn'
+  | 'trae_intl'
   | 'composite'
 
 // ── Badge (bg + text + border, for inline badges with border) ───────
@@ -42,6 +44,8 @@ const BADGE: Record<Platform, string> = {
   command_code: 'bg-neutral-500/10 text-neutral-700 border-neutral-500/30 dark:text-neutral-300',
   cline: 'bg-violet-500/10 text-violet-600 border-violet-500/30 dark:text-violet-400',
   workbuddy_cn: 'bg-blue-500/10 text-blue-600 border-blue-500/30 dark:text-blue-400',
+  trae_cn: 'bg-amber-500/10 text-amber-600 border-amber-500/30 dark:text-amber-400',
+  trae_intl: 'bg-sky-500/10 text-sky-600 border-sky-500/30 dark:text-sky-400',
   workbuddy_intl: 'bg-cyan-500/10 text-cyan-600 border-cyan-500/30 dark:text-cyan-400',
   composite: 'bg-cyan-500/10 text-cyan-700 border-cyan-500/30 dark:text-cyan-300',
 }
@@ -63,6 +67,8 @@ const BADGE_LIGHT: Record<Platform, string> = {
   command_code: 'bg-neutral-500/10 text-neutral-700 dark:bg-neutral-500/10 dark:text-neutral-300',
   cline: 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300',
   workbuddy_cn: 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300',
+  trae_cn: 'bg-amber-500/10 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300',
+  trae_intl: 'bg-sky-500/10 text-sky-600 dark:bg-sky-500/10 dark:text-sky-300',
   workbuddy_intl: 'bg-cyan-500/10 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-300',
   composite: 'bg-cyan-500/10 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300',
 }
@@ -83,6 +89,8 @@ const BORDER: Record<Platform, string> = {
   command_code: 'border-neutral-500/20 dark:border-neutral-500/20',
   cline: 'border-violet-500/20 dark:border-violet-500/20',
   workbuddy_cn: 'border-blue-500/20 dark:border-blue-500/20',
+  trae_cn: 'border-amber-500/20 dark:border-amber-500/20',
+  trae_intl: 'border-sky-500/20 dark:border-sky-500/20',
   workbuddy_intl: 'border-cyan-500/20 dark:border-cyan-500/20',
   composite: 'border-cyan-500/20 dark:border-cyan-500/20',
 }
@@ -104,6 +112,8 @@ const BORDER_STRONG: Record<Platform, string> = {
   command_code: 'border-neutral-500/35 dark:border-neutral-500/30',
   cline: 'border-violet-500/35 dark:border-violet-500/30',
   workbuddy_cn: 'border-blue-500/35 dark:border-blue-500/30',
+  trae_cn: 'border-amber-500/35 dark:border-amber-500/30',
+  trae_intl: 'border-sky-500/35 dark:border-sky-500/30',
   workbuddy_intl: 'border-cyan-500/35 dark:border-cyan-500/30',
   composite: 'border-cyan-500/35 dark:border-cyan-500/30',
 }
@@ -126,6 +136,8 @@ const ACCENT: Record<Platform, string> = {
   command_code: '#737373', // neutral-500
   cline: '#8b5cf6', // violet-500（Cline 品牌紫 #9F58FA）
   workbuddy_cn: '#3b82f6',
+  trae_cn: '#3b82f6',
+  trae_intl: '#3b82f6',
   workbuddy_intl: '#06b6d4',
   composite: '#06b6d4', // cyan-500
 }
@@ -147,6 +159,8 @@ const ACCENT_BAR: Record<Platform, string> = {
   command_code: 'bg-gradient-to-r from-neutral-400 to-neutral-500',
   cline: 'bg-gradient-to-r from-violet-400 to-violet-500',
   workbuddy_cn: 'bg-gradient-to-r from-blue-400 to-blue-500',
+  trae_cn: 'bg-gradient-to-r from-amber-400 to-amber-500',
+  trae_intl: 'bg-gradient-to-r from-sky-400 to-sky-500',
   workbuddy_intl: 'bg-gradient-to-r from-cyan-400 to-cyan-500',
   composite: 'bg-gradient-to-r from-slate-500 to-cyan-500',
 }
@@ -168,6 +182,8 @@ const TEXT: Record<Platform, string> = {
   command_code: 'text-neutral-700 dark:text-neutral-300',
   cline: 'text-violet-600 dark:text-violet-400',
   workbuddy_cn: 'text-blue-600 dark:text-blue-400',
+  trae_cn: 'text-amber-600 dark:text-amber-400',
+  trae_intl: 'text-sky-600 dark:text-sky-400',
   workbuddy_intl: 'text-cyan-600 dark:text-cyan-400',
   composite: 'text-cyan-700 dark:text-cyan-300',
 }
@@ -189,6 +205,8 @@ const ICON: Record<Platform, string> = {
   command_code: 'text-neutral-500 dark:text-neutral-300',
   cline: 'text-violet-500 dark:text-violet-400',
   workbuddy_cn: 'text-blue-500 dark:text-blue-400',
+  trae_cn: 'text-amber-500 dark:text-amber-400',
+  trae_intl: 'text-sky-500 dark:text-sky-400',
   workbuddy_intl: 'text-cyan-500 dark:text-cyan-400',
   composite: 'text-cyan-600 dark:text-cyan-300',
 }
@@ -210,6 +228,8 @@ const BUTTON: Record<Platform, string> = {
   command_code: 'bg-neutral-500 text-white hover:bg-neutral-600 active:bg-neutral-700 dark:bg-neutral-500/80 dark:hover:bg-neutral-500',
   cline: 'bg-violet-500 text-white hover:bg-violet-600 active:bg-violet-700 dark:bg-violet-500/80 dark:hover:bg-violet-500',
   workbuddy_cn: 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700 dark:bg-blue-500/80 dark:hover:bg-blue-500',
+  trae_cn: 'bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700 dark:bg-amber-500/80 dark:hover:bg-amber-500',
+  trae_intl: 'bg-sky-500 text-white hover:bg-sky-600 active:bg-sky-700 dark:bg-sky-500/80 dark:hover:bg-sky-500',
   workbuddy_intl: 'bg-cyan-500 text-white hover:bg-cyan-600 active:bg-cyan-700 dark:bg-cyan-500/80 dark:hover:bg-cyan-500',
   composite: 'bg-cyan-700 text-white hover:bg-cyan-800 active:bg-cyan-900 dark:bg-cyan-600 dark:hover:bg-cyan-500',
 }
@@ -231,6 +251,8 @@ const DISCOUNT: Record<Platform, string> = {
   command_code: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-900/40 dark:text-neutral-300',
   cline: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
   workbuddy_cn: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  trae_cn: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  trae_intl: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
   workbuddy_intl: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
   composite: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
 }
@@ -252,6 +274,8 @@ const GRADIENT: Record<Platform, string> = {
   command_code: 'from-neutral-500 to-neutral-600',
   cline: 'from-violet-500 to-violet-600',
   workbuddy_cn: 'from-blue-500 to-blue-600',
+  trae_cn: 'from-amber-500 to-amber-600',
+  trae_intl: 'from-sky-500 to-sky-600',
   workbuddy_intl: 'from-cyan-500 to-cyan-600',
   composite: 'from-slate-600 to-cyan-600',
 }
@@ -273,6 +297,8 @@ const GRADIENT_TEXT: Record<Platform, string> = {
   command_code: 'text-neutral-100',
   cline: 'text-violet-100',
   workbuddy_cn: 'text-blue-100',
+  trae_cn: 'text-amber-100',
+  trae_intl: 'text-sky-100',
   workbuddy_intl: 'text-cyan-100',
   composite: 'text-cyan-100',
 }
@@ -293,6 +319,8 @@ const GRADIENT_SUBTEXT: Record<Platform, string> = {
   command_code: 'text-neutral-200',
   cline: 'text-violet-200',
   workbuddy_cn: 'text-blue-200',
+  trae_cn: 'text-amber-200',
+  trae_intl: 'text-sky-200',
   workbuddy_intl: 'text-cyan-200',
   composite: 'text-cyan-200',
 }

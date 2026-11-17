@@ -55,6 +55,7 @@ import {
   type WorkBuddyCredits,
   type WorkBuddyCreditDailySummary
 } from '@/api/admin/workbuddy'
+import { fetchCredits as fetchTraeCredits } from '@/api/admin/trae'
 import { getMarvisCredits, type MarvisCredits } from '@/api/admin/marvis'
 
 const props = defineProps<{ accountId: number; platform: string; accountName?: string }>()
@@ -91,6 +92,8 @@ const trendTitle = computed(() =>
 
 
 
+const traeUnlimited = ref(false)
+
 function formatValue(v: number | undefined): string {
   if (v == null) return '—'
   return v.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
@@ -99,6 +102,31 @@ function formatValue(v: number | undefined): string {
 async function load() {
   loading.value = true
   error.value = ''
+  // Trae：额度来自上游（国内站积分 / 国际站美元），展示口径统一为积分
+  // （1 美元 = 1 积分，仅换算，不改上游计费）。
+  if (props.platform === 'trae_cn' || props.platform === 'trae_intl') {
+    try {
+      const c = await fetchTraeCredits(props.accountId)
+      traeUnlimited.value = c.unlimited === true
+      credits.value = {
+        account_id: props.accountId,
+        platform: props.platform,
+        total: c.unlimited ? 0 : Math.max(0, (c.limit ?? 0) - (c.used ?? 0)),
+        groups: [],
+        package_name: c.plan || '',
+        credits_info_available: true
+      } as unknown as WorkBuddyCredits
+      trend.value = []
+      return
+    } catch (e: any) {
+      error.value = e?.message || 'failed'
+      credits.value = null
+      return
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Marvis 走自己的钱包接口：它按 token 计量，没有 WorkBuddy 那套分组积分。
   if (props.platform === 'marvis') {
     try {

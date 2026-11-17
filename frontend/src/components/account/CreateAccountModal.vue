@@ -137,17 +137,20 @@
           >
             <div
               :class="[
-                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold',
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
                 isTraePlatform
                   ? 'bg-amber-500 text-white'
                   : 'bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400'
               ]"
             >
-              T
+              <PlatformIcon
+                :platform="form.platform === 'trae_intl' ? 'trae_intl' : 'trae_cn'"
+                size="sm"
+              />
             </div>
             <div class="min-w-0">
               <span class="block text-sm font-medium text-gray-900 dark:text-white">Trae</span>
-              <span class="block truncate text-xs text-gray-500 dark:text-gray-400">国内版 / 国际版 · 浏览器授权</span>
+              <span class="block truncate text-xs text-gray-500 dark:text-gray-400">国内版 / 国际版</span>
             </div>
           </button>
         </div>

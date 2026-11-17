@@ -555,6 +555,23 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 		}
 	}
 
+	// Trae 新账号：创建阶段拉一次可用模型目录写进 model_mapping。
+	//
+	// 与 WorkBuddy 同理——目录由上游 /api/ide/v1/* 按账号动态下发，不写默认值
+	// 账号的模型列表为空，调度时匹配不到任何请求。
+	if IsTraePlatform(input.Platform) && len(input.Credentials) > 0 {
+		if _, has := input.Credentials["model_mapping"]; !has {
+			if models := s.traeDefaultModelMapping(ctx, input); len(models) > 0 {
+				merged := make(map[string]any, len(input.Credentials)+1)
+				for k, v := range input.Credentials {
+					merged[k] = v
+				}
+				merged["model_mapping"] = models
+				input.Credentials = merged
+			}
+		}
+	}
+
 	// Marvis：分配硬件指纹前先读同平台已有账号占位，保证这台「机器」
 	// 在账号池里是唯一的一台。放在 buildAccountForCreate 之前，
 	// 因为指纹要随凭据一起入库。

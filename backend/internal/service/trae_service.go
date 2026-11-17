@@ -173,3 +173,27 @@ func traeAccountContext(account *Account) (*traeSite, traeToken, error) {
 	}
 	return site, token, nil
 }
+
+// traeDefaultModelMapping 在创建账号时拉一次模型目录，作为默认的 model_mapping。
+//
+// 目录完全来自上游（/api/ide/v1/batch_get_detail_param，回落逐 function），
+// 不做任何内置清单：拉不到就留空，由用户在账号页手动同步，而不是塞一份会过期的表。
+func (s *adminServiceImpl) traeDefaultModelMapping(ctx context.Context, input *CreateAccountInput) map[string]string {
+	site := traeSiteForPlatform(input.Platform)
+	if site == nil || len(input.Credentials) == 0 {
+		return nil
+	}
+	token := traeTokenOf(input.Credentials)
+	if token.Access == "" {
+		return nil
+	}
+	models, err := fetchTraeModels(ctx, site, token)
+	if err != nil || len(models) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(models))
+	for _, m := range models {
+		out[m.ID] = m.ID
+	}
+	return out
+}

@@ -23,6 +23,16 @@
               ]"
               @click="handleChannelChange(opt.value)"
             >
+              <div
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+                :class="
+                  platform === opt.value
+                    ? opt.iconActiveClass
+                    : 'bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400'
+                "
+              >
+                <PlatformIcon :platform="opt.value" size="md" />
+              </div>
               <span
                 class="text-sm font-medium"
                 :class="
@@ -121,6 +131,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import { useTraeOAuth } from '@/composables/useTraeOAuth'
 
 // Trae 授权：选站点 → 生成链接 → 浏览器登录 → 粘贴回调地址。
@@ -144,14 +155,16 @@ const channelOptions = computed(() => [
   {
     value: 'trae_cn' as const,
     label: t('admin.accounts.traeAuth.channelCN'),
-    activeClass: 'border-blue-500 bg-blue-50 dark:bg-blue-900/20',
-    textActiveClass: 'text-blue-700 dark:text-blue-300'
+    activeClass: 'border-amber-500 bg-amber-50 dark:bg-amber-900/20',
+    iconActiveClass: 'bg-amber-500 text-white',
+    textActiveClass: 'text-amber-700 dark:text-amber-300'
   },
   {
     value: 'trae_intl' as const,
     label: t('admin.accounts.traeAuth.channelIntl'),
-    activeClass: 'border-violet-500 bg-violet-50 dark:bg-violet-900/20',
-    textActiveClass: 'text-violet-700 dark:text-violet-300'
+    activeClass: 'border-sky-500 bg-sky-50 dark:bg-sky-900/20',
+    iconActiveClass: 'bg-sky-500 text-white',
+    textActiveClass: 'text-sky-700 dark:text-sky-300'
   }
 ])
 

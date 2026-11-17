@@ -302,14 +302,6 @@ function handleWorkBuddyConfirm() {
   reauthReady.value = true
 }
 
-// handleWorkBuddyReauthorize 用已拿到的登录态保存凭据，完成重新授权。
-async function handleWorkBuddyReauthorize() {
-  if (!props.account || reauthSaving.value) return
-  const creds = workbuddyOAuth.buildCredentials()
-  if (!creds) {
-    appStore.showError('Authorization incomplete')
-    return
-  }
   reauthSaving.value = true
   try {
     const updated = await adminAPI.accounts.update(props.account.id, { credentials: creds })

@@ -467,7 +467,7 @@
       :account-id="traeDeviceDialog.accountId"
       :account-name="traeDeviceDialog.accountName"
       @close="traeDeviceDialog.show = false"
-      @rotated="handleAccountUpdated"
+      @rotated="refreshAccountsIncrementally"
     />
 
     <WorkBuddyFingerprintDialog

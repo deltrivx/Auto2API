@@ -350,8 +350,23 @@ func ensureMarvisFingerprintCredentials(creds map[string]any) map[string]any {
 	if creds == nil {
 		creds = map[string]any{}
 	}
-	if existing := marvisFingerprintOfCredentials(creds); existing != nil {
-		if s, _ := existing["machine_id"].(string); strings.TrimSpace(s) != "" {
+	// 指纹必须与当前登录态绑定的设备一致。
+	//
+	// 重新授权会带来新的 guid（那是上游在这次登录时分配的设备标识），
+	// 而旧指纹是按旧 guid 派生的。留着旧指纹会让 Ual-Access-MarvisExt
+	// 里的设备标识与 guid 对不上，上游直接按风控拦（4100404）。
+	// 因此：guid 变了就重建指纹。
+	existing := marvisFingerprintOfCredentials(creds)
+	if existing != nil {
+		existingMachine, _ := existing["machine_id"].(string)
+		existingUID, _ := existing["uid"].(string)
+		currentGUID := ""
+		if v, ok := creds["guid"].(string); ok {
+			currentGUID = strings.TrimSpace(v)
+		}
+		// 旧画像的 uid 就是派生时的种子：guid 与它对不上说明登录态换了设备。
+		if strings.TrimSpace(existingMachine) != "" &&
+			(currentGUID == "" || existingUID == "" || existingUID == currentGUID) {
 			return creds
 		}
 	}

@@ -4,14 +4,18 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/DeltrivX/Auto2API/internal/pkg/timezone"
 )
 
 // Trae 积分快照。
 //
 // 与 WorkBuddy / Marvis 的快照同构：一次拉全部 Trae 账号的额度，供仪表盘
 // 卡片与账号管理共用。额度只来自上游接口（国内站积分 / 国际站美元），
-// 按平台口径折算成积分（1 美元 = 1 积分），不做任何本地记账或重置逻辑——
-// 上游每日凌晨自行重置，下一次拉取自然反映新周期。
+// 按平台口径折算成积分。
+//
+// ⚠ 上游 used 是**周期累计值，不随自然日重置**（实测跨 0 点后继续累加），
+// 所以「今日消耗」必须用当日基准做差，不能直接把 used 当今日用量。
 
 // TraeAccountCredits 是单个 Trae 账号的额度。
 type TraeAccountCredits struct {
@@ -35,8 +39,13 @@ type TraeCreditSnapshot struct {
 	// AvailableCN / AvailableIntl 是按站点拆开的余额（均已折算成积分）。
 	AvailableCN   float64 `json:"available_cn"`
 	AvailableIntl float64 `json:"available_intl"`
-	// TodayUsed 是今日消耗（积分）。上游额度按周期累计，这里取周期内已用量，
-	// 与卡片展示口径保持一致。
+	// TodayUsed 是今日消耗（积分）。
+	//
+	// 上游 used 是**周期累计值**，且不随自然日重置（实测跨 0 点后继续累加），
+	// 所以不能直接当今日消耗。这里用「当天首次同步记基准，之后求差」：
+	//   todayUsed = usedSum - 当日基准
+	// 跨天自动换基准，进程重启后第一次同步的当天值会有偏差（基准丢失），
+	// 这是可接受的：下一次同步就回到准确值。
 	TodayUsed float64 `json:"today_used"`
 }
 
@@ -132,9 +141,19 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 		rows = append(rows, row)
 	}
 
-	// 今日消耗取 usedSum：上游额度按周期累计，每次同步拿到的就是本周期
-	// 已用量。之前用跨次差值，进程重启后第一次必然是 0。
-	todayUsed := usedSum
+	// 今日消耗 = 周期累计已用 - 当日基准。基准在每天第一次同步时记录，
+	// 当天后续同步都跟它对减，这样跨 0 点会自然归零重新计。
+	today := time.Now().In(timezone.Location()).Format("2006-01-02")
+	var todayUsed float64
+	if s.lastUsedDay == today {
+		todayUsed = usedSum - s.lastUsed
+		if todayUsed < 0 {
+			// 周期重置或基准偏大时直接归零，不要显示负数。
+			todayUsed = 0
+		}
+	}
+	s.lastUsed = usedSum
+	s.lastUsedDay = today
 
 	s.mu.Lock()
 	now := time.Now()

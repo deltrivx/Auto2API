@@ -462,6 +462,14 @@
       @close="creditsDialog.show = false"
     />
 
+    <TraeDeviceDialog
+      :show="traeDeviceDialog.show"
+      :account-id="traeDeviceDialog.accountId"
+      :account-name="traeDeviceDialog.accountName"
+      @close="traeDeviceDialog.show = false"
+      @rotated="handleAccountUpdated"
+    />
+
     <WorkBuddyFingerprintDialog
       :show="fingerprintDialog.show"
       :account-id="fingerprintDialog.accountId"
@@ -520,6 +528,7 @@ import AccountUsageCell from '@/components/account/AccountUsageCell.vue'
 import AccountCreditsCell from '@/components/admin/account/AccountCreditsCell.vue'
 import AccountCreditsDialog from '@/components/admin/account/AccountCreditsDialog.vue'
 import WorkBuddyFingerprintDialog from '@/components/admin/account/WorkBuddyFingerprintDialog.vue'
+import TraeDeviceDialog from '@/components/admin/account/TraeDeviceDialog.vue'
 import AccountTodayStatsCell from '@/components/account/AccountTodayStatsCell.vue'
 import AccountGroupsCell from '@/components/account/AccountGroupsCell.vue'
 import AccountCapacityCell from '@/components/account/AccountCapacityCell.vue'
@@ -1813,6 +1822,7 @@ const handleEdit = async (a: AccountListItem) => {
   showEdit.value = true
 }
 const fingerprintDialog = reactive({ show: false, accountId: 0, accountName: '', platform: '' })
+const traeDeviceDialog = reactive({ show: false, accountId: 0, accountName: '' })
 // 积分明细弹窗：避免在表格内展开导致行高变动与滚动位置跳动。
 const creditsDialog = reactive({ show: false, accountId: 0, accountName: '', platform: '' })
 
@@ -1830,6 +1840,13 @@ const handleAccountCreated = () => {
 }
 
 const handleViewFingerprint = (a: Account) => {
+  // Trae 的设备字段与 WorkBuddy 的硬件指纹不同，走自己的弹窗。
+  if (a.platform === 'trae_cn' || a.platform === 'trae_intl') {
+    traeDeviceDialog.show = true
+    traeDeviceDialog.accountId = a.id
+    traeDeviceDialog.accountName = a.name
+    return
+  }
   fingerprintDialog.accountId = a.id
   fingerprintDialog.accountName = a.name
   fingerprintDialog.platform = a.platform

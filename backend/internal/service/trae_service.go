@@ -197,3 +197,28 @@ func (s *adminServiceImpl) traeDefaultModelMapping(ctx context.Context, input *C
 	}
 	return out
 }
+
+// TraeAccountModels 返回账号当前可用的模型（供账号测试弹窗选择）。
+//
+// 直接问上游，不做本地目录；拉取失败返回空列表，前端会显示「无可用模型」，
+// 而不是给出一份可能已过期的内置清单。
+func TraeAccountModels(ctx context.Context, account *Account) []map[string]any {
+	site, token, err := traeAccountContext(account)
+	if err != nil {
+		return nil
+	}
+	models, err := fetchTraeModels(ctx, site, token)
+	if err != nil || len(models) == 0 {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(models))
+	for _, m := range models {
+		out = append(out, map[string]any{
+			"id":           m.ID,
+			"object":       "model",
+			"type":         "model",
+			"display_name": m.Name,
+		})
+	}
+	return out
+}

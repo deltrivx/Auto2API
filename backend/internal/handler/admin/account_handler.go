@@ -2662,6 +2662,12 @@ func (h *AccountHandler) respondAvailableModels(c *gin.Context, account *service
 		return
 	}
 
+	// Trae：模型目录由上游按账号下发，这里实时问一次（不落内置清单）。
+	if service.IsTraePlatform(account.Platform) {
+		response.Success(c, service.TraeAccountModels(c.Request.Context(), account))
+		return
+	}
+
 	// Handle OpenAI accounts
 	if account.IsOpenAI() {
 		// Prefer the shared, account-keyed upstream catalog. If discovery fails,

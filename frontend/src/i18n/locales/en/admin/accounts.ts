@@ -70,6 +70,16 @@ export default {
         successHint: '{name} signed in — click Create to add the account',
       },
       traeAccount: 'Trae account',
+      traeDevice: {
+        title: 'Trae device fingerprint',
+        hint: 'The device is created at sign-in and bound to the account; requests and token renewals are signed with it. Re-assigning gives this account a new machine.',
+        deviceId: 'Device ID',
+        machineId: 'Machine ID',
+        brand: 'Device brand',
+        type: 'Device type',
+        osVersion: 'OS version',
+        rotate: 'Re-assign device',
+      },
       marvisAuth: {
         loginQQ: 'QQ',
         loginWeChat: 'WeChat',

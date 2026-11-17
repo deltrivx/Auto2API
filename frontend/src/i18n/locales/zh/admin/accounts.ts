@@ -70,6 +70,16 @@ export default {
         successHint: '{name} 登录成功，请点击创建按钮创建账号',
       },
       traeAccount: 'Trae 账号',
+      traeDevice: {
+        title: 'Trae 设备指纹',
+        hint: '设备在登录时生成并与账号绑定，请求与续期都用它签名。重新分配相当于给这个账号换一台机器。',
+        deviceId: '设备 ID',
+        machineId: '机器码',
+        brand: '设备品牌',
+        type: '设备类型',
+        osVersion: '系统版本',
+        rotate: '重新分配设备',
+      },
       marvisAuth: {
         loginQQ: 'QQ 登录',
         loginWeChat: '微信登录',

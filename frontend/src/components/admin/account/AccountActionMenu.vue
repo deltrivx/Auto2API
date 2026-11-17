@@ -59,7 +59,7 @@
               <Icon name="refresh" size="sm" />
               {{ t('admin.accounts.resetQuota') }}
             </button>
-              <button v-if="isWorkBuddy || isMarvis" @click="$emit('fingerprint', account); $emit('close')" class="flex w-full items-center gap-2 px-4 py-2 text-sm text-cyan-600 hover:bg-gray-100 dark:hover:bg-dark-700">
+              <button v-if="isWorkBuddy || isMarvis || isTrae" @click="$emit('fingerprint', account); $emit('close')" class="flex w-full items-center gap-2 px-4 py-2 text-sm text-cyan-600 hover:bg-gray-100 dark:hover:bg-dark-700">
                 <Icon name="cpu" size="sm" />
                 {{ t('admin.accounts.fingerprintMenu') }}
               </button>
@@ -119,6 +119,9 @@ const isWorkBuddy = computed(
 )
 // Marvis 也有设备标识（guid + 每次现签的 uskey），同样提供指纹视图。
 const isMarvis = computed(() => props.account?.platform === 'marvis')
+const isTrae = computed(
+  () => props.account?.platform === 'trae_cn' || props.account?.platform === 'trae_intl'
+)
 // 能否完整管理该账号：本人创建或管理员。
 // 他人的账号只允许查看类操作（统计、查看），修改类操作禁用。
 

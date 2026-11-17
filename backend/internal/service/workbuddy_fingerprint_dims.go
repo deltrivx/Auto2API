@@ -20,6 +20,8 @@ type workBuddyOSFamily string
 const (
 	workBuddyOSMac     workBuddyOSFamily = "mac"
 	workBuddyOSWindows workBuddyOSFamily = "win"
+	// workBuddyOSLinux 是支持 Linux 客户端的平台（部分渠道提供 Linux 构建）。
+	workBuddyOSLinux workBuddyOSFamily = "linux"
 )
 
 // workBuddyCPUSpec 是一个 CPU 型号及其自洽的核心数/内存档位。
@@ -31,34 +33,43 @@ type workBuddyCPUSpec struct {
 	Memory []int
 	// GPU 是与该 CPU 搭配合理的显卡。
 	GPU []string
+	// Screens / Disks 是该机型可选的屏幕与容量；为空表示用家族默认表。
+	Screens []string
+	Disks   []int
 }
 
 // workBuddyMacVersions 是 macOS 的主要版本。
 //
 // 只列仍在支持窗口内的版本；过老版本会被上游看出异常。
 var workBuddyMacVersions = []string{
-	"14.2", "14.5", "14.6.1", "15.0", "15.1", "15.2", "15.3",
+	"15.5", "15.6", "26.0", "26.0.1", "26.1", "26.2",
 }
 
 // workBuddyWindowsVersions 是 Windows 10/11 的常见 build 号。
 var workBuddyWindowsVersions = []string{
-	"10.0.19045", // Win10 22H2
-	"10.0.22621", // Win11 22H2
 	"10.0.22631", // Win11 23H2
 	"10.0.26100", // Win11 24H2
+	"10.0.26200", // Win11 25H2
 }
 
 // workBuddyMacCPUs 是按代际排列的 Apple Silicon。
 //
 // 核心数与内存取自官方配置表；内存为统一内存，GPU 共享。
 var workBuddyMacCPUs = []workBuddyCPUSpec{
-	{Model: "Apple M1", Cores: []int{8}, Memory: []int{8, 16}, GPU: []string{"Apple M1 / 共享内存"}},
-	{Model: "Apple M2", Cores: []int{8}, Memory: []int{8, 16, 24}, GPU: []string{"Apple M2 / 共享内存"}},
-	{Model: "Apple M3", Cores: []int{8}, Memory: []int{8, 16, 24}, GPU: []string{"Apple M3 / 共享内存"}},
-	{Model: "Apple M3 Pro", Cores: []int{11, 12}, Memory: []int{18, 36}, GPU: []string{"Apple M3 Pro / 共享内存"}},
-	{Model: "Apple M4", Cores: []int{8, 10}, Memory: []int{16, 24, 32}, GPU: []string{"Apple M4 / 共享内存"}},
-	{Model: "Apple M4 Pro", Cores: []int{12, 14}, Memory: []int{24, 48}, GPU: []string{"Apple M4 Pro / 共享内存"}},
-	{Model: "Apple M4 Max", Cores: []int{14, 16}, Memory: []int{36, 64}, GPU: []string{"Apple M4 Max / 共享内存"}},
+	{Model: "Apple M1", Cores: []int{8}, Memory: []int{8, 16}, GPU: []string{"Apple M1 / 共享内存"},
+		Screens: []string{"2560x1600", "2880x1864"}, Disks: []int{256, 512, 1024}},
+	{Model: "Apple M2", Cores: []int{8, 10}, Memory: []int{8, 16, 24}, GPU: []string{"Apple M2 / 共享内存"},
+		Screens: []string{"2560x1664", "2560x1600"}, Disks: []int{256, 512, 1024}},
+	{Model: "Apple M3", Cores: []int{8, 10}, Memory: []int{8, 16, 24}, GPU: []string{"Apple M3 / 共享内存"},
+		Screens: []string{"2560x1664", "3024x1964"}, Disks: []int{512, 1024, 2048}},
+	{Model: "Apple M3 Pro", Cores: []int{11, 12}, Memory: []int{18, 36}, GPU: []string{"Apple M3 Pro / 共享内存"},
+		Screens: []string{"3024x1964", "3456x2234"}, Disks: []int{512, 1024, 2048}},
+	{Model: "Apple M4", Cores: []int{8, 10}, Memory: []int{16, 24, 32}, GPU: []string{"Apple M4 / 共享内存"},
+		Screens: []string{"2560x1664", "3024x1964"}, Disks: []int{256, 512, 1024}},
+	{Model: "Apple M4 Pro", Cores: []int{12, 14}, Memory: []int{24, 48}, GPU: []string{"Apple M4 Pro / 共享内存"},
+		Screens: []string{"3024x1964", "3456x2234"}, Disks: []int{512, 1024, 2048}},
+	{Model: "Apple M4 Max", Cores: []int{14, 16}, Memory: []int{36, 64}, GPU: []string{"Apple M4 Max / 共享内存"},
+		Screens: []string{"3456x2234", "4480x2520"}, Disks: []int{1024, 2048, 4096}},
 }
 
 // workBuddyWindowsCPUs 是 Intel 12/13/14 代与 AMD Zen3/Zen4 的常见零售型号。
@@ -71,12 +82,27 @@ var workBuddyWindowsCPUs = []workBuddyCPUSpec{
 	{Model: "Intel Core i7-12700", Cores: []int{12}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 3060 / 12 GB"}},
 	{Model: "Intel Core i7-13700F", Cores: []int{16}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4060 Ti / 8 GB"}},
 	{Model: "Intel Core i7-14700F", Cores: []int{20}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB"}},
-	{Model: "Intel Core i9-13900K", Cores: []int{24}, Memory: []int{32, 64, 128}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB", "NVIDIA GeForce RTX 4080 / 16 GB"}},
+	{Model: "Intel Core i9-13900K", Cores: []int{24}, Memory: []int{32, 64, 128}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB", "NVIDIA GeForce RTX 4080 / 16 GB", "NVIDIA GeForce RTX 4090 / 24 GB"}},
 	{Model: "AMD Ryzen 5 5600X", Cores: []int{6}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 3060 / 12 GB", "AMD Radeon RX 6600 / 8 GB"}},
 	{Model: "AMD Ryzen 7 5800X3D", Cores: []int{8}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 4060 / 8 GB"}},
 	{Model: "AMD Ryzen 7 7800X3D", Cores: []int{8}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB"}},
 	{Model: "AMD Ryzen 9 5950X", Cores: []int{16}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB", "AMD Radeon RX 6800 XT / 16 GB"}},
 	{Model: "AMD Ryzen 9 7950X", Cores: []int{16}, Memory: []int{32, 64, 128}, GPU: []string{"NVIDIA GeForce RTX 4080 / 16 GB"}},
+}
+
+// workBuddyLinuxVersions 是 Linux 客户端常见的发行版与内核版本串。
+var workBuddyLinuxVersions = []string{
+	"Ubuntu 22.04", "Ubuntu 24.04", "Ubuntu 24.10",
+	"Fedora 40", "Fedora 41", "Debian 12",
+}
+
+// workBuddyLinuxCPUs 是 Linux 工作站常见配置（与 Windows 同表，取其中零售型号）。
+var workBuddyLinuxCPUs = []workBuddyCPUSpec{
+	{Model: "AMD Ryzen 7 5800X3D", Cores: []int{8}, Memory: []int{16, 32}, GPU: []string{"NVIDIA GeForce RTX 4060 / 8 GB"}},
+	{Model: "AMD Ryzen 9 5950X", Cores: []int{16}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4070 / 12 GB"}},
+	{Model: "AMD Ryzen 9 7950X", Cores: []int{16}, Memory: []int{32, 64, 128}, GPU: []string{"NVIDIA GeForce RTX 4080 / 16 GB"}},
+	{Model: "Intel Core i7-13700F", Cores: []int{16}, Memory: []int{32, 64}, GPU: []string{"NVIDIA GeForce RTX 4060 Ti / 8 GB"}},
+	{Model: "Intel Core i9-13900K", Cores: []int{24}, Memory: []int{32, 64, 128}, GPU: []string{"NVIDIA GeForce RTX 4090 / 24 GB"}},
 }
 
 // workBuddyMacDisks 是 Mac 的常见存储容量。
@@ -105,7 +131,7 @@ var workBuddyWindowsScreens = []string{
 // workBuddyChromeVersions 是参与 UA 派生的 Chrome 主版本号。
 //
 // 只取仍在广泛使用的区间；过老版本会与「刚安装客户端」的判断冲突。
-var workBuddyChromeVersions = []int{125, 126, 127, 128, 129, 130, 131}
+var workBuddyChromeVersions = []int{140, 141, 142, 143, 144, 145, 146}
 
 // workBuddyDeriveProfile 从 key 与盐派生一个自洽的硬件画像。
 //
@@ -117,21 +143,33 @@ var workBuddyChromeVersions = []int{125, 126, 127, 128, 129, 130, 131}
 func workBuddyDeriveProfile(key string, salt int) workBuddyFingerprintProfile {
 	h := workBuddySHA256([]byte("wb-fp:" + key + "#" + itoa(salt)))
 
+	// 家族按权重抽取：Mac 40% / Windows 40% / Linux 20%（部分渠道提供 Linux 客户端）。
 	family := workBuddyOSMac
-	if workBuddyPick16(h, 0, 2) == 0 {
+	switch roll := workBuddyPick16(h, 0, 10); {
+	case roll < 4:
+		family = workBuddyOSMac
+	case roll < 8:
 		family = workBuddyOSWindows
+	default:
+		family = workBuddyOSLinux
 	}
 
 	var cpus []workBuddyCPUSpec
 	var versions []string
 	var disks []int
 	var screens []string
-	if family == workBuddyOSMac {
+	switch family {
+	case workBuddyOSMac:
 		cpus = workBuddyMacCPUs
 		versions = workBuddyMacVersions
 		disks = workBuddyMacDisks
 		screens = workBuddyMacScreens
-	} else {
+	case workBuddyOSLinux:
+		cpus = workBuddyLinuxCPUs
+		versions = workBuddyLinuxVersions
+		disks = workBuddyWindowsDisks
+		screens = workBuddyWindowsScreens
+	default:
 		cpus = workBuddyWindowsCPUs
 		versions = workBuddyWindowsVersions
 		disks = workBuddyWindowsDisks
@@ -145,8 +183,16 @@ func workBuddyDeriveProfile(key string, salt int) workBuddyFingerprintProfile {
 	memory := cpu.Memory[workBuddyPick16(h, 5, len(cpu.Memory))]
 	gpu := cpu.GPU[workBuddyPick16(h, 7, len(cpu.GPU))]
 	osVersion := versions[workBuddyPick16(h, 9, len(versions))]
-	disk := disks[workBuddyPick16(h, 11, len(disks))]
-	screen := screens[workBuddyPick16(h, 13, len(screens))]
+	// 屏幕与磁盘按机型绑定：CPU 条目自带候选时用它的，避免「M1 Air 配 16 寸屏」。
+	modelScreens, modelDisks := screens, disks
+	if len(cpu.Screens) > 0 {
+		modelScreens = cpu.Screens
+	}
+	if len(cpu.Disks) > 0 {
+		modelDisks = cpu.Disks
+	}
+	disk := modelDisks[workBuddyPick16(h, 11, len(modelDisks))]
+	screen := modelScreens[workBuddyPick16(h, 13, len(modelScreens))]
 	chrome := workBuddyChromeVersions[workBuddyPick16(h, 15, len(workBuddyChromeVersions))]
 
 	profile := workBuddyFingerprintProfile{
@@ -164,6 +210,11 @@ func workBuddyDeriveProfile(key string, salt int) workBuddyFingerprintProfile {
 		profile.Arch = "arm64"
 		profile.UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) " +
 			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + itoa(chrome) + ".0.0.0 Safari/537.36"
+	} else if family == workBuddyOSLinux {
+		profile.OS = "Linux x86_64"
+		profile.Arch = "x64"
+		profile.UA = "Mozilla/5.0 (X11; Linux x86_64) " +
+			"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/" + itoa(chrome) + ".0.0.0 Safari/537.36"
 	} else {
 		profile.OS = "Win32"
 		profile.Arch = "x64"
@@ -177,7 +228,8 @@ func workBuddyDeriveProfile(key string, salt int) workBuddyFingerprintProfile {
 func workBuddyFingerprintCombinations() int {
 	mac := len(workBuddyMacCPUs) * len(workBuddyMacVersions) * len(workBuddyMacDisks) * len(workBuddyMacScreens)
 	win := len(workBuddyWindowsCPUs) * len(workBuddyWindowsVersions) * len(workBuddyWindowsDisks) * len(workBuddyWindowsScreens)
-	return (mac + win) * len(workBuddyChromeVersions)
+	linux := len(workBuddyLinuxCPUs) * len(workBuddyLinuxVersions) * len(workBuddyWindowsDisks) * len(workBuddyWindowsScreens)
+	return (mac + win + linux) * len(workBuddyChromeVersions)
 }
 
 // workBuddySHA256 返回 SHA-256 摘要，供维度派生使用。

@@ -4,23 +4,13 @@
     <div v-else-if="error" class="rounded bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
       {{ error }}
     </div>
-    <div v-else-if="isTrae ? !!traeDevice : !!fp" class="space-y-4">
+    <div v-else-if="fp" class="space-y-4">
       <p class="text-xs text-gray-500 dark:text-gray-400">
         {{ t('admin.accounts.fingerprint.hint') }}
       </p>
 
-      <!-- Trae：设备标识（与 WorkBuddy 的硬件画像同一套 dl 结构） -->
-      <dl v-if="isTrae" class="divide-y divide-gray-200 text-sm dark:divide-dark-600">
-        <div v-for="row in traeRows" :key="row.label" class="flex gap-4 py-2">
-          <dt class="w-28 flex-shrink-0 text-gray-500 dark:text-gray-400">{{ row.label }}</dt>
-          <dd class="min-w-0 break-all font-mono text-xs text-gray-900 dark:text-gray-100">
-            {{ row.value || '—' }}
-          </dd>
-        </div>
-      </dl>
-
       <!-- 硬件规格：divide-y 列表，标签定宽 112px（w-28），值与标签同行 -->
-      <dl v-if="!isTrae && fp" class="divide-y divide-gray-200 text-sm dark:divide-dark-600">
+      <dl class="divide-y divide-gray-200 text-sm dark:divide-dark-600">
         <div v-for="row in specRows" :key="row.label" class="flex gap-4 py-2">
           <dt class="w-28 flex-shrink-0 text-gray-500 dark:text-gray-400">{{ row.label }}</dt>
           <dd class="min-w-0 break-all font-mono text-xs text-gray-900 dark:text-gray-100">
@@ -30,7 +20,7 @@
       </dl>
 
       <!-- 设备标识：单独一节，带小标题 -->
-      <div v-if="!isTrae">
+      <div>
         <p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
           {{ t('admin.accounts.fingerprint.deviceIdsTitle') }}
         </p>
@@ -45,7 +35,7 @@
       </div>
 
       <!-- User-Agent：单独一段，值完整换行 -->
-      <div v-if="!isTrae">
+      <div>
         <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">User-Agent</p>
         <p class="break-all font-mono text-xs text-gray-900 dark:text-gray-100">{{ fp?.ua || '—' }}</p>
       </div>
@@ -125,20 +115,6 @@ const idRows = computed(() => {
   ]
 })
 
-// Trae 的设备字段与 WorkBuddy 的硬件画像不同：只有设备/机器码与设备画像，
-// 没有 CPU / 内存 / GPU，所以单独一组行，界面沿用同一套 dl 结构。
-const traeRows = computed(() => {
-  const d = traeDevice.value
-  if (!d) return []
-  return [
-    { label: t('admin.accounts.traeDevice.deviceId'), value: d.device_id },
-    { label: t('admin.accounts.traeDevice.machineId'), value: d.machine_id },
-    { label: t('admin.accounts.traeDevice.brand'), value: d.device_brand },
-    { label: t('admin.accounts.traeDevice.type'), value: d.device_type },
-    { label: t('admin.accounts.traeDevice.osVersion'), value: d.os_version }
-  ]
-})
-
 const rotating = ref(false)
 
 /** 重新分配 Trae 设备（与 WorkBuddy 的「换一套指纹」同一语义）。 */
@@ -161,9 +137,28 @@ async function load() {
   error.value = ''
   try {
     if (isTrae.value) {
-      traeDevice.value = await getTraeDevice(props.accountId)
-      fp.value = null
+      const d = await getTraeDevice(props.accountId)
+      traeDevice.value = d
       marvisFp.value = null
+      // 与 WorkBuddy / Marvis 共用同一套展示结构：Trae 的设备字段映射到同名属性。
+      fp.value = {
+        uid: d.device_id,
+        machine_id: d.machine_id,
+        session_id: (d as any).session_id || d.machine_id,
+        mac: (d as any).mac || '',
+        os: (d as any).os || 'Windows',
+        arch: (d as any).arch || 'x64',
+        os_version: d.os_version,
+        cpu_cores: (d as any).cpu_cores || 0,
+        memory_size: (d as any).memory_size || 0,
+        ua: (d as any).ua || '',
+        ide_version: '',
+        gpu: (d as any).gpu || '',
+        disk: (d as any).disk || 0,
+        screen: (d as any).screen || '',
+        cpu_model: (d as any).cpu_model || '',
+        persisted: true
+      } as unknown as WorkBuddyFingerprint
       return
     }
     if (isMarvis.value) {

@@ -52,6 +52,19 @@ export interface TraeDevice {
   device_brand: string
   device_type: string
   os_version: string
+  // 与 WorkBuddy 指纹同名的展示字段（后端按机器码确定性派生）。
+  os?: string
+  arch?: string
+  cpu_model?: string
+  cpu_cores?: number
+  memory_size?: number
+  gpu?: string
+  disk?: number
+  screen?: string
+  session_id?: string
+  mac?: string
+  ua?: string
+  persisted?: boolean
 }
 
 /** 生成授权链接。 */

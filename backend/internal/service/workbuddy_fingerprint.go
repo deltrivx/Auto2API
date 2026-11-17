@@ -373,9 +373,12 @@ func workBuddyProfileExtras(profile workBuddyFingerprintProfile) (gpu string, di
 		return profile.GPU, profile.Disk, profile.Screen, profile.CPUModel
 	}
 	if profile.CPUModel == "" {
-		if profile.OS == "MacIntel" {
+		switch profile.OS {
+		case "MacIntel":
 			profile.CPUModel = "Apple M4"
-		} else {
+		case "Linux x86_64":
+			profile.CPUModel = "AMD Ryzen 7"
+		default:
 			profile.CPUModel = "Intel Core i7"
 		}
 	}
@@ -390,6 +393,18 @@ func workBuddyProfileExtras(profile workBuddyFingerprintProfile) (gpu string, di
 			return "Apple M4 / 共享内存", 512, "2560x1600", profile.CPUModel
 		}
 	}
+	// Linux 工作站：独立显卡 + 常见分辨率。
+	if profile.OS == "Linux x86_64" {
+		switch {
+		case profile.MemorySize >= 32:
+			return "NVIDIA GeForce RTX 4070 / 12 GB", 1024, "2560x1440", profile.CPUModel
+		case profile.MemorySize >= 16:
+			return "NVIDIA GeForce RTX 4060 / 8 GB", 512, "1920x1080", profile.CPUModel
+		default:
+			return "Mesa Intel Graphics / 共享内存", 512, "1920x1080", profile.CPUModel
+		}
+	}
+
 	// Windows 台式/笔记本：独立显卡 + 常见分辨率。
 	switch {
 	case profile.MemorySize >= 32:

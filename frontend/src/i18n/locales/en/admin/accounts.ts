@@ -60,7 +60,7 @@ export default {
         step1: 'Choose a site',
         channelCN: 'China',
         channelIntl: 'International',
-        step2: 'Generate the authorization link, open it in your browser and sign in',
+        step2: 'Generate the authorization link, open it in your browser and sign in (Douyin login is not supported yet — use the phone number option)',
         generate: 'Generate link',
         waiting: 'Waiting for authorization',
         step3: 'After signing in, paste the address from your browser address bar here and click Complete sign-in.',

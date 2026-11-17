@@ -173,19 +173,81 @@ func (s *TraeOAuthService) RotateDevice(account *Account) (map[string]any, error
 	return creds, nil
 }
 
-// DeviceInfo 返回账号当前设备的可展示字段（不含私钥）。
+// DeviceInfo 返回账号当前设备与硬件画像（不含私钥）。
+//
+// 除了 Trae 真正会发出去的设备字段，这里还按同一套维度派生一份硬件画像，
+// 让「指纹」弹窗与 WorkBuddy / Marvis 完全同构（CPU / 内存 / GPU / 磁盘 / 屏幕）。
+// 画像由 machine_id 确定性派生，不落库也不会变。
 func (s *TraeOAuthService) DeviceInfo(account *Account) map[string]any {
 	token := traeTokenOf(account.Credentials)
 	if token.Device == nil {
 		return nil
 	}
-	return map[string]any{
+	profile := traeHardwareProfile(account, token.Device)
+	out := map[string]any{
 		"device_id":    token.Device.DeviceID,
 		"machine_id":   token.Device.MachineID,
 		"device_brand": token.Device.DeviceBrand,
 		"device_type":  token.Device.DeviceType,
 		"os_version":   token.Device.OSVersion,
+		// 与 WorkBuddy 指纹同名的展示字段。
+		"os":          "Windows",
+		"arch":        "x64",
+		"cpu_model":   profile.CPUModel,
+		"cpu_cores":   profile.CPUCores,
+		"memory_size": profile.MemorySize,
+		"gpu":         profile.GPU,
+		"disk":        profile.Disk,
+		"screen":      profile.Screen,
+		"session_id":  token.Device.MachineID,
+		"mac":         traeDerivedMAC(token.Device.MachineID),
+		"ua":          profile.UA,
+		"persisted":   true,
 	}
+	return out
+}
+
+// traeHardwareProfile 从设备机器码派生一份 Windows 硬件画像。
+//
+// Trae 的客户端形态是 Windows 桌面端，所以固定取 Windows 家族：派生结果若是
+// Mac 就换一个盐继续，直到命中 Windows 为止（确定性，不依赖随机数）。
+func traeHardwareProfile(account *Account, device *traeDevice) workBuddyFingerprintProfile {
+	seed := ""
+	if device != nil {
+		seed = device.MachineID
+	}
+	if seed == "" && account != nil {
+		seed = traeStringValue(account.Credentials, "machine_id")
+	}
+	if seed == "" {
+		seed = "trae"
+	}
+	for salt := 0; salt < 32; salt++ {
+		profile := workBuddyDeriveProfile("trae:"+seed, salt)
+		if profile.OS == "Win32" {
+			return profile
+		}
+	}
+	return workBuddyDeriveProfile("trae:"+seed, 0)
+}
+
+// traeDerivedMAC 从机器码派生一个稳定的 MAC 地址（展示用）。
+func traeDerivedMAC(machineID string) string {
+	sum := workBuddySHA256([]byte("trae-mac:" + machineID))
+	hexChars := "0123456789ABCDEF"
+	out := make([]byte, 17)
+	for i := 0; i < 6; i++ {
+		b := sum[i]
+		if i == 0 {
+			b = (b | 0x02) & 0xFE // 本地管理地址、单播
+		}
+		out[i*3] = hexChars[b>>4]
+		out[i*3+1] = hexChars[b&0x0F]
+		if i < 5 {
+			out[i*3+2] = ':'
+		}
+	}
+	return string(out)
 }
 
 // traeAccountContext 取出账号的站点与登录态。

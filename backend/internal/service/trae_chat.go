@@ -255,6 +255,14 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 		}
 	}
 
+	// 上游不返回 token 计量，这里用本地估算兜底。
+	// 只有上游明确给出非零值时采信上游，否则一律估算，避免 usage 全 0
+	// 导致 usage_logs 没有可聚合的量、仪表盘按平台拆分看不到 Trae。
+	if usage.InputTokens == 0 && usage.OutputTokens == 0 {
+		usage.InputTokens = traeEstimatePromptTokens(body)
+		usage.OutputTokens = traeEstimateTokens(content.String()) + traeEstimateTokens(reasoning.String())
+	}
+
 	if clientStream {
 		writeTraeChunk(c, originalModel, map[string]any{}, nil, finishReason)
 		final := gin.H{

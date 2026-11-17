@@ -181,20 +181,94 @@ type traeCallback struct {
 	ExpiresAt    time.Time
 }
 
-// parseTraeCallback 解析用户粘贴的回调地址（整条 URL、或只有参数部分都接受）。
+// parseTraeCallback 解析用户粘贴的回调地址。
+//
+// 接受三种输入：整条回调 URL（推荐）、只有 query 的片段、以及页面里直接复制的
+// JSON。Trae 的回调是 GET + query（userJwt / userInfo / refreshToken），
+// 这里同时兼容参数在 #fragment 里、以及被二次 URL 编码的情况。
 func parseTraeCallback(raw string) (*traeCallback, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return nil, errors.New("trae: 回调地址为空")
 	}
+
+	// 直接粘贴 JSON（userJwt/userInfo 内容）时按字段解析。
+	if strings.HasPrefix(raw, "{") {
+		values := url.Values{}
+		var obj map[string]any
+		if err := json.Unmarshal([]byte(raw), &obj); err != nil {
+			return nil, errors.New("trae: 粘贴的内容既不是地址也不是 JSON")
+		}
+		for key, value := range obj {
+			if text, ok := value.(string); ok {
+				values.Set(key, text)
+			} else if value != nil {
+				if encoded, err := json.Marshal(value); err == nil {
+					values.Set(key, string(encoded))
+				}
+			}
+		}
+		return traeCallbackFromValues(values)
+	}
+
+	if strings.Contains(raw, "/authorization") && !strings.Contains(raw, "userJwt") &&
+		!strings.Contains(raw, "refreshToken") {
+		return nil, errors.New("trae: 这是授权页地址，不是回调地址——请在浏览器里完成登录，等页面跳到 127.0.0.1:47823 后复制地址栏里的那一条")
+	}
+
 	query := raw
 	if idx := strings.Index(raw, "?"); idx >= 0 {
 		query = raw[idx+1:]
 	}
+	// 参数也可能落在 #fragment 里。
 	values, err := url.ParseQuery(query)
 	if err != nil {
 		return nil, fmt.Errorf("trae: 回调地址解析失败: %w", err)
 	}
+	if frag := traeFragmentValues(raw); len(frag) > 0 {
+		for key, items := range frag {
+			if values.Get(key) == "" && len(items) > 0 {
+				values.Set(key, items[0])
+			}
+		}
+	}
+	if len(values) == 0 {
+		return nil, errors.New("trae: 粘贴的地址里没有任何参数，请复制浏览器跳转到 127.0.0.1:47823 后的完整地址")
+	}
+	return traeCallbackFromValues(values)
+}
+
+// traeFragmentValues 取 # 之后的参数（有些客户端把令牌放在 fragment 里）。
+func traeFragmentValues(raw string) url.Values {
+	idx := strings.Index(raw, "#")
+	if idx < 0 || idx == len(raw)-1 {
+		return nil
+	}
+	fragment := raw[idx+1:]
+	if !strings.Contains(fragment, "=") {
+		return nil
+	}
+	values, err := url.ParseQuery(fragment)
+	if err != nil {
+		return nil
+	}
+	return values
+}
+
+// traeDecoded 在值看起来是二次编码时再解一次。
+func traeDecoded(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if !strings.Contains(trimmed, "%") {
+		return trimmed
+	}
+	if decoded, err := url.QueryUnescape(trimmed); err == nil {
+		return decoded
+	}
+	return trimmed
+}
+
+// traeCallbackFromValues 把参数集合解析成回调结果。
+func traeCallbackFromValues(values url.Values) (*traeCallback, error) {
 	if msg := values.Get("error_description"); msg != "" {
 		return nil, fmt.Errorf("trae: 授权被拒绝: %s", msg)
 	}
@@ -203,50 +277,41 @@ func parseTraeCallback(raw string) (*traeCallback, error) {
 	}
 
 	out := &traeCallback{
-		RefreshToken: strings.TrimSpace(values.Get("refreshToken")),
-		ClientID:     strings.TrimSpace(values.Get("clientId")),
-		UID:          strings.TrimSpace(values.Get("userId")),
-		Host:         strings.TrimSpace(values.Get("host")),
-		AuthHost:     strings.TrimSpace(values.Get("authHost")),
-	}
-	if out.AuthHost == "" {
-		out.AuthHost = strings.TrimSpace(values.Get("auth_host"))
+		RefreshToken: traeDecoded(values.Get("refreshToken")),
+		ClientID:     traeDecoded(values.Get("clientId")),
+		UID:          traeDecoded(values.Get("userId")),
+		Host:         traeDecoded(values.Get("host")),
+		AuthHost:     firstNonEmpty(traeDecoded(values.Get("authHost")), traeDecoded(values.Get("auth_host"))),
 	}
 
-	if jwtRaw := values.Get("userJwt"); jwtRaw != "" {
-		var jwt struct {
-			Token         string `json:"Token"`
-			TokenLower    string `json:"token"`
-			RefreshToken  string `json:"RefreshToken"`
-			RefreshLower  string `json:"refreshToken"`
-			TokenExpireAt int64  `json:"TokenExpireAt"`
-			ExpireAtLower int64  `json:"tokenExpireAt"`
-			ClientID      string `json:"ClientID"`
-			ClientIDLower string `json:"clientId"`
-		}
+	if jwtRaw := traeDecoded(values.Get("userJwt")); jwtRaw != "" {
+		var jwt map[string]any
 		if err := json.Unmarshal([]byte(jwtRaw), &jwt); err != nil {
 			return nil, fmt.Errorf("trae: userJwt 解析失败: %w", err)
 		}
-		out.Token = firstNonEmpty(jwt.Token, jwt.TokenLower)
-		out.RefreshToken = firstNonEmpty(out.RefreshToken, jwt.RefreshToken, jwt.RefreshLower)
-		out.ClientID = firstNonEmpty(out.ClientID, jwt.ClientID, jwt.ClientIDLower)
-		out.ExpiresAt = traeExpiryFromUnix(firstNonEmptyInt64(jwt.TokenExpireAt, jwt.ExpireAtLower))
+		out.Token = firstNonEmpty(traeStringValue(jwt, "Token", "token"))
+		out.RefreshToken = firstNonEmpty(out.RefreshToken, traeStringValue(jwt, "RefreshToken", "refreshToken"))
+		out.ClientID = firstNonEmpty(out.ClientID, traeStringValue(jwt, "ClientID", "clientId"))
+		out.ExpiresAt = traeExpiryFromUnix(int64(traeNumberValue(jwt, "TokenExpireAt", "tokenExpireAt")))
 	}
 
-	if infoRaw := values.Get("userInfo"); infoRaw != "" {
-		var info map[string]any
-		if err := json.Unmarshal([]byte(infoRaw), &info); err == nil {
+	if infoRaw := traeDecoded(values.Get("userInfo")); infoRaw != "" {
+		if info, ok := traeAnyToMap(infoRaw); ok {
 			out.UID = firstNonEmpty(out.UID, traeStringValue(info, "UserID", "userId"))
 			out.Name = traeStringValue(info, "ScreenName", "screenName")
-			out.Region = firstNonEmpty(
-				traeStringValue(info, "AIRegion", "aiRegion", "Region", "region"),
-			)
+			out.Region = traeStringValue(info, "AIRegion", "aiRegion", "Region", "region")
 			out.Host = firstNonEmpty(out.Host, traeStringValue(info, "Host", "host"))
+			out.AuthHost = firstNonEmpty(out.AuthHost, traeStringValue(info, "AuthHost", "authHost"))
 		}
 	}
 
 	if out.Token == "" && out.RefreshToken == "" {
-		return nil, errors.New("trae: 回调里没有登录态（userJwt / refreshToken 都为空）")
+		keys := make([]string, 0, len(values))
+		for key := range values {
+			keys = append(keys, key)
+		}
+		sortStrings(keys)
+		return nil, fmt.Errorf("trae: 回调里没有登录态（userJwt / refreshToken 都为空）。收到的参数：%s", strings.Join(keys, ", "))
 	}
 	if out.ClientID == "" {
 		out.ClientID = traeOAuthClientID

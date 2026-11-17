@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // Trae 登录服务的对外接口（管理端直接调用）。
@@ -47,7 +48,7 @@ func (s *TraeOAuthService) StartAuth(platform string) (*TraeAuthInstruction, err
 // CompleteAuth 用粘贴回来的回调地址完成授权。
 //
 // 设备由服务端按 state 取出，不经过浏览器；用户只需把地址栏内容原样贴回。
-func (s *TraeOAuthService) CompleteAuth(state, callbackURL string) (*TraeAuthResult, error) {
+func (s *TraeOAuthService) CompleteAuth(ctx context.Context, state, callbackURL string) (*TraeAuthResult, error) {
 	state = strings.TrimSpace(state)
 	if state == "" {
 		return nil, errors.New("trae: state 为空，请重新生成授权链接")
@@ -60,9 +61,38 @@ func (s *TraeOAuthService) CompleteAuth(state, callbackURL string) (*TraeAuthRes
 	if err != nil {
 		return nil, err
 	}
+	creds := parsed.credentials(session.Platform, session.Device)
+
+	// 回调里只给了 refreshToken 的情况（部分登录方式如此）：立刻用设备换一次票，
+	// 否则落库的 access_token 为空，建号后第一次请求必然失败。
+	if parsed.Token == "" && parsed.RefreshToken != "" {
+		if site := traeSiteForPlatform(session.Platform); site != nil {
+			seed := traeToken{
+				Refresh:  parsed.RefreshToken,
+				ClientID: parsed.ClientID,
+				AuthHost: parsed.AuthHost,
+				Region:   parsed.Region,
+				Device:   session.Device,
+			}
+			if refreshed, err := traeExchangeToken(ctx, traeClient, site, seed); err == nil {
+				creds["access_token"] = refreshed.Access
+				if refreshed.Refresh != "" {
+					creds["refresh_token"] = refreshed.Refresh
+				}
+				if !refreshed.ExpiresAt.IsZero() {
+					creds["expires_at"] = refreshed.ExpiresAt.Format(time.RFC3339)
+					creds["expiresAt"] = refreshed.ExpiresAt.UTC().Format(time.RFC3339)
+				}
+				if refreshed.UID != "" {
+					creds["uid"] = refreshed.UID
+				}
+			}
+		}
+	}
+
 	return &TraeAuthResult{
 		Platform:    session.Platform,
-		Credentials: parsed.credentials(session.Platform, session.Device),
+		Credentials: creds,
 		UID:         parsed.UID,
 		Name:        parsed.Name,
 		Region:      parsed.Region,

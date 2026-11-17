@@ -72,7 +72,7 @@ func (h *TraeOAuthHandler) CompleteAuth(c *gin.Context) {
 		response.BadRequest(c, "请求体不合法: "+err.Error())
 		return
 	}
-	result, err := h.trae.CompleteAuth(req.State, req.CallbackURL)
+	result, err := h.trae.CompleteAuth(c.Request.Context(), req.State, req.CallbackURL)
 	if err != nil {
 		response.BadRequest(c, err.Error())
 		return

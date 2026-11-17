@@ -66,7 +66,7 @@ var traeSeriesPrices = []traeSeriesPrice{
 // 供调用方在需要区分「精确定价」与「粗略兜底」时使用。
 func traeModelSeriesPricing(model string) (inputPerToken, outputPerToken float64, contextLimit int64, matched bool) {
 	lower := strings.ToLower(strings.TrimSpace(model))
-	for i, rule := range traeSeriesPrices {
+	for _, rule := range traeSeriesPrices {
 		if rule.prefix == "" || strings.HasPrefix(lower, rule.prefix) {
 			return rule.inputPerM / 1_000_000,
 				rule.outputPerM / 1_000_000,

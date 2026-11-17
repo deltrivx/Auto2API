@@ -193,6 +193,12 @@ func (s *OpenAIGatewayService) forwardAsRawChatCompletionsWithStartTime(
 		zap.Bool("stream", clientStream),
 	)
 
+	// Trae 不走 OpenAI 协议：请求发到 IDE 的 llm_utils_chat，回答是它自己的
+	// SSE 事件。这里整体交给专用适配器（含 function 回退与事件翻译）。
+	if IsTraePlatform(account.Platform) {
+		return s.forwardTraeChatCompletions(ctx, c, account, body, originalModel, billingModel, upstreamModel, clientStream, startTime)
+	}
+
 	// 5. Build and send upstream request via the shared CC pipeline
 	targetURL, err := s.rawChatCompletionsURL(account)
 	if err != nil {

@@ -42,18 +42,7 @@
 
     </div>
     <template #footer>
-      <div class="flex justify-between gap-3">
-        <button type="button" class="btn btn-secondary" @click="emit('close')">{{ t('common.close') }}</button>
-        <button
-          v-if="isTrae"
-          type="button"
-          class="btn btn-primary"
-          :disabled="rotating"
-          @click="rotateTrae"
-        >
-          {{ rotating ? t('common.loading') : t('admin.accounts.traeDevice.rotate') }}
-        </button>
-      </div>
+      <button type="button" class="btn btn-secondary" @click="emit('close')">{{ t('common.close') }}</button>
     </template>
   </BaseDialog>
 </template>
@@ -64,7 +53,7 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import { getWorkBuddyFingerprint, type WorkBuddyFingerprint } from '@/api/admin/workbuddy'
 import { getMarvisFingerprint, type MarvisFingerprint } from '@/api/admin/marvis'
-import { fetchDevice as getTraeDevice, rotateDevice as rotateTraeDevice, type TraeDevice } from '@/api/admin/trae'
+import { fetchDevice as getTraeDevice, type TraeDevice } from '@/api/admin/trae'
 
 // platform 决定走哪套指纹接口：WorkBuddy 与 Marvis 的设备标识含义不同，
 // 前者是完整硬件画像，后者只有 guid + 每次现签的 uskey。
@@ -101,7 +90,11 @@ const specRows = computed(() => {
     { label: t('admin.accounts.fingerprint.memory'), value: `${f.memory_size} GB` },
     { label: t('admin.accounts.fingerprint.gpu'), value: f.gpu || '—' },
     { label: t('admin.accounts.fingerprint.disk'), value: f.disk ? `${f.disk} GB` : '—' },
-    { label: t('admin.accounts.fingerprint.screen'), value: f.screen || '—' }
+    { label: t('admin.accounts.fingerprint.screen'), value: f.screen || '—' },
+    { label: t('admin.accounts.fingerprint.hostname'), value: f.hostname || '—' },
+    { label: t('admin.accounts.fingerprint.timezone'), value: f.timezone || '—' },
+    { label: t('admin.accounts.fingerprint.locale'), value: f.locale || '—' },
+    { label: t('admin.accounts.fingerprint.webgl'), value: f.webgl_renderer || '—' }
   ]
 })
 
@@ -114,22 +107,6 @@ const idRows = computed(() => {
     { label: 'MAC', value: f.mac }
   ]
 })
-
-const rotating = ref(false)
-
-/** 重新分配 Trae 设备（与 WorkBuddy 的「换一套指纹」同一语义）。 */
-async function rotateTrae() {
-  if (!props.accountId || rotating.value) return
-  rotating.value = true
-  error.value = ''
-  try {
-    traeDevice.value = await rotateTraeDevice(props.accountId)
-  } catch (e: any) {
-    error.value = e?.message || 'failed'
-  } finally {
-    rotating.value = false
-  }
-}
 
 async function load() {
   if (!props.show || !props.accountId) return

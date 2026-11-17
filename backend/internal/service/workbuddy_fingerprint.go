@@ -121,6 +121,13 @@ type workBuddyFingerprint struct {
 	Screen string `json:"screen"`
 	// CPUModel 是 CPU 型号（如 "Apple M4"），与管理端显示格式对齐。
 	CPUModel string `json:"cpu_model"`
+	// 指纹扩维：主机名 / 时区 / 语言区域 / 字体集 / WebGL，仅用于展示与唯一性。
+	Hostname      string   `json:"hostname"`
+	Timezone      string   `json:"timezone"`
+	Locale        string   `json:"locale"`
+	Fonts         []string `json:"fonts"`
+	WebGLVendor   string   `json:"webgl_vendor"`
+	WebGLRenderer string   `json:"webgl_renderer"`
 }
 
 // workBuddyUUIDv5 按 RFC 4122 计算 UUIDv5。
@@ -273,23 +280,29 @@ func (a *workBuddyFingerprintAllocator) workBuddyAssign(key string) workBuddyFin
 	a.usedUAs[profile.UA] = true
 
 	return workBuddyFingerprint{
-		UID:          key,
-		MachineID:    machineID,
-		SessionID:    sessionID,
-		MPMachineID:  mpMachineID,
-		WebMachineID: webMachineID,
-		MAC:          mac,
-		OS:           profile.OS,
-		Arch:         profile.Arch,
-		OSVersion:    profile.OSVersion,
-		CPUCores:     profile.CPUCores,
-		MemorySize:   profile.MemorySize,
-		UA:           profile.UA,
-		IDEVersion:   profile.IDEVersion,
-		GPU:          gpu,
-		Disk:         disk,
-		Screen:       screen,
-		CPUModel:     cpuModel,
+		UID:           key,
+		MachineID:     machineID,
+		SessionID:     sessionID,
+		MPMachineID:   mpMachineID,
+		WebMachineID:  webMachineID,
+		MAC:           mac,
+		OS:            profile.OS,
+		Arch:          profile.Arch,
+		OSVersion:     profile.OSVersion,
+		CPUCores:      profile.CPUCores,
+		MemorySize:    profile.MemorySize,
+		UA:            profile.UA,
+		IDEVersion:    profile.IDEVersion,
+		GPU:           gpu,
+		Disk:          disk,
+		Screen:        screen,
+		CPUModel:      cpuModel,
+		Hostname:      profile.Hostname,
+		Timezone:      profile.Timezone,
+		Locale:        profile.Locale,
+		Fonts:         profile.Fonts,
+		WebGLVendor:   profile.WebGLVendor,
+		WebGLRenderer: profile.WebGLRenderer,
 	}
 }
 
@@ -360,6 +373,12 @@ func WorkBuddyFingerprintOf(account *Account) map[string]any {
 		"disk":           workBuddyFingerprintDisk(fp),
 		"screen":         workBuddyFingerprintScreen(fp),
 		"cpu_model":      workBuddyFingerprintCPUModel(fp),
+		"hostname":       fp.Hostname,
+		"timezone":       fp.Timezone,
+		"locale":         fp.Locale,
+		"fonts":          fp.Fonts,
+		"webgl_vendor":   fp.WebGLVendor,
+		"webgl_renderer": fp.WebGLRenderer,
 		"persisted":      persisted,
 	}
 }

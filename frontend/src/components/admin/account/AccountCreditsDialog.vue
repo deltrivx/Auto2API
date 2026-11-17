@@ -181,10 +181,12 @@ function shortName(name: string): string {
   return name.slice(0, max - 1) + '…'
 }
 
-function formatValue(v: number): string {
-  if (v >= 1e4) return (v / 1e4).toFixed(2) + '万'
-  if (v >= 1) return v.toFixed(2)
-  return v.toFixed(2)
+function formatValue(v: number | undefined | null): string {
+  // 分组字段可能缺省（早期接口没有 remain），undefined.toFixed 会让弹窗直接闪退。
+  if (v == null || Number.isNaN(Number(v))) return '—'
+  const n = Number(v)
+  if (n >= 1e4) return (n / 1e4).toFixed(2) + '万'
+  return n.toFixed(2)
 }
 
 function groupDot(g: { kind: string; name: string }): string {

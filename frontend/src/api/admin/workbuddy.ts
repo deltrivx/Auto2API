@@ -154,6 +154,12 @@ export interface WorkBuddyFingerprint {
   disk?: number
   screen?: string
   cpu_model?: string
+  hostname?: string
+  timezone?: string
+  locale?: string
+  fonts?: string[]
+  webgl_vendor?: string
+  webgl_renderer?: string
   persisted: boolean
 }
 

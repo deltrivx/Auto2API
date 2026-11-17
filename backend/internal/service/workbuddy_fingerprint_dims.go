@@ -128,6 +128,53 @@ var workBuddyWindowsScreens = []string{
 	"3840x2160",
 }
 
+// workBuddyTimezones 是常见的系统时区（偏移 + 城市）。
+var workBuddyTimezones = []string{
+	"Asia/Shanghai", "Asia/Hong_Kong", "Asia/Taipei", "Asia/Tokyo",
+	"Asia/Seoul", "Asia/Singapore", "Europe/London", "Europe/Berlin",
+	"Europe/Paris", "America/New_York", "America/Los_Angeles", "America/Chicago",
+	"Australia/Sydney", "Asia/Dubai",
+}
+
+// workBuddyLocales 是常见的系统语言与区域。
+var workBuddyLocales = []string{
+	"zh-CN", "zh-HK", "zh-TW", "en-US", "en-GB", "ja-JP",
+	"ko-KR", "de-DE", "fr-FR", "es-ES", "ru-RU", "pt-BR",
+}
+
+// workBuddyFontSets 是字体指纹的典型组合（按字体数量与常见字体家族区分）。
+var workBuddyFontSets = [][]string{
+	{"Arial", "Calibri", "Segoe UI", "Microsoft YaHei", "Cambria", "Consolas"},
+	{"Arial", "Helvetica", "PingFang SC", "Menlo", "Monaco", "SF Pro Text"},
+	{"Noto Sans", "Noto Sans CJK SC", "DejaVu Sans", "Liberation Sans", "Ubuntu Mono"},
+	{"Arial", "Segoe UI", "Microsoft YaHei", "SimSun", "Consolas", "Tahoma", "Verdana"},
+	{"Helvetica Neue", "PingFang SC", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Menlo"},
+}
+
+// workBuddyWebGLRenderers 是 WebGL renderer 字符串，与显卡档次对应（展示用）。
+type workBuddyWebGL struct {
+	Vendor   string
+	Renderer string
+}
+
+var workBuddyWebGLMac = []workBuddyWebGL{
+	{Vendor: "Apple Inc.", Renderer: "Apple GPU"},
+	{Vendor: "Apple Inc.", Renderer: "Apple M2"},
+	{Vendor: "Apple Inc.", Renderer: "Apple M3"},
+}
+
+var workBuddyWebGLWindows = []workBuddyWebGL{
+	{Vendor: "Google Inc. (NVIDIA)", Renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+	{Vendor: "Google Inc. (NVIDIA)", Renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+	{Vendor: "Google Inc. (NVIDIA)", Renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+	{Vendor: "Google Inc. (Intel)", Renderer: "ANGLE (Intel, Intel(R) UHD Graphics 730 Direct3D11 vs_5_0 ps_5_0, D3D11)"},
+}
+
+var workBuddyWebGLLinux = []workBuddyWebGL{
+	{Vendor: "Google Inc. (Mesa)", Renderer: "ANGLE (Mesa, llvmpipe (LLVM 17.0.6, 256 bits), OpenGL 4.5)"},
+	{Vendor: "Google Inc. (NVIDIA)", Renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060/PCIe/SSE2, OpenGL 4.6)"},
+}
+
 // workBuddyChromeVersions 是参与 UA 派生的 Chrome 主版本号。
 //
 // 只取仍在广泛使用的区间；过老版本会与「刚安装客户端」的判断冲突。
@@ -195,15 +242,35 @@ func workBuddyDeriveProfile(key string, salt int) workBuddyFingerprintProfile {
 	screen := modelScreens[workBuddyPick16(h, 13, len(modelScreens))]
 	chrome := workBuddyChromeVersions[workBuddyPick16(h, 15, len(workBuddyChromeVersions))]
 
+	// 主机名按摘要程序化生成（DESKTOP-XXXXXXX / 用户机名），空间远大于表驱动维度。
+	hostname := workBuddyHostname(h)
+	timezone := workBuddyTimezones[workBuddyPick16(h, 17, len(workBuddyTimezones))]
+	locale := workBuddyLocales[workBuddyPick16(h, 19, len(workBuddyLocales))]
+	fonts := workBuddyFontSets[workBuddyPick16(h, 21, len(workBuddyFontSets))]
+	webglTable := workBuddyWebGLWindows
+	switch family {
+	case workBuddyOSMac:
+		webglTable = workBuddyWebGLMac
+	case workBuddyOSLinux:
+		webglTable = workBuddyWebGLLinux
+	}
+	webgl := webglTable[workBuddyPick16(h, 23, len(webglTable))]
+
 	profile := workBuddyFingerprintProfile{
-		CPUCores:   cores,
-		MemorySize: memory,
-		GPU:        gpu,
-		Disk:       disk,
-		Screen:     screen,
-		CPUModel:   cpu.Model,
-		OSVersion:  osVersion,
-		IDEVersion: "5.5.6",
+		Hostname:      hostname,
+		Timezone:      timezone,
+		Locale:        locale,
+		Fonts:         fonts,
+		WebGLVendor:   webgl.Vendor,
+		WebGLRenderer: webgl.Renderer,
+		CPUCores:      cores,
+		MemorySize:    memory,
+		GPU:           gpu,
+		Disk:          disk,
+		Screen:        screen,
+		CPUModel:      cpu.Model,
+		OSVersion:     osVersion,
+		IDEVersion:    "5.5.6",
 	}
 	if family == workBuddyOSMac {
 		profile.OS = "MacIntel"
@@ -229,7 +296,41 @@ func workBuddyFingerprintCombinations() int {
 	mac := len(workBuddyMacCPUs) * len(workBuddyMacVersions) * len(workBuddyMacDisks) * len(workBuddyMacScreens)
 	win := len(workBuddyWindowsCPUs) * len(workBuddyWindowsVersions) * len(workBuddyWindowsDisks) * len(workBuddyWindowsScreens)
 	linux := len(workBuddyLinuxCPUs) * len(workBuddyLinuxVersions) * len(workBuddyWindowsDisks) * len(workBuddyWindowsScreens)
-	return (mac + win + linux) * len(workBuddyChromeVersions)
+	base := (mac + win + linux) * len(workBuddyChromeVersions)
+	// 新增四维：时区 × 语言 × 字体集 × WebGL（主机名单独按程序化空间计）。
+	extra := len(workBuddyTimezones) * len(workBuddyLocales) * len(workBuddyFontSets)
+	extra *= len(workBuddyWebGLWindows) // 三族数量接近，取其一作代表
+	return base * extra
+}
+
+// workBuddyHostname 由摘要生成一个稳定主机名。
+//
+// Windows 常见 "DESKTOP-" + 7 位大写字母数字；Mac 用用户名样式；Linux 用小写主机名。
+// 空间分别约 36^7 ≈ 780 亿 / 26^8，足够让主机名成为独立的大维度。
+func workBuddyHostname(h []byte) string {
+	const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const lower = "abcdefghijklmnopqrstuvwxyz0123456789"
+	familyRoll := workBuddyPick16(h, 0, 10)
+	if familyRoll < 4 {
+		// Mac：像用户名 + 的机器名
+		buf := make([]byte, 8)
+		for i := range buf {
+			buf[i] = lower[(int(h[(2+i)%len(h)])+i*7)%len(lower)]
+		}
+		return string(buf) + "-macbook"
+	}
+	if familyRoll < 8 {
+		buf := make([]byte, 7)
+		for i := range buf {
+			buf[i] = upper[(int(h[(2+i)%len(h)])+i*11)%len(upper)]
+		}
+		return "DESKTOP-" + string(buf)
+	}
+	buf := make([]byte, 9)
+	for i := range buf {
+		buf[i] = lower[(int(h[(2+i)%len(h)])+i*13)%len(lower)]
+	}
+	return string(buf)
 }
 
 // workBuddySHA256 返回 SHA-256 摘要，供维度派生使用。

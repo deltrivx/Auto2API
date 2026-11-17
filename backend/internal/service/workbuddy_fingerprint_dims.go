@@ -333,6 +333,31 @@ func workBuddyHostname(h []byte) string {
 	return string(buf)
 }
 
+// workBuddyDimensionExtras 按种子派生四项与设备无关的展示维度。
+//
+// Trae 与 Marvis 没有 WorkBuddy 那套完整画像，但指纹弹窗要显示同样的字段集，
+// 所以用同一个种子（机器码 / openid）确定性派生：主机名、时区、语言、字体、WebGL。
+func workBuddyDimensionExtras(seed string) map[string]any {
+	if seed == "" {
+		seed = "extras"
+	}
+	h := workBuddySHA256([]byte("wb-extras:" + seed))
+	fonts := workBuddyFontSets[workBuddyPick16(h, 21, len(workBuddyFontSets))]
+	webglTable := workBuddyWebGLWindows
+	if workBuddyPick16(h, 0, 10) < 4 {
+		webglTable = workBuddyWebGLMac
+	}
+	webgl := webglTable[workBuddyPick16(h, 23, len(webglTable))]
+	return map[string]any{
+		"hostname":       workBuddyHostname(h),
+		"timezone":       workBuddyTimezones[workBuddyPick16(h, 17, len(workBuddyTimezones))],
+		"locale":         workBuddyLocales[workBuddyPick16(h, 19, len(workBuddyLocales))],
+		"fonts":          fonts,
+		"webgl_vendor":   webgl.Vendor,
+		"webgl_renderer": webgl.Renderer,
+	}
+}
+
 // workBuddySHA256 返回 SHA-256 摘要，供维度派生使用。
 func workBuddySHA256(b []byte) []byte {
 	sum := sha256.Sum256(b)

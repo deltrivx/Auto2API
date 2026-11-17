@@ -139,6 +139,12 @@ export interface MarvisFingerprint {
   guid: string
   openid: string
   login_type: string
+  hostname?: string
+  timezone?: string
+  locale?: string
+  fonts?: string[]
+  webgl_vendor?: string
+  webgl_renderer?: string
   persisted: boolean
 }
 

@@ -405,6 +405,14 @@ func MarvisFingerprintView(account *Account) map[string]any {
 		return 0
 	}
 
+	// 与 WorkBuddy / Trae 同一套扩维：主机名 / 时区 / 语言 / 字体 / WebGL，
+	// 由账号机器码确定性派生，弹窗三个平台显示同样的字段集。
+	fpSeed := str("machine_id")
+	if fpSeed == "" {
+		fpSeed = marvisAccountSeed(account.Credentials)
+	}
+	extras := workBuddyDimensionExtras(fpSeed)
+
 	credsView := marvisCredentialsOf(account)
 	out["account_id"] = account.ID
 	out["name"] = account.Name
@@ -433,6 +441,10 @@ func MarvisFingerprintView(account *Account) map[string]any {
 	}
 	out["ide_version"] = MarvisClientVersion
 	out["persisted"] = marvisFingerprintOfCredentials(creds) != nil
+	// 扩维字段：与 WorkBuddy / Trae 同名，弹窗共用同一套行。
+	for k, v := range extras {
+		out[k] = v
+	}
 	return out
 }
 

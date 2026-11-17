@@ -134,6 +134,12 @@ async function load() {
         disk: (d as any).disk || 0,
         screen: (d as any).screen || '',
         cpu_model: (d as any).cpu_model || '',
+        hostname: (d as any).hostname || '',
+        timezone: (d as any).timezone || '',
+        locale: (d as any).locale || '',
+        fonts: (d as any).fonts || [],
+        webgl_vendor: (d as any).webgl_vendor || '',
+        webgl_renderer: (d as any).webgl_renderer || '',
         persisted: true
       } as unknown as WorkBuddyFingerprint
       return
@@ -158,6 +164,12 @@ async function load() {
         disk: m.disk,
         screen: m.screen,
         cpu_model: m.cpu_model,
+        hostname: (m as any).hostname || '',
+        timezone: (m as any).timezone || '',
+        locale: (m as any).locale || '',
+        fonts: (m as any).fonts || [],
+        webgl_vendor: (m as any).webgl_vendor || '',
+        webgl_renderer: (m as any).webgl_renderer || '',
         persisted: m.persisted
       } as unknown as WorkBuddyFingerprint
     } else {

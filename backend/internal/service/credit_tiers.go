@@ -56,7 +56,7 @@ var creditTiers = []creditTier{
 	},
 	{
 		name:         "高速",
-		prefixes:     []string{"deepseek-v4.1-flash", "deepseek-v4-flash", "mimo-v2.6-flash", "glm-5.3-flash", "doubao-seed-code", "qwen3.8-flash", "minimax-m3.1-flash", "dola-seed"},
+		prefixes:     []string{"deepseek-v4.1-flash", "deepseek-v4-1-flash", "deepseek-v4-flash", "mimo-v2.6-flash", "glm-5.3-flash", "doubao-seed-code", "qwen3.8-flash", "minimax-m3.1-flash", "dola-seed"},
 		inputPer1M:   112,
 		outputPer1M:  90,
 		contextLimit: 200_000,
@@ -89,7 +89,49 @@ func creditTierFor(model string) (inputPer1M, outputPer1M float64, contextLimit 
 			}
 		}
 	}
+	// 上游常在模型名后追加版本或日期后缀（如 deepseek-v4-1-flash-261017、
+	// kimi-k2.8-preview），前缀匹配不到时去掉这些尾段再试一次。
+	trimmed := trimModelSuffix(lower)
+	if trimmed != lower {
+		for _, tier := range creditTiers {
+			for _, p := range tier.prefixes {
+				if strings.HasPrefix(trimmed, p) || strings.HasPrefix(p, trimmed) {
+					return tier.inputPer1M, tier.outputPer1M, tier.contextLimit, true
+				}
+			}
+		}
+	}
 	return 0, 0, 0, false
+}
+
+// trimModelSuffix 去掉模型名末尾的版本/日期段。
+//
+// "deepseek-v4-1-flash-261017" -> "deepseek-v4-1-flash"
+// "kimi-k2.8-preview"          -> "kimi-k2.8"
+// 只从后往前剥掉「全是数字」或「纯字母的已知修饰词」的段，避免误伤模型主体。
+func trimModelSuffix(model string) string {
+	modifiers := map[string]bool{
+		"preview": true, "official": true, "latest": true, "exp": true,
+		"beta": true, "alpha": true, "auto": true, "high": true, "low": true,
+		"turbo": false, "pro": false, "flash": false, // 这几个属于模型名主体，不剥
+	}
+	parts := strings.Split(model, "-")
+	for len(parts) > 1 {
+		last := parts[len(parts)-1]
+		allDigits := true
+		for _, r := range last {
+			if r < '0' || r > '9' {
+				allDigits = false
+				break
+			}
+		}
+		if allDigits || modifiers[last] {
+			parts = parts[:len(parts)-1]
+			continue
+		}
+		break
+	}
+	return strings.Join(parts, "-")
 }
 
 // creditTierCost 按档位算一次请求的积分成本。

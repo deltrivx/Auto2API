@@ -229,7 +229,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import CreditsOverviewCards from '@/components/dashboard/CreditsOverviewCards.vue'

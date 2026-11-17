@@ -20,7 +20,7 @@
       </dl>
 
       <!-- 硬件规格：divide-y 列表，标签定宽 112px（w-28），值与标签同行 -->
-      <dl v-if="!isTrae" class="divide-y divide-gray-200 text-sm dark:divide-dark-600">
+      <dl v-if="!isTrae && fp" class="divide-y divide-gray-200 text-sm dark:divide-dark-600">
         <div v-for="row in specRows" :key="row.label" class="flex gap-4 py-2">
           <dt class="w-28 flex-shrink-0 text-gray-500 dark:text-gray-400">{{ row.label }}</dt>
           <dd class="min-w-0 break-all font-mono text-xs text-gray-900 dark:text-gray-100">
@@ -47,7 +47,7 @@
       <!-- User-Agent：单独一段，值完整换行 -->
       <div v-if="!isTrae">
         <p class="mb-1 text-xs text-gray-500 dark:text-gray-400">User-Agent</p>
-        <p class="break-all font-mono text-xs text-gray-900 dark:text-gray-100">{{ fp.ua || '—' }}</p>
+        <p class="break-all font-mono text-xs text-gray-900 dark:text-gray-100">{{ fp?.ua || '—' }}</p>
       </div>
 
     </div>

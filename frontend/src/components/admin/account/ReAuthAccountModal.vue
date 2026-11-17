@@ -83,6 +83,14 @@
         @authorized="handleWorkBuddyConfirm"
       />
 
+      <!-- Trae 重新授权：选站点 → 生成链接 → 粘贴回调地址 -->
+      <TraeAuthSteps
+        v-if="authFlow === 'trae'"
+        :platform="account!.platform as 'trae_cn' | 'trae_intl'"
+        :auth="traeOAuth"
+        @authorized="handleTraeConfirm"
+      />
+
       <!-- Marvis 重新授权：与添加账号共用同一套三步流程 -->
       <MarvisAuthSteps
         v-if="authFlow === 'marvis'"
@@ -204,12 +212,14 @@ import { adminAPI } from '@/api/admin'
 import type { AddMethod, AuthInputMethod } from '@/composables/useAccountOAuth'
 import { useWorkBuddyOAuth } from '@/composables/useWorkBuddyOAuth'
 import { useMarvisOAuth } from '@/composables/useMarvisOAuth'
+import { useTraeOAuth } from '@/composables/useTraeOAuth'
 import type { Account } from '@/types'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
 import OAuthAuthorizationFlow from '@/components/account/OAuthAuthorizationFlow.vue'
 import WorkBuddyAuthSteps from '@/components/account/WorkBuddyAuthSteps.vue'
 import MarvisAuthSteps from '@/components/account/MarvisAuthSteps.vue'
+import TraeAuthSteps from '@/components/account/TraeAuthSteps.vue'
 
 // Type for exposed OAuthAuthorizationFlow component
 // Note: defineExpose automatically unwraps refs, so we use the unwrapped types
@@ -239,6 +249,7 @@ const { t } = useI18n()
 // OAuth composables
 const workbuddyOAuth = useWorkBuddyOAuth()
 const marvisOAuth = useMarvisOAuth()
+const traeOAuth = useTraeOAuth()
 
 // Refs
 const oauthFlowRef = ref<OAuthFlowExposed | null>(null)
@@ -332,6 +343,24 @@ async function handleMarvisConfirm() {
   }
 }
 
+// handleTraeConfirm 用服务端组装好的凭据完成重新授权。
+async function handleTraeConfirm() {
+  if (!props.account) return
+  const creds = traeOAuth.result?.value?.credentials
+  if (!creds?.access_token) {
+    appStore.showError('Authorization incomplete')
+    return
+  }
+  try {
+    const updated = await adminAPI.accounts.update(props.account.id, { credentials: creds })
+    appStore.showSuccess(t('admin.accounts.oauth.authorized'))
+    emit('reauthorized', updated as unknown as Account)
+    handleClose()
+  } catch (e: any) {
+    appStore.showError(e?.message || 'Save failed')
+  }
+}
+
 // Computed - current OAuth state based on platform
 const currentAuthUrl = computed(() => workbuddyOAuth.authUrl.value)
 const currentSessionId = computed(() => workbuddyOAuth.state.value)
@@ -391,6 +420,7 @@ const resetState = () => {
   // Marvis 也要清：否则关掉弹窗再打开，第二步的授权链接和回调输入还在，
   // 用户看到的是一个已经过期的旧链接。
   marvisOAuth.reset()
+  traeOAuth.reset()
   oauthFlowRef.value?.reset()
 }
 

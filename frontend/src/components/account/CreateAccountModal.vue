@@ -123,6 +123,33 @@
               <span class="block truncate text-xs text-gray-500 dark:text-gray-400">QQ / 微信登录</span>
             </div>
           </button>
+
+          <button
+            type="button"
+            data-testid="platform-button-trae"
+            @click="selectTraePlatform"
+            :class="[
+              'flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all sm:col-span-2',
+              isTraePlatform
+                ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                : 'border-gray-200 hover:border-amber-300 dark:border-dark-600 dark:hover:border-amber-700'
+            ]"
+          >
+            <div
+              :class="[
+                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-semibold',
+                isTraePlatform
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400'
+              ]"
+            >
+              T
+            </div>
+            <div class="min-w-0">
+              <span class="block text-sm font-medium text-gray-900 dark:text-white">Trae</span>
+              <span class="block truncate text-xs text-gray-500 dark:text-gray-400">国内版 / 国际版 · 浏览器授权</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -144,6 +171,19 @@
         <label class="input-label">登录</label>
         <div class="mt-2 rounded-lg border border-gray-200 p-4 dark:border-dark-600">
           <MarvisAuthSteps :auth="marvisOAuth" @authorized="handleMarvisAuthorized" />
+        </div>
+      </div>
+
+      <!-- Trae 登录：选站点 → 生成链接 → 粘贴回调地址 -->
+      <div v-if="isTraePlatform">
+        <label class="input-label">登录</label>
+        <div class="mt-2 rounded-lg border border-gray-200 p-4 dark:border-dark-600">
+          <TraeAuthSteps
+            :platform="form.platform as 'trae_cn' | 'trae_intl'"
+            :auth="traeOAuth"
+            @channel-change="handleTraeChannelChange"
+            @authorized="handleTraeAuthorized"
+          />
         </div>
       </div>
 
@@ -3896,8 +3936,10 @@ import { useAntigravityOAuth } from '@/composables/useAntigravityOAuth'
 import { useGrokOAuth } from '@/composables/useGrokOAuth'
 import { useWorkBuddyOAuth } from '@/composables/useWorkBuddyOAuth'
 import { useMarvisOAuth } from '@/composables/useMarvisOAuth'
+import { useTraeOAuth } from '@/composables/useTraeOAuth'
 import WorkBuddyAuthSteps from '@/components/account/WorkBuddyAuthSteps.vue'
 import MarvisAuthSteps from '@/components/account/MarvisAuthSteps.vue'
+import TraeAuthSteps from '@/components/account/TraeAuthSteps.vue'
 import type {
   Proxy,
   AdminGroup,
@@ -4151,6 +4193,7 @@ const antigravityOAuth = useAntigravityOAuth() // For Antigravity OAuth
 const grokOAuth = useGrokOAuth() // For Grok OAuth
 const workbuddyOAuth = useWorkBuddyOAuth() // For WorkBuddy OAuth
 const marvisOAuth = useMarvisOAuth() // For Tencent Marvis OAuth
+const traeOAuth = useTraeOAuth() // For Trae (CN / Global)
 
 // Computed: current OAuth state for template binding
 const currentAuthUrl = computed(() => {
@@ -4320,6 +4363,34 @@ const cnAccentIconClass = computed(() => {
 const isWorkBuddyPlatform = computed(
   () => form.platform === 'workbuddy_cn' || form.platform === 'workbuddy_intl'
 )
+
+/** 当前是否选择了 Trae（两个站点）。 */
+const isTraePlatform = computed(() => form.platform === 'trae_cn' || form.platform === 'trae_intl')
+
+/** 选中 Trae：默认落到国内站，站点可在授权步骤里切换。 */
+function selectTraePlatform() {
+  if (isTraePlatform.value) return
+  form.platform = 'trae_cn'
+  accountCategory.value = 'oauth-based'
+  form.group_ids = defaultGroupIDsForPlatform('trae_cn')
+  traeOAuth.reset()
+}
+
+/** 切换 Trae 站点：两个站点账号不通，切换后必须重新授权。 */
+function handleTraeChannelChange(platform: 'trae_cn' | 'trae_intl') {
+  form.platform = platform
+  accountCategory.value = 'oauth-based'
+  form.group_ids = defaultGroupIDsForPlatform(platform)
+  traeOAuth.reset()
+}
+
+/** 授权完成：只回填账号名，建号由底部「创建」按钮完成。 */
+function handleTraeAuthorized() {
+  const result = traeOAuth.result?.value
+  if (!form.name.trim()) {
+    form.name = result?.name || result?.uid || 'Trae 账号'
+  }
+}
 
 /** 切换 WorkBuddy 站点。两个站点认证独立，切换后需重新授权。 */
 function selectWorkBuddyPlatform(platform: 'workbuddy_cn' | 'workbuddy_intl') {
@@ -5999,6 +6070,17 @@ const handleSubmit = async () => {
     if (mv.credentials.nickname) mvCreds.nickname = mv.credentials.nickname
     if (mv.credentials.avatar) mvCreds.avatar = mv.credentials.avatar
     await createAccountAndFinish(form.platform, 'oauth' as AccountType, mvCreds)
+    return
+  }
+
+  // Trae：粘贴回调地址完成授权，凭据由服务端组装好（含设备身份），直接建号。
+  if (isTraePlatform.value) {
+    const traeResult = traeOAuth.result?.value
+    if (!traeResult?.credentials?.access_token) {
+      appStore.showError(t('admin.accounts.pleaseCompleteAuth'))
+      return
+    }
+    await createAccountAndFinish(form.platform, 'oauth' as AccountType, traeResult.credentials)
     return
   }
 

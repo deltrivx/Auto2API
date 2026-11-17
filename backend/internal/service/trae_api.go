@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -120,6 +121,26 @@ type traeModel struct {
 	Function  string   `json:"function,omitempty"`
 	// DevModel 是该条目给本模型分配的 __dev 模型名。
 	DevModel string `json:"dev_model,omitempty"`
+}
+
+// traeNoiseModelPattern 匹配目录里的「非对话」条目。
+//
+// Trae 的 /api/ide/v1 目录会把 IDE 内部的辅助条目一并列出（配置槽、检索
+// 代理、标题生成、摘要、代码补全等）。它们没有对话服务，选中就是 11102 /
+// 404，所以列给用户之前先剔掉 —— 与 magpie 的做法一致：插件只把能跑 chat
+// 的模型放进列表。
+var traeNoiseModelPattern = regexp.MustCompile(`(?i)^(` +
+	`custom_model|search_agent|custom_model_|summary|fast_apply|fast_apply_new|` +
+	`title_generation|input_optimization|laziness_detection|file_search_agent|` +
+	`browser_use_subagent|computer_use_subagent|explore_sub_agent)`)
+
+// traeIsChatModel 判断一个目录条目是否可以用于对话。
+func traeIsChatModel(id string) bool {
+	trimmed := strings.TrimSpace(id)
+	if trimmed == "" {
+		return false
+	}
+	return !traeNoiseModelPattern.MatchString(trimmed)
 }
 
 // traeChatFunctions 是对话可用的 function，按优先级排列（与 magpie 一致）。

@@ -143,11 +143,12 @@ func marvisNonce() string {
 // qimei36 只在能拿到真值时才有意义 —— 它要求与设备一致。我们拿不到真值，
 // 因此整个字段不发，而不是用占位值冒充（官方实现同样如此）。
 func marvisExtJSON(creds MarvisCredentials) string {
-	// osVersion 跟随账号画像，保证与 Ual-Access-Guid 描述的是同一台机器。
-	osVersion := strings.TrimSpace(creds.OSVersion)
-	if osVersion == "" {
-		osVersion = marvisDefaultOSVersion
-	}
+	// osVersion 是常量，不跟随账号画像。
+	//
+	// magpie-marvis 的 marvisExt() 把它写死成 "Windows-10-10.0.26200"
+	// （照抄 Marvis agent 的 build_llm_auth_headers）。画像里的 os_version
+	// 是给管理端弹窗看的展示值，放进 MarvisExt 会和上游期望的格式对不上。
+	osVersion := marvisDefaultOSVersion
 	ext := map[string]any{
 		"osVersion":     osVersion,
 		"guid":          creds.GUID,

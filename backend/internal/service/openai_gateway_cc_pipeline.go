@@ -239,10 +239,19 @@ func (s *OpenAIGatewayService) sendCCUpstreamRequest(
 	}
 
 	// 透传白名单中的客户端 header。详见 openaiCCRawAllowedHeaders 的设计说明。
+	// 透传必须是「先清后写」而不是 Add：Add 会把客户端的 User-Agent 与
+	// 后面 Set 的官方 UA 拼成 "客户端UA, 官方UA" 两条值。上游把这种拼接
+	// 当成伪造头，直接 4100404 风控 —— magpie-marvis 的 fetch 包装里专门
+	// 按小写判重就是为这个坑（它的注释写明：两条 UA 用逗号连起来就触发风控）。
 	for key, values := range c.Request.Header {
 		lowerKey := strings.ToLower(key)
 		if openaiCCRawAllowedHeaders[lowerKey] {
-			for _, v := range values {
+			upstreamReq.Header.Del(key)
+			for i, v := range values {
+				if i == 0 {
+					upstreamReq.Header.Set(key, v)
+					continue
+				}
 				upstreamReq.Header.Add(key, v)
 			}
 		}

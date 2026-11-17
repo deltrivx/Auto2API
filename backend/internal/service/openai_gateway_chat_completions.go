@@ -93,6 +93,16 @@ func (s *OpenAIGatewayService) forwardAsChatCompletions(
 		return nil, errors.New("codex_cli_only restriction: only codex official clients are allowed")
 	}
 
+	// Trae 不走 OpenAI 协议：请求要发到 IDE 的 llm_utils_chat，回答是它自己的
+	// SSE 事件。必须在协议分流之前拦下——否则会按多协议 profile 判成 Responses，
+	// 落进需要 API Key / OAuth token 的转换链（报 "not an openai oauth account"）。
+	if IsTraePlatform(account.Platform) {
+		originalModel := gjson.GetBytes(body, "model").String()
+		billingModel := resolveOpenAIForwardModel(account, originalModel, defaultMappedModel)
+		return s.forwardTraeChatCompletions(ctx, c, account, body, originalModel, billingModel, billingModel,
+			gjson.GetBytes(body, "stream").Bool(), time.Now())
+	}
+
 	if false {
 		if account.IsGrokOAuth() {
 			if eligible, reason := grokChatResponsesBridgeEligibility(body); eligible {

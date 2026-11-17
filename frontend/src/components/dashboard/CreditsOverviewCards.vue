@@ -48,7 +48,7 @@ import {
 //
 //   1 WorkBuddy 今日积分  今日签到 + 今日任务
 //   2 WorkBuddy 总积分    副标题给「今日数据：总量 - 今日消费」
-//   3 Marvis 总积分       K 结尾，副标题给今日消费
+//   3 Marvis 总积分       副标题按授权方式（QQ / 微信）拆分余额
 //   4 Trae 总积分         副标题给今日消费
 //
 // 数据全部来自上游快照，不读本地台账——账号可能在客户端或别处签到/做任务，
@@ -68,11 +68,6 @@ function fmt(v: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
-}
-
-/** 宽卡量级大，用 K 压缩并保留两位小数：1,234,567 → 1,234.57K。 */
-function fmtK(v: number): string {
-  return `${fmt((Number.isFinite(v) ? v : 0) / 1_000)}K`
 }
 
 /** 积分单位文案（全平台统一「积分」）。 */
@@ -106,20 +101,23 @@ const cards = computed<Card[]>(() => {
   const wbTotal = wb?.total_credits ?? 0
   const wbTodayCost = todayCheckin + todayTask
 
-  const mvTotal = mv?.total_credits ?? 0
-  const mvTodayUsed = mv?.today_used ?? 0
+  // Marvis 卡片显示「所有账号的余额之和」，不是总额度之和。
+  // available_credits 是各账号钱包余额（avail_tokens）的累加，
+  // total_credits 是额度上限的累加，口径不同。
+  const mvTotal = mv?.available_credits ?? 0
 
   // Trae：额度来自上游（国内站积分 / 国际站美元），后端已折算成积分
   // （1 美元 = 100 积分），这里直接用。
-  const trTotal = tr?.total_credits ?? 0
-  const trTodayUsed = tr?.today_used ?? 0
+  // Trae 卡片显示「两个站点所有账号的余额之和」，不是额度上限之和。
+  const trTotal = tr?.available_credits ?? 0
 
   return [
     {
       key: 'wb-today',
       label: t('admin.accounts.creditsTodayWorkBuddy'),
       value: fmt(wbTodayCost),
-      hint: `${t('admin.accounts.creditsCheckinShort')}${fmt(todayCheckin)} · ${t('admin.accounts.creditsTaskShort')}${fmt(todayTask)}`,
+      // 两个分项是相加得出主数值的关系，用 + 而不是 · 更直观。
+      hint: `${t('admin.accounts.creditsCheckinShort')}${fmt(todayCheckin)} + ${t('admin.accounts.creditsTaskShort')}${fmt(todayTask)}`,
       icon: 'chart',
       color: 'text-primary-600 dark:text-primary-400',
       bg: 'bg-primary-50 dark:bg-primary-900/20'
@@ -128,8 +126,9 @@ const cards = computed<Card[]>(() => {
       key: 'wb-total',
       label: t('admin.accounts.creditsTotalWorkBuddy'),
       value: fmt(wbTotal),
-      // 副标题按新口径：今日数据 = 总量 - 今日消费，并带单位。
-      hint: `${t('admin.accounts.cardTodayData')}: ${fmt(wbTotal - wbTodayCost)} ${unit.value} - ${fmt(wbTodayCost)} ${unit.value}`,
+      // 副标题第二行 = 国内版所有账号总余额 + 国际版所有账号总余额。
+      // 两个数都直接来自快照的站点拆分字段，不在前端做减法。
+      hint: `${t('admin.accounts.creditsCNTotal')} ${fmt(Number(wb?.total_credits_cn ?? 0))} ${unit.value} + ${t('admin.accounts.creditsIntlTotal')} ${fmt(Number(wb?.total_credits_intl ?? 0))} ${unit.value}`,
       icon: 'trophy',
       color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-50 dark:bg-emerald-900/20'
@@ -137,9 +136,11 @@ const cards = computed<Card[]>(() => {
     {
       key: 'marvis',
       label: t('admin.accounts.creditsMarvisTotal'),
-      value: fmtK(mvTotal),
-      // 今日消耗按用户要求不用 K，保留两位小数并带单位。
-      hint: `${t('admin.accounts.cardTodayUsed')}: ${fmt(mvTodayUsed)} ${unit.value}`,
+      // 换算成积分后量级在万级，K 缩写反而不直观，直接两位小数完整显示。
+      value: fmt(mvTotal),
+      // 副标题按授权方式拆分余额：QQ 登录的账号之和、微信登录的账号之和。
+      // 两个数都由后端按 login_type 分别累加，前端只做展示。
+      hint: `QQ：${fmt(Number(mv?.available_qq ?? 0))} ${unit.value} + 微信：${fmt(Number(mv?.available_wx ?? 0))} ${unit.value}`,
       platform: 'marvis',
       color: 'text-cyan-600 dark:text-cyan-400',
       bg: 'bg-cyan-50 dark:bg-cyan-900/20'
@@ -147,9 +148,10 @@ const cards = computed<Card[]>(() => {
     {
       key: 'trae',
       label: t('admin.accounts.creditsTraeTotal'),
-      // Trae 不用 K 缩写，直接两位小数完整显示。
+      // 全部平台统一两位小数完整显示，不再用 K 缩写。
       value: fmt(trTotal),
-      hint: `${t('admin.accounts.cardTodayUsed')}: ${fmt(trTodayUsed)} ${unit.value}`,
+      // 参考 WorkBuddy 卡片：副标题按站点拆分余额，两个数都由后端分别累加。
+      hint: `${t('admin.accounts.creditsCNTotal')} ${fmt(Number(tr?.available_cn ?? 0))} ${unit.value} + ${t('admin.accounts.creditsIntlTotal')} ${fmt(Number(tr?.available_intl ?? 0))} ${unit.value}`,
       platform: 'trae_cn',
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-900/20'

@@ -554,6 +554,9 @@ export interface MarvisCreditSnapshot {
   total_credits: number
   used_credits: number
   available_credits: number
+  /** 按授权方式拆分的可用余额：QQ 登录 / 微信登录。 */
+  available_qq?: number
+  available_wx?: number
   today_used: number
 }
 
@@ -573,6 +576,9 @@ export interface TraeCreditSnapshot {
   total_credits: number
   used_credits: number
   available_credits: number
+  /** 按站点拆分的余额（均已折算成积分）。 */
+  available_cn?: number
+  available_intl?: number
   today_used: number
 }
 

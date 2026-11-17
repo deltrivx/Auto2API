@@ -32,6 +32,18 @@ type MarvisWallet struct {
 	Status       int    `json:"status"`
 }
 
+// MarvisTokensPerCredit 是令牌与积分的换算比。
+//
+// 上游钱包按 token 计量（每日 1000 万 token），但产品口径统一用积分展示：
+// 10000 积分 = 10000000 token，即 1 积分 = 1000 token。
+// 所有对外展示的数值都要先除这个数，避免把 token 当积分读。
+const MarvisTokensPerCredit = 1000
+
+// TokensToCredits 把 token 数换算成积分。
+func TokensToCredits(tokens int64) float64 {
+	return float64(tokens) / MarvisTokensPerCredit
+}
+
 // UsedPercent 返回已用占比（0-100）。
 func (w MarvisWallet) UsedPercent() float64 {
 	if w.TotalTokens <= 0 {

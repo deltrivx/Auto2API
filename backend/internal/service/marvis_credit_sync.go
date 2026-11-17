@@ -17,8 +17,12 @@ import (
 
 // MarvisAccountCredits 是单个账号的积分。
 type MarvisAccountCredits struct {
-	AccountID   int64   `json:"account_id"`
-	Account     string  `json:"account"`
+	AccountID int64  `json:"account_id"`
+	Account   string `json:"account"`
+	// LoginType 是授权方式：1=QQ、2=微信（凭据里的 login_type，缺省按 QQ）。
+	// 卡片副标题要按授权方式分别汇总余额，所以必须带上。
+	LoginType string `json:"login_type"`
+	// Total / Used / Available 均为积分（已由 token 换算）。
 	Total       float64 `json:"total"`
 	Used        float64 `json:"used"`
 	Available   float64 `json:"available"`
@@ -38,6 +42,10 @@ type MarvisCreditSnapshot struct {
 	UsedCredits float64 `json:"used_credits"`
 	// AvailableCredits 是全部账号的可用额度之和。
 	AvailableCredits float64 `json:"available_credits"`
+	// AvailableQQ / AvailableWX 是按授权方式拆开的可用余额：
+	// QQ 登录的账号之和 / 微信登录的账号之和。
+	AvailableQQ float64 `json:"available_qq"`
+	AvailableWX float64 `json:"available_wx"`
 	// TodayUsed 是今日消耗（用上次快照的差值估算，跨天归零）。
 	TodayUsed float64 `json:"today_used"`
 	Syncing   bool    `json:"syncing"`
@@ -110,23 +118,35 @@ func (s *MarvisCreditSyncService) Sync(ctx context.Context) *MarvisCreditSnapsho
 	}
 
 	rows := make([]MarvisAccountCredits, 0, len(accounts))
-	var totalSum, usedSum, availSum float64
+	var totalSum, usedSum, availSum, availQQSum, availWXSum float64
 	for i := range accounts {
 		acc := accounts[i]
-		row := MarvisAccountCredits{AccountID: acc.ID, Account: acc.Name}
+		row := MarvisAccountCredits{
+			AccountID: acc.ID,
+			Account:   acc.Name,
+			LoginType: marvisCredentialsOf(&accounts[i]).LoginType,
+		}
 		wallet, wErr := FetchMarvisWallet(ctx, &accounts[i])
 		if wErr != nil {
 			row.Error = wErr.Error()
 		} else {
-			row.Total = float64(wallet.TotalTokens)
-			row.Used = float64(wallet.UsedTokens)
-			row.Available = float64(wallet.AvailTokens)
+			// 上游钱包按 token 计量，快照对外一律换算成积分
+			// （1 积分 = 1000 token），与账号列表、明细弹窗口径一致。
+			row.Total = TokensToCredits(wallet.TotalTokens)
+			row.Used = TokensToCredits(wallet.UsedTokens)
+			row.Available = TokensToCredits(wallet.AvailTokens)
 			if wallet.TotalTokens > 0 {
 				row.UsedPercent = float64(wallet.UsedTokens) / float64(wallet.TotalTokens) * 100
 			}
 			totalSum += row.Total
 			usedSum += row.Used
 			availSum += row.Available
+			// 按授权方式分别累加余额，卡片的副标题要分开显示 QQ / 微信。
+			if row.LoginType == MarvisLoginTypeWX {
+				availWXSum += row.Available
+			} else {
+				availQQSum += row.Available
+			}
 
 			// 积分归零即停调：额度用尽的账号继续被调度只会一路报错。
 			// 恢复靠充值或人工重新开启，这里只管单向关闭。
@@ -158,6 +178,8 @@ func (s *MarvisCreditSyncService) Sync(ctx context.Context) *MarvisCreditSnapsho
 		TotalCredits:     totalSum,
 		UsedCredits:      usedSum,
 		AvailableCredits: availSum,
+		AvailableQQ:      availQQSum,
+		AvailableWX:      availWXSum,
 		TodayUsed:        todayUsed,
 	}
 	cp := *s.snapshot
@@ -165,14 +187,27 @@ func (s *MarvisCreditSyncService) Sync(ctx context.Context) *MarvisCreditSnapsho
 	return &cp
 }
 
-// marvisAccounts 列出全部可调度的 Marvis 账号。
+// marvisAccounts 列出全部 Marvis 账号。
+//
+// 这里**不能**传 status="active"：仓库层对 active 的处理除了 status 匹配，
+// 还会追加 schedulable = true（account_repo.go 的 accountListFilteredQuery）。
+// 一旦账号被置为不调度（额度用尽自动停调、或人工关闭），就整个查不出来，
+// 卡片上的余额会变成 0 —— 而余额跟调不调度毫无关系。
+//
+// 所以按平台查询，再在内存里只保留状态正常的账号（排除 error / disabled）。
 func (s *MarvisCreditSyncService) marvisAccounts(ctx context.Context) ([]Account, error) {
 	const pageSize = 200
-	list, _, err := s.adminService.ListAccounts(ctx, 1, pageSize, PlatformMarvis, "", "active", "", 0, "", "", "")
+	list, _, err := s.adminService.ListAccounts(ctx, 1, pageSize, PlatformMarvis, "", "", "", 0, "", "", "")
 	if err != nil {
 		return nil, err
 	}
-	return list, nil
+	out := make([]Account, 0, len(list))
+	for i := range list {
+		if list[i].Status == StatusActive {
+			out = append(out, list[i])
+		}
+	}
+	return out, nil
 }
 
 // Start 按间隔周期同步，直到 ctx 取消。

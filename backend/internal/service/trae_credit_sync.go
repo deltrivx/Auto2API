@@ -32,7 +32,10 @@ type TraeCreditSnapshot struct {
 	TotalCredits float64              `json:"total_credits"`
 	UsedCredits  float64              `json:"used_credits"`
 	Available    float64              `json:"available_credits"`
-	TodayUsed    float64              `json:"today_used"`
+	// AvailableCN / AvailableIntl 是按站点拆开的余额（均已折算成积分）。
+	AvailableCN   float64 `json:"available_cn"`
+	AvailableIntl float64 `json:"available_intl"`
+	TodayUsed     float64 `json:"today_used"`
 }
 
 // TraeCreditSyncService 周期性拉取 Trae 账号额度。
@@ -85,16 +88,19 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 		s.mu.Unlock()
 	}()
 
-	list, _, err := s.adminService.ListAccounts(ctx, 1, 200, "", "", "active", "", 0, "", "", "")
+	// status 传空：仓库层对 "active" 的处理除状态匹配外还会追加
+	// schedulable = true，账号一关调度就从快照里消失，余额会凭空归零。
+	// 这里按状态在内存里过滤即可。
+	list, _, err := s.adminService.ListAccounts(ctx, 1, 500, "", "", "", "", 0, "", "", "")
 	if err != nil {
 		return s.Snapshot()
 	}
 
 	rows := make([]TraeAccountCredits, 0, len(list))
-	var totalSum, usedSum, availSum float64
+	var totalSum, usedSum, availSum, availCNSum, availIntlSum float64
 	for i := range list {
 		acc := &list[i]
-		if !IsTraePlatform(acc.Platform) {
+		if !IsTraePlatform(acc.Platform) || acc.Status != StatusActive {
 			continue
 		}
 		row := TraeAccountCredits{AccountID: acc.ID, Account: acc.Name, Platform: acc.Platform}
@@ -114,6 +120,12 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 			totalSum += row.Total
 			usedSum += row.Used
 			availSum += row.Available
+			// 按站点分别累加余额，卡片副标题要分开显示国内版 / 国际版。
+			if acc.Platform == PlatformTraeCN {
+				availCNSum += row.Available
+			} else {
+				availIntlSum += row.Available
+			}
 		}
 		rows = append(rows, row)
 	}
@@ -132,12 +144,14 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 
 	now := time.Now()
 	s.snapshot = &TraeCreditSnapshot{
-		Accounts:     rows,
-		SyncedAt:     &now,
-		TotalCredits: totalSum,
-		UsedCredits:  usedSum,
-		Available:    availSum,
-		TodayUsed:    todayUsed,
+		Accounts:      rows,
+		SyncedAt:      &now,
+		TotalCredits:  totalSum,
+		UsedCredits:   usedSum,
+		Available:     availSum,
+		AvailableCN:   availCNSum,
+		AvailableIntl: availIntlSum,
+		TodayUsed:     todayUsed,
 	}
 	cp := *s.snapshot
 	s.mu.Unlock()

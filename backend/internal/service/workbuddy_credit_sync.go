@@ -24,7 +24,10 @@ import (
 
 // WorkBuddyAccountSnapshot 是单个账号的云端积分快照。
 type WorkBuddyAccountSnapshot struct {
-	AccountID   int64  `json:"account_id"`
+	AccountID int64 `json:"account_id"`
+	// Platform 是该账号所属站点（国内版 / 国际版）。汇总时两个站点的余额
+	// 要分开统计再相加，不能只靠平台常量判断。
+	Platform    string `json:"platform"`
 	AccountName string `json:"account_name"`
 	// CheckinCredits 是签到活动累计积分（上游 total_credits）。
 	CheckinCredits float64 `json:"checkin_credits"`
@@ -59,8 +62,11 @@ type WorkBuddyCreditSnapshot struct {
 	SyncedAt time.Time                  `json:"synced_at"`
 	// CheckinCredits 是全部账号的签到累计积分之和。
 	CheckinCredits float64 `json:"checkin_credits"`
-	// TotalCredits 是全部账号当前可用积分之和。
+	// TotalCredits 是全部账号当前可用积分之和（= 国内版 + 国际版）。
 	TotalCredits float64 `json:"total_credits"`
+	// TotalCreditsCN / TotalCreditsIntl 是按站点拆开的余额，便于核对总额。
+	TotalCreditsCN   float64 `json:"total_credits_cn"`
+	TotalCreditsIntl float64 `json:"total_credits_intl"`
 	// TaskClaimable 是可领奖任务总数（自动领取后仍剩余的）。
 	TaskClaimable int `json:"task_claimable"`
 	// TodayTaskCredits 是全部账号的任务积分之和（上游任务状态口径）。
@@ -284,6 +290,11 @@ func (s *WorkBuddyCreditSyncService) Sync(ctx context.Context) {
 	for _, a := range snap.Accounts {
 		snap.CheckinCredits += a.CheckinCredits
 		snap.TotalCredits += a.TotalCredits
+		if a.Platform == PlatformWorkBuddyIntl {
+			snap.TotalCreditsIntl += a.TotalCredits
+		} else {
+			snap.TotalCreditsCN += a.TotalCredits
+		}
 		snap.TaskClaimable += a.TaskClaimable
 		snap.AutoClaimedCredits += a.AutoClaimedCredits
 		snap.TodayTaskCredits += a.TodayTaskCredits
@@ -305,6 +316,7 @@ func (s *WorkBuddyCreditSyncService) Sync(ctx context.Context) {
 func (s *WorkBuddyCreditSyncService) syncAccount(ctx context.Context, acc *Account) WorkBuddyAccountSnapshot {
 	row := WorkBuddyAccountSnapshot{
 		AccountID:   acc.ID,
+		Platform:    acc.Platform,
 		AccountName: acc.Name,
 		UpdatedAt:   time.Now(),
 	}

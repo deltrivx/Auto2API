@@ -224,27 +224,35 @@ func (h *MarvisOAuthHandler) Wallet(c *gin.Context) {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	// 返回与 WorkBuddy 积分卡片同形状的结构，前端同一个组件直接渲染。
+	// 上游按 token 计量，对外统一换算成积分（1 积分 = 1000 token）。
+	// 换算放在接口层做一次，前端所有展示位都不再关心 token。
+	totalPts := service.TokensToCredits(wallet.TotalTokens)
+	usedPts := service.TokensToCredits(wallet.UsedTokens)
+	availPts := service.TokensToCredits(wallet.AvailTokens)
+	frozenPts := service.TokensToCredits(wallet.FrozenTokens)
+
 	response.Success(c, gin.H{
 		"account_id":             account.ID,
 		"account":                account.Name,
 		"platform":               account.Platform,
-		"total":                  wallet.TotalTokens,
-		"used":                   wallet.UsedTokens,
-		"available":              wallet.AvailTokens,
-		"frozen":                 wallet.FrozenTokens,
+		"total":                  totalPts,
+		"used":                   usedPts,
+		"available":              availPts,
+		"frozen":                 frozenPts,
 		"used_percent":           wallet.UsedPercent(),
 		"package_name":           "Marvis 令牌",
 		"is_paid_user":           false,
 		"credits_info_available": true,
+		"credits_per_token":      1.0 / float64(service.MarvisTokensPerCredit),
 		"groups": []gin.H{
 			{
 				"name":      "令牌用量",
-				"total":     wallet.TotalTokens,
-				"used":      wallet.UsedTokens,
-				"remaining": wallet.AvailTokens,
+				"total":     totalPts,
+				"used":      usedPts,
+				"remaining": availPts,
 			},
 		},
+		// 原始 token 值一并带上，便于排查；前端不展示。
 		"wallet": wallet,
 	})
 }

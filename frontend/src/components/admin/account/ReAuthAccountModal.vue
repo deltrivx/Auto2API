@@ -302,20 +302,6 @@ function handleWorkBuddyConfirm() {
   reauthReady.value = true
 }
 
-  reauthSaving.value = true
-  try {
-    const updated = await adminAPI.accounts.update(props.account.id, { credentials: creds })
-    appStore.showSuccess(t('admin.accounts.oauth.authorized'))
-    emit('reauthorized', updated as unknown as Account)
-    handleClose()
-  } catch (e: any) {
-    appStore.showError(e?.message || 'Save failed')
-  } finally {
-    reauthSaving.value = false
-  }
-}
-
-
 // handleMarvisConfirm 只标记就绪：保存交给底部「重新授权」按钮。
 function handleMarvisConfirm() {
   const signed = marvisOAuth.result.value

@@ -50,6 +50,13 @@ type workBuddyFingerprintProfile struct {
 	Disk     int
 	Screen   string
 	CPUModel string
+	// 指纹扩维：主机名 / 时区 / 语言区域 / 字体集 / WebGL（仅展示与唯一性）。
+	Hostname      string
+	Timezone      string
+	Locale        string
+	Fonts         []string
+	WebGLVendor   string
+	WebGLRenderer string
 }
 
 // workBuddyFingerprintPool 是可分配的硬件画像池。

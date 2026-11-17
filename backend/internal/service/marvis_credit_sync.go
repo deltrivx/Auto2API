@@ -166,6 +166,7 @@ func (s *MarvisCreditSyncService) Sync(ctx context.Context) *MarvisCreditSnapsho
 	// 卡片要等下一次刷新才有数，属于无谓的口径损耗。
 	todayUsed := usedSum
 
+	s.mu.Lock()
 	s.snapshot = &MarvisCreditSnapshot{
 		Accounts:         rows,
 		SyncedAt:         time.Now(),

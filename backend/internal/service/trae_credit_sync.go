@@ -136,6 +136,7 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 	// 已用量。之前用跨次差值，进程重启后第一次必然是 0。
 	todayUsed := usedSum
 
+	s.mu.Lock()
 	now := time.Now()
 	s.snapshot = &TraeCreditSnapshot{
 		Accounts:      rows,

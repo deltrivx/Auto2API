@@ -639,6 +639,12 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 	if err != nil {
 		return nil, err
 	}
+	// Marvis 重新授权会带来新的 guid（上游在这次登录时分配的设备标识），
+	// 而凭据里的硬件指纹是按旧 guid 派生的。不同步会让 MarvisExt 里的
+	// 设备标识与 guid 对不上，上游按风控拦（4100404）。
+	if IsMarvisPlatform(account.Platform) && input.Credentials != nil {
+		input.Credentials = ensureMarvisFingerprintCredentials(input.Credentials)
+	}
 	var normalizedExtra map[string]any
 	if input.Extra != nil {
 		normalizedExtra, err = normalizeOpenAILongContextBillingUpdateExtra(account, input)

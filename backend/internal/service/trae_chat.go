@@ -50,8 +50,8 @@ func buildTraeChatPayload(account *Account, body []byte, model, function string)
 		"config_name": model,
 		"model":       model,
 		"function":    function,
-		"request_id":  traeSessionID(account, body+"|"+fmt.Sprintf("%d", time.Now().UnixNano())),
-		"session_id":  traeSessionID(account, body),
+		"request_id":  traeSessionID(account, string(body)+"|"+fmt.Sprintf("%d", time.Now().UnixNano())),
+		"session_id":  traeSessionID(account, string(body)),
 	}
 	if effort := strings.TrimSpace(gjson.GetBytes(body, "reasoning_effort").String()); effort != "" {
 		payload["reasoning_effort"] = traeReasoningEffort(effort)

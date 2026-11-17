@@ -470,49 +470,20 @@ func (h *WorkBuddyTaskHandler) AccountCreditTrend(c *gin.Context) {
 // 剩余/总量与使用进度——上游按批次发放，同一类型的包可能有几十个且到期
 // 日各不相同，只看汇总会丢失「哪部分快过期」这类关键信息。
 func (h *WorkBuddyTaskHandler) AccountCreditsDetail(c *gin.Context) {
+	// Trae 的额度与 WorkBuddy 无关，必须在 workBuddyAccount 的平台校验之前分流。
+	if id, err := strconv.ParseInt(c.Param("id"), 10, 64); err == nil {
+		if traeAccount, aerr := h.adminService.GetAccount(c.Request.Context(), id); aerr == nil &&
+			service.IsTraePlatform(traeAccount.Platform) {
+			h.traeCreditsDetail(c, traeAccount)
+			return
+		}
+	}
+
 	account, ok := h.workBuddyAccount(c)
 	if !ok {
 		return
 	}
 	ctx := c.Request.Context()
-
-	// Trae：额度来自上游（国内站积分 / 国际站美元，展示按 1 美元 = 1 积分折算），
-	// 与 WorkBuddy 共用同一张明细卡片。
-	if service.IsTraePlatform(account.Platform) {
-		credits, err := service.TraeCreditsSnapshot(ctx, account)
-		if err != nil {
-			response.Success(c, gin.H{
-				"account_id": account.ID,
-				"account":    account.Name,
-				"platform":   account.Platform,
-				"packages":   []any{},
-				"groups":     []any{},
-				"total":      0,
-				"error":      err.Error(),
-			})
-			return
-		}
-		remaining := credits.Limit - credits.Used
-		if remaining < 0 {
-			remaining = 0
-		}
-		response.Success(c, gin.H{
-			"account_id":   account.ID,
-			"account":      account.Name,
-			"platform":     account.Platform,
-			"total":        remaining,
-			"package_name": credits.Plan,
-			"unlimited":    credits.Unlimited,
-			"groups": []gin.H{{
-				"kind":  "credits",
-				"name":  "积分",
-				"used":  credits.Used,
-				"total": credits.Limit,
-			}},
-			"packages": []any{},
-		})
-		return
-	}
 
 	pkgs, pkgErr := service.WorkBuddyCreditPackagesOf(ctx, account)
 	credits, credErr := service.WorkBuddyCreditsOf(ctx, account)
@@ -541,6 +512,44 @@ func (h *WorkBuddyTaskHandler) AccountCreditsDetail(c *gin.Context) {
 	}
 	resp["package_remain_sum"] = sumRemain
 	response.Success(c, resp)
+}
+
+// traeCreditsDetail 返回 Trae 账号的额度明细（与 WorkBuddy 同一张卡片）。
+//
+// 国内站原生积分、国际站原生美元，展示统一按 1 美元 = 1 积分折算。
+func (h *WorkBuddyTaskHandler) traeCreditsDetail(c *gin.Context, account *service.Account) {
+	credits, err := service.TraeCreditsSnapshot(c.Request.Context(), account)
+	if err != nil {
+		response.Success(c, gin.H{
+			"account_id": account.ID,
+			"account":    account.Name,
+			"platform":   account.Platform,
+			"packages":   []any{},
+			"groups":     []any{},
+			"total":      0,
+			"error":      err.Error(),
+		})
+		return
+	}
+	remaining := credits.Limit - credits.Used
+	if remaining < 0 {
+		remaining = 0
+	}
+	response.Success(c, gin.H{
+		"account_id":   account.ID,
+		"account":      account.Name,
+		"platform":     account.Platform,
+		"total":        remaining,
+		"package_name": credits.Plan,
+		"unlimited":    credits.Unlimited,
+		"groups": []gin.H{{
+			"kind":  "credits",
+			"name":  "积分",
+			"used":  credits.Used,
+			"total": credits.Limit,
+		}},
+		"packages": []any{},
+	})
 }
 
 // MarvisCreditSnapshot 返回 Marvis 积分快照。

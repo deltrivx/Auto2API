@@ -25,19 +25,21 @@ import (
 )
 
 type Application struct {
-	Server        *http.Server
-	PromptAudit   *securityaudit.PromptService
-	Cleanup       func()
+	Server      *http.Server
+	PromptAudit *securityaudit.PromptService
+	Cleanup     func()
 	// TaskScheduler 负责 WorkBuddy 积分任务的定时签到与领奖。
 	TaskScheduler *service.WorkBuddyTaskScheduler
 	// CreditSync 定时把上游积分同步到快照。
-	CreditSync    *service.WorkBuddyCreditSyncService
+	CreditSync *service.WorkBuddyCreditSyncService
 	// MarvisWalletSync 定时刷新腾讯 Marvis 的令牌额度。
 	MarvisWalletSync *service.MarvisWalletSyncService
 	// MarvisCreditSync 定时汇总 Marvis 各账号额度，供仪表盘读取。
 	// 与 MarvisWalletSync 的分工：WalletSync 把额度写进 account.extra，
 	// CreditSync 负责跨账号求和与快照；二者都需启动，否则看板只显示首次同步的结果。
 	MarvisCreditSync *service.MarvisCreditSyncService
+	// TraeCreditSync 定时汇总 Trae 各账号额度（国内站积分 / 国际站美元）。
+	TraeCreditSync *service.TraeCreditSyncService
 }
 
 func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {

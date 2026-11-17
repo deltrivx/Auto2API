@@ -441,6 +441,7 @@ func registerWorkBuddyOAuthRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		workbuddy.GET("/tasks/trend", h.Admin.WorkBuddyTask.CreditTrend)
 		workbuddy.GET("/credits/snapshot", h.Admin.WorkBuddyTask.CreditSnapshot)
 		workbuddy.GET("/credits/marvis", h.Admin.WorkBuddyTask.MarvisCreditSnapshot)
+		workbuddy.GET("/credits/trae", h.Admin.WorkBuddyTask.TraeCreditSnapshot)
 		workbuddy.GET("/tasks/:code/detail", h.Admin.WorkBuddyTask.TaskDetail)
 		workbuddy.POST("/tasks/:code/run", h.Admin.WorkBuddyTask.RunTaskAll)
 		workbuddy.POST("/tasks/execute", h.Admin.WorkBuddyTask.ExecuteTasks)

@@ -213,8 +213,10 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	traeOAuthHandler := admin.NewTraeOAuthHandler(traeOAuthService, adminService)
 	workBuddyCreditSyncService := service.NewWorkBuddyCreditSyncService(adminService, redisClient)
 	marvisCreditSyncService := service.NewMarvisCreditSyncService(adminService, 5*time.Minute)
+	traeCreditSyncService := service.NewTraeCreditSyncService(adminService)
 	marvisWalletSyncService := service.NewMarvisWalletSyncService(adminService)
 	workBuddyTaskHandler := admin.NewWorkBuddyTaskHandler(adminService, workBuddyCreditSyncService)
+	workBuddyTaskHandler.WithTraeCreditSync(traeCreditSyncService)
 	proxyHandler := admin.NewProxyHandler(adminService)
 	adminRedeemHandler := admin.NewRedeemHandler(adminService, redeemService)
 	promoHandler := admin.NewPromoHandler(promoService)
@@ -335,6 +337,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 		Cleanup:              v,
 		MarvisWalletSync:     marvisWalletSyncService,
 		MarvisCreditSync:     marvisCreditSyncService,
+		TraeCreditSync:       traeCreditSyncService,
 		ChannelMonitorRunner: channelMonitorRunner,
 	}
 	return application, nil

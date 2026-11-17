@@ -20,6 +20,8 @@ type WorkBuddyTaskHandler struct {
 	creditSync *service.WorkBuddyCreditSyncService
 	// marvisCreditSync 提供 Marvis 积分快照（与 WorkBuddy 同构）。
 	marvisCreditSync *service.MarvisCreditSyncService
+	// traeCreditSync 提供 Trae 积分快照（国内站积分 / 国际站美元折算）。
+	traeCreditSync *service.TraeCreditSyncService
 }
 
 // NewWorkBuddyTaskHandler 构造积分任务 handler。
@@ -576,6 +578,37 @@ func (h *WorkBuddyTaskHandler) MarvisCreditSnapshot(c *gin.Context) {
 		return
 	}
 	response.Success(c, h.marvisCreditSync.Snapshot())
+}
+
+// TraeCreditSnapshot 返回 Trae 积分快照。
+//
+// GET /admin/workbuddy/credits/trae?sync=1
+//
+// 与 WorkBuddy / Marvis 快照同一形状，前端用同一套卡片渲染。带 sync=1 时
+// 现拉一次上游，保证打开页面看到的不是周期缓存里的旧值。
+func (h *WorkBuddyTaskHandler) TraeCreditSnapshot(c *gin.Context) {
+	if h.traeCreditSync == nil {
+		response.Success(c, gin.H{
+			"accounts":          []any{},
+			"synced_at":         nil,
+			"total_credits":     0,
+			"used_credits":      0,
+			"available_credits": 0,
+			"today_used":        0,
+		})
+		return
+	}
+	if c.Query("sync") == "1" {
+		response.Success(c, h.traeCreditSync.Sync(c.Request.Context()))
+		return
+	}
+	response.Success(c, h.traeCreditSync.Snapshot())
+}
+
+// WithTraeCreditSync 注入 Trae 积分快照服务。
+func (h *WorkBuddyTaskHandler) WithTraeCreditSync(sync *service.TraeCreditSyncService) *WorkBuddyTaskHandler {
+	h.traeCreditSync = sync
+	return h
 }
 
 // WithMarvisCreditSync 注入 Marvis 积分快照服务。

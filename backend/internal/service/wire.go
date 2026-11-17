@@ -734,6 +734,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(TokenCacheInvalidator), new(*CompositeTokenCacheInvalidator)),
 	NewWorkBuddyOAuthService,
 	NewTraeOAuthService,
+	NewTraeCreditSyncService,
 	NewWorkBuddyTaskScheduler,
 	NewWorkBuddyCreditSyncService,
 	ProvideOAuthRefreshAPI,

@@ -182,6 +182,12 @@ func runMainServer() {
 		defer cancelMarvisCredit()
 		app.MarvisCreditSync.Start(marvisCreditCtx)
 	}
+	// Trae 汇总快照：与 Marvis 同一套机制，不启动则看板停在首次同步的值。
+	if app.TraeCreditSync != nil {
+		traeCreditCtx, cancelTraeCredit := context.WithCancel(context.Background())
+		defer cancelTraeCredit()
+		app.TraeCreditSync.Start(traeCreditCtx)
+	}
 	// 渠道监控的定时打点。
 	//
 	// 这里此前没有启动：监控记录建好了、界面上也有开关，但 runner 从未跑起来，

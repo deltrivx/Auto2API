@@ -557,6 +557,33 @@ export interface MarvisCreditSnapshot {
   today_used: number
 }
 
+/** Trae 积分快照（国内站积分 / 国际站美元按 1:1 折算成积分）。 */
+export interface TraeCreditSnapshot {
+  accounts: Array<{
+    account_id: number
+    account: string
+    platform: string
+    total: number
+    used: number
+    available: number
+    unlimited?: boolean
+    error?: string
+  }>
+  synced_at: string | null
+  total_credits: number
+  used_credits: number
+  available_credits: number
+  today_used: number
+}
+
+/** 读取 Trae 积分快照；sync=true 时现拉一次上游额度。 */
+export async function getTraeCreditSnapshot(sync = false): Promise<TraeCreditSnapshot> {
+  const { data } = await apiClient.get<TraeCreditSnapshot>(wbPath('/credits/trae'), {
+    params: sync ? { sync: 1 } : undefined
+  })
+  return data
+}
+
 /** 读取 Marvis 积分快照；sync=true 时现拉一次上游钱包。 */
 export async function getMarvisCreditSnapshot(sync = false): Promise<MarvisCreditSnapshot> {
   const { data } = await apiClient.get<MarvisCreditSnapshot>(wbPath('/credits/marvis'), {

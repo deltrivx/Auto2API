@@ -17,8 +17,7 @@
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ card.label }}</p>
           <!-- 未就绪时用骨架条而不是「—」：占位更直观，也不会闪一下破折号 -->
           <div v-if="!ready" class="my-1 h-5 w-20 animate-pulse rounded bg-gray-200 dark:bg-dark-600"></div>
-          <!-- 不用 truncate：数值被截成省略号比换行更难读。
-               万/亿分级已把最长宽度压到 11 字符左右，配合小屏字号收缩即可完整显示。 -->
+          <!-- 不用 truncate：数值被截成省略号比换行更难读。 -->
           <p v-else class="whitespace-nowrap text-base font-bold leading-tight sm:text-xl" :class="card.color">
             {{ card.value }}
           </p>
@@ -39,52 +38,56 @@ import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import {
   getWorkBuddyCreditSnapshot,
   getMarvisCreditSnapshot,
+  getTraeCreditSnapshot,
   type WorkBuddyCreditSnapshot,
-  type MarvisCreditSnapshot
+  type MarvisCreditSnapshot,
+  type TraeCreditSnapshot
 } from '@/api/admin/workbuddy'
 
 // 积分体系四卡：
 //
 //   1 WorkBuddy 今日积分  今日签到 + 今日任务
-//   2 WorkBuddy 总积分    全部 WorkBuddy 账号当前可用积分之和
-//   3 Marvis 积分         Marvis 总额度（副标题给今日消耗）
-//   4 平台总积分          WorkBuddy 总积分 + Marvis 可用积分
+//   2 WorkBuddy 总积分    副标题给「今日数据：总量 - 今日消费」
+//   3 Marvis 总积分       K 结尾，副标题给今日消费
+//   4 Trae 总积分         副标题给今日消费
 //
 // 数据全部来自上游快照，不读本地台账——账号可能在客户端或别处签到/做任务，
-// 只有上游数据是准确的。管理端与用户端共用这一个组件，保证两处口径一致。
+// 只有上游数据是准确的。三个平台都按「每次刷新现拉上游」取数，上游每日凌晨
+// 自行重置额度，因此不需要任何本地重置逻辑。
+//
+// 管理端与用户端共用这一个组件，保证两处口径一致。
 
 const { t } = useI18n()
 const snap = ref<WorkBuddyCreditSnapshot | null>(null)
 const marvis = ref<MarvisCreditSnapshot | null>(null)
+const trae = ref<TraeCreditSnapshot | null>(null)
 
-// 数字格式化：千分位 + 两位小数。
+/** 千分位 + 两位小数。 */
 function fmt(v: number): string {
-  return v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  return (Number.isFinite(v) ? v : 0).toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
-// 第 3、4 张卡是 Marvis 与合计，量级可达千万，用 K 压缩显示。
-// 小数位保持两位：1,234,567 → 1,234.57K，量级与精度兼顾。
-// 前两张卡直接走 fmt()，避免长数字撑破窄卡。
-function fmtCardK(v: number): string {
-  return `${fmt(v / 1_000)}K`
+/** 宽卡量级大，用 K 压缩并保留两位小数：1,234,567 → 1,234.57K。 */
+function fmtK(v: number): string {
+  return `${fmt((Number.isFinite(v) ? v : 0) / 1_000)}K`
 }
 
-// 两个快照都到齐才算就绪：只到一半会让第 4 张卡短暂显示偏小的合计数。
-const ready = computed(() => {
-  const wb = snap.value
-  const mv = marvis.value
-  if (!wb || wb.accounts.length === 0) return false
-  // Marvis 没有账号时也算就绪（总量为 0），否则只接 WorkBuddy 的部署会
-  // 永远停在骨架态。
-  return mv !== null
-})
+/** 积分单位文案（全平台统一「积分」）。 */
+const unit = computed(() => t('admin.accounts.creditsUnit'))
+
+// 三个快照都到齐才算就绪：只到一部分会让合计与今日数据短暂偏小。
+// 某平台没有账号时后端返回空列表（仍是有效快照），不会被误判成未就绪。
+const ready = computed(() => snap.value !== null && marvis.value !== null && trae.value !== null)
 
 type Card = {
   key: string
   label: string
   value: string
   hint: string
-  platform?: 'workbuddy_cn' | 'marvis'
+  platform?: 'workbuddy_cn' | 'marvis' | 'trae_cn'
   icon?: 'chart' | 'trophy' | 'clock' | 'grid'
   color: string
   bg: string
@@ -93,6 +96,7 @@ type Card = {
 const cards = computed<Card[]>(() => {
   const wb = snap.value
   const mv = marvis.value
+  const tr = trae.value
 
   const todayCheckin = (wb?.accounts ?? []).reduce(
     (n, a) => n + (a.today_checked_in ? a.daily_credit : 0),
@@ -100,13 +104,20 @@ const cards = computed<Card[]>(() => {
   )
   const todayTask = wb?.today_task_credits ?? 0
   const wbTotal = wb?.total_credits ?? 0
+  const wbTodayCost = todayCheckin + todayTask
+
   const mvTotal = mv?.total_credits ?? 0
+  const mvTodayUsed = mv?.today_used ?? 0
+
+  // Trae：额度来自上游（国内站积分 / 国际站美元 1:1 折算成积分）。
+  const trTotal = tr?.total_credits ?? 0
+  const trTodayUsed = tr?.today_used ?? 0
 
   return [
     {
       key: 'wb-today',
       label: t('admin.accounts.creditsTodayWorkBuddy'),
-      value: fmt(todayCheckin + todayTask),
+      value: fmt(wbTodayCost),
       hint: `${t('admin.accounts.creditsCheckinShort')}${fmt(todayCheckin)} · ${t('admin.accounts.creditsTaskShort')}${fmt(todayTask)}`,
       icon: 'chart',
       color: 'text-primary-600 dark:text-primary-400',
@@ -116,60 +127,77 @@ const cards = computed<Card[]>(() => {
       key: 'wb-total',
       label: t('admin.accounts.creditsTotalWorkBuddy'),
       value: fmt(wbTotal),
-      hint: t('admin.accounts.creditsWorkBuddyAccountsHint'),
+      // 副标题按新口径：今日数据 = 总量 - 今日消费，并带单位。
+      hint: `${t('admin.accounts.cardTodayData')}: ${fmt(wbTotal - wbTodayCost)} ${unit.value} - ${fmt(wbTodayCost)} ${unit.value}`,
       icon: 'trophy',
       color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-50 dark:bg-emerald-900/20'
     },
     {
       key: 'marvis',
-      label: t('admin.accounts.creditsMarvis'),
-      value: fmtCardK(mvTotal),
-      hint: t('admin.accounts.creditsMarvisAvailableHint'),
-      icon: 'clock',
+      label: t('admin.accounts.creditsMarvisTotal'),
+      value: fmtK(mvTotal),
+      // 今日消耗按用户要求不用 K，保留两位小数并带单位。
+      hint: `${t('admin.accounts.cardTodayUsed')}: ${fmt(mvTodayUsed)} ${unit.value}`,
+      platform: 'marvis',
       color: 'text-cyan-600 dark:text-cyan-400',
       bg: 'bg-cyan-50 dark:bg-cyan-900/20'
     },
     {
-      key: 'all',
-      label: t('admin.accounts.creditsAllPlatforms'),
-      value: fmtCardK(wbTotal + mvTotal),
-      hint: t('admin.accounts.creditsAllPlatformsHint'),
-      icon: 'grid',
+      key: 'trae',
+      label: t('admin.accounts.creditsTraeTotal'),
+      value: fmtK(trTotal),
+      hint: `${t('admin.accounts.cardTodayUsed')}: ${fmt(trTodayUsed)} ${unit.value}`,
+      platform: 'trae_cn',
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-900/20'
     }
   ]
 })
 
-// load 读取两个平台的积分快照。
+/** 归一化快照：后端异常返回时兜底成空快照，避免卡片永远停在骨架。 */
+function normalizeWb(s: WorkBuddyCreditSnapshot | null): WorkBuddyCreditSnapshot | null {
+  if (!s) return null
+  return { ...s, accounts: s.accounts ?? [] }
+}
+
+// load 读取三个平台的积分快照。
 //
-// 首次无数据时带 sync=1 让后端同步跑一轮再返回，否则仪表盘会先显示
-// 骨架条，用户以为功能坏了。两个请求并发，不串行等。
+// 首次无数据时带 sync=1 让后端同步跑一轮再返回，否则仪表盘会先显示骨架条。
+// 三个请求并发，不串行等。失败时保留上一次的值，避免刷新时闪回骨架。
 async function load(forceSync = false) {
-  const [wb, mv] = await Promise.all([
+  const [wb, mv, tr] = await Promise.all([
     (async () => {
       try {
-        // 账号数为 0 说明还是空快照：强制同步一次，免得停在骨架条上。
         let s = await getWorkBuddyCreditSnapshot(forceSync)
-        if (s.accounts.length === 0 && !forceSync) s = await getWorkBuddyCreditSnapshot(true)
-        return s
+        if ((s.accounts?.length ?? 0) === 0 && !forceSync) s = await getWorkBuddyCreditSnapshot(true)
+        return normalizeWb(s)
       } catch {
-        return null
+        return snap.value
       }
     })(),
     (async () => {
       try {
         let s = await getMarvisCreditSnapshot(forceSync)
-        if (s.accounts.length === 0 && !forceSync) s = await getMarvisCreditSnapshot(true)
+        if ((s.accounts?.length ?? 0) === 0 && !forceSync) s = await getMarvisCreditSnapshot(true)
         return s
       } catch {
-        return null
+        return marvis.value
+      }
+    })(),
+    (async () => {
+      try {
+        let s = await getTraeCreditSnapshot(forceSync)
+        if ((s.accounts?.length ?? 0) === 0 && !forceSync) s = await getTraeCreditSnapshot(true)
+        return s
+      } catch {
+        return trae.value
       }
     })()
   ])
-  snap.value = wb
-  marvis.value = mv
+  if (wb) snap.value = wb
+  if (mv) marvis.value = mv
+  if (tr) trae.value = tr
 }
 
 // 定时刷新：与频道状态页、账号列表用同一套 useAutoRefresh，
@@ -179,7 +207,8 @@ const autoRefresh = useAutoRefresh({
   intervals: [30, 60, 300] as const,
   defaultInterval: 60,
   defaultEnabled: true,
-  onRefresh: () => load(),
+  // 定时刷新走 sync=1：积分来自上游，缓存值会让人误以为没在刷新。
+  onRefresh: () => load(true),
   shouldPause: () => document.hidden
 })
 
@@ -189,6 +218,6 @@ onMounted(() => {
   if (autoRefresh.enabled.value) autoRefresh.start()
 })
 
-// 供「刷新」按钮调用：带上 sync=1，让后端立刻同步一轮再返回。
+// 供「刷新」按钮与其它组件调用。
 defineExpose({ refresh: () => load(true) })
 </script>

@@ -6,6 +6,7 @@ export default {
     apiKeys: 'API Keys',
     todayRequests: 'Today Requests',
     todayCost: 'Today Cost',
+    allPlatformCredits: 'All platforms credits',
     todayTokens: 'Today Tokens',
     totalTokens: 'Total Tokens',
     cacheToday: 'Cache (Today)',

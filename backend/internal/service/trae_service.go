@@ -291,9 +291,6 @@ func (s *adminServiceImpl) traeDefaultModelMapping(ctx context.Context, input *C
 	}
 	out := make(map[string]string, len(models))
 	for _, m := range models {
-		if !traeIsChatModel(m.ID) {
-			continue
-		}
 		out[m.ID] = m.ID
 	}
 	return out
@@ -314,11 +311,6 @@ func TraeAccountModels(ctx context.Context, account *Account) []map[string]any {
 	}
 	out := make([]map[string]any, 0, len(models))
 	for _, m := range models {
-		// 目录里混着 IDE 内部条目（custom_model_* / search_agent_* / summary …），
-		// 它们没有对话服务，列出来必然报 11102 或 404。
-		if !traeIsChatModel(m.ID) {
-			continue
-		}
 		out = append(out, map[string]any{
 			"id":           m.ID,
 			"object":       "model",

@@ -505,6 +505,8 @@ export async function getWorkBuddyTaskTrend(days = 7): Promise<WorkBuddyTaskTren
 /** 单账号云端积分快照。 */
 export interface WorkBuddyAccountSnapshot {
   account_id: number
+  /** 账号所属站点：workbuddy_cn / workbuddy_intl。 */
+  platform?: string
   account_name: string
   checkin_credits: number
   streak_days: number
@@ -524,6 +526,9 @@ export interface WorkBuddyCreditSnapshot {
   synced_at: string
   checkin_credits: number
   total_credits: number
+  /** 按站点拆分的余额：国内版 / 国际版（两者之和等于 total_credits）。 */
+  total_credits_cn?: number
+  total_credits_intl?: number
   task_claimable: number
   today_task_credits: number
   auto_claimed_credits: number

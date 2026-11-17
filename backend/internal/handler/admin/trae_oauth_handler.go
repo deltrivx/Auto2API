@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"math"
 	"strconv"
 	"strings"
 
@@ -94,7 +95,13 @@ func (h *TraeOAuthHandler) Models(c *gin.Context) {
 	response.Success(c, models)
 }
 
-// Credits 返回账号额度（原生单位）。
+// Credits 返回账号额度（已折算成积分）。
+//
+// 展示口径全平台统一为积分：国际站上游按美元计费，这里用 TraeCreditsAsPoints
+// 折算（1 美元 = 100 积分）后再返回。原生值与 native_unit 一并带上，便于排查。
+//
+// 注意：不能把原生值直接吐给前端 —— 账号列表的积分格就是这么被当成积分显示的，
+// 结果国际站账号看起来像「1 美元 = 1 积分」。
 func (h *TraeOAuthHandler) Credits(c *gin.Context) {
 	account, ok := h.accountOf(c)
 	if !ok {
@@ -105,7 +112,20 @@ func (h *TraeOAuthHandler) Credits(c *gin.Context) {
 		response.Error(c, 502, err.Error())
 		return
 	}
-	response.Success(c, credits)
+	limitPts, usedPts := service.TraeCreditsAsPoints(credits)
+	response.Success(c, gin.H{
+		"platform":       credits.Platform,
+		"native_unit":    credits.NativeUnit,
+		"native_limit":   credits.Limit,
+		"native_used":    credits.Used,
+		"limit":          limitPts,
+		"used":           usedPts,
+		"available":      math.Max(0, limitPts-usedPts),
+		"unlimited":      credits.Unlimited,
+		"plan":           credits.Plan,
+		"credit_per_usd": service.TraeCreditsPerUSD(),
+		"updated_at":     credits.UpdatedAt,
+	})
 }
 
 // Device 返回账号当前设备指纹（不含私钥）。

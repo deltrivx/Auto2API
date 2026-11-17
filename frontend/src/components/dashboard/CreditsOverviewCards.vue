@@ -109,7 +109,8 @@ const cards = computed<Card[]>(() => {
   const mvTotal = mv?.total_credits ?? 0
   const mvTodayUsed = mv?.today_used ?? 0
 
-  // Trae：额度来自上游（国内站积分 / 国际站美元 1:1 折算成积分）。
+  // Trae：额度来自上游（国内站积分 / 国际站美元），后端已折算成积分
+  // （1 美元 = 100 积分），这里直接用。
   const trTotal = tr?.total_credits ?? 0
   const trTodayUsed = tr?.today_used ?? 0
 

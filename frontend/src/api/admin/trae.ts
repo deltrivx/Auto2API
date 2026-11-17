@@ -38,9 +38,17 @@ export interface TraeModel {
 
 export interface TraeCredits {
   platform: TraePlatform
+  /** 上游原生单位：国内站 credits、国际站 usd。 */
   native_unit: 'credits' | 'usd'
+  /** limit/used/available 已按展示口径折算成积分（后端换算，前端不要再乘）。 */
   limit: number
   used: number
+  available: number
+  /** 原生值，仅用于排查，不要直接展示。 */
+  native_limit?: number
+  native_used?: number
+  /** 展示折算率：1 美元 = 多少积分。 */
+  credit_per_usd?: number
   unlimited: boolean
   plan?: string
   updated_at?: string

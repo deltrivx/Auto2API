@@ -102,8 +102,11 @@ function formatValue(v: number | undefined): string {
 async function load() {
   loading.value = true
   error.value = ''
-  // Trae：额度来自上游（国内站积分 / 国际站美元），展示口径统一为积分
-  // （1 美元 = 1 积分，仅换算，不改上游计费）。
+  // Trae：额度来自上游（国内站积分 / 国际站美元）。
+  // 折算成积分这一步必须由后端完成（TraeCreditsAsPoints，1 美元 = 100 积分），
+  // 前端拿到的 limit/used/available 已经是积分。
+  // 早先这里直接用原生 limit - used 当积分显示，国际站账号就变成了
+  // 「1 美元 = 1 积分」，与明细弹窗口径对不上。
   if (props.platform === 'trae_cn' || props.platform === 'trae_intl') {
     try {
       const c = await fetchTraeCredits(props.accountId)
@@ -111,7 +114,7 @@ async function load() {
       credits.value = {
         account_id: props.accountId,
         platform: props.platform,
-        total: c.unlimited ? 0 : Math.max(0, (c.limit ?? 0) - (c.used ?? 0)),
+        total: c.unlimited ? 0 : Math.max(0, c.available ?? (c.limit ?? 0) - (c.used ?? 0)),
         groups: [],
         package_name: c.plan || '',
         credits_info_available: true

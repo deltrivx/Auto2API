@@ -557,7 +557,7 @@ export interface MarvisCreditSnapshot {
   today_used: number
 }
 
-/** Trae 积分快照（国内站积分 / 国际站美元按 1:1 折算成积分）。 */
+/** Trae 积分快照（国内站积分 / 国际站美元按 1:100 折算成积分）。 */
 export interface TraeCreditSnapshot {
   accounts: Array<{
     account_id: number

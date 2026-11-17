@@ -258,7 +258,8 @@ func traeReasoningLevels(config map[string]any) []string {
 // TraeCredits 是一个账号的额度快照。
 //
 // NativeUnit 是上游的原生单位（国内站 credits、国际站 usd）；Limit/Used 是原生
-// 数值。展示时统一折算成积分（1 美元 = 1 积分），原始数值一并保留。
+// 数值。展示时统一折算成积分（1 美元 = 100 积分，见 TraeCreditsAsPoints），
+// 原始数值一并保留。
 type TraeCredits struct {
 	Platform   string  `json:"platform"`
 	NativeUnit string  `json:"native_unit"`
@@ -368,6 +369,9 @@ func traeSumDollars(raw []byte) (float64, float64, bool) {
 // 产品口径：Auto2API 内所有平台都按积分显示。国际站原生按美元计费，
 // 展示时 1 美元 = 100 积分（仅换算，不改上游计费）。国内站本身就是积分，不折算。
 const traeUSDToCredits = 100
+
+// TraeCreditsPerUSD 暴露展示折算率给接口层，避免前端/文档再写死一份。
+func TraeCreditsPerUSD() float64 { return traeUSDToCredits }
 
 // TraeCreditsAsPoints 把额度按展示口径折算成积分。
 func TraeCreditsAsPoints(c *TraeCredits) (limit, used float64) {

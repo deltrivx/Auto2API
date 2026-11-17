@@ -34,45 +34,45 @@ type creditTier struct {
 // creditTiers 是全局档位表，顺序即优先级。
 var creditTiers = []creditTier{
 	{
-		name:        "旗舰",
-		prefixes:    []string{"glm-5.3", "glm-5.2", "glm-5"},
-		inputPer1M:  687,
-		outputPer1M: 642,
+		name:         "旗舰",
+		prefixes:     []string{"glm-5.3", "glm-5.2", "glm-5"},
+		inputPer1M:   687,
+		outputPer1M:  642,
 		contextLimit: 200_000,
 	},
 	{
-		name:        "高级",
-		prefixes:    []string{"deepseek-v4-pro", "deepseek-v4.1-pro", "doubao-seed-2.1-pro", "kimi-k3.1-pro", "kimi-k3"},
-		inputPer1M:  507,
-		outputPer1M: 494,
+		name:         "高级",
+		prefixes:     []string{"deepseek-v4-pro", "deepseek-v4.1-pro", "doubao-seed-2.1-pro", "kimi-k3.1-pro", "kimi-k3"},
+		inputPer1M:   507,
+		outputPer1M:  494,
 		contextLimit: 200_000,
 	},
 	{
-		name:        "标准",
-		prefixes:    []string{"kimi-k2.5", "kimi-k2.8", "doubao-seed-2.1-turbo", "minimax-m3", "qwen4-max", "qwen3.8-max"},
-		inputPer1M:  129,
-		outputPer1M: 130,
+		name:         "标准",
+		prefixes:     []string{"kimi-k2.5", "kimi-k2.8", "doubao-seed-2.1-turbo", "minimax-m3", "qwen4-max", "qwen3.8-max"},
+		inputPer1M:   129,
+		outputPer1M:  130,
 		contextLimit: 200_000,
 	},
 	{
-		name:        "高速",
-		prefixes:    []string{"deepseek-v4.1-flash", "deepseek-v4-flash", "mimo-v2.6-flash", "glm-5.3-flash", "doubao-seed-code", "qwen3.8-flash", "minimax-m3.1-flash", "dola-seed"},
-		inputPer1M:  112,
-		outputPer1M: 90,
+		name:         "高速",
+		prefixes:     []string{"deepseek-v4.1-flash", "deepseek-v4-flash", "mimo-v2.6-flash", "glm-5.3-flash", "doubao-seed-code", "qwen3.8-flash", "minimax-m3.1-flash", "dola-seed"},
+		inputPer1M:   112,
+		outputPer1M:  90,
 		contextLimit: 200_000,
 	},
 	{
-		name:        "轻量",
-		prefixes:    []string{"hy3", "hy4", "step-", "doubao", "qwen", "minimax", "kimi-k2"},
-		inputPer1M:  100,
-		outputPer1M: 97,
+		name:         "轻量",
+		prefixes:     []string{"hy3", "hy4", "step-", "doubao", "qwen", "minimax", "kimi-k2"},
+		inputPer1M:   100,
+		outputPer1M:  97,
 		contextLimit: 128_000,
 	},
 	{
-		name:        "迷你",
-		prefixes:    []string{"wb-lite", "lite", "mini", "nano"},
-		inputPer1M:  29,
-		outputPer1M: 29,
+		name:         "迷你",
+		prefixes:     []string{"wb-lite", "lite", "mini", "nano"},
+		inputPer1M:   29,
+		outputPer1M:  29,
 		contextLimit: 128_000,
 	},
 }
@@ -108,4 +108,16 @@ func creditTierCost(model string, tokens UsageTokens) float64 {
 		float64(cached)/perM*inPer1M*0.1 +
 		float64(tokens.OutputTokens)/perM*outPer1M
 	return cost
+}
+
+// isTraeOrMarvisPlatformName 判断平台常量是否属于 Trae / Marvis。
+//
+// 模型广场的 lookupOfficialPricing 只拿得到平台字符串，这里单独提供一个
+// 不依赖 *Account 的判断，避免为了一个布尔值构造账号对象。
+func isTraeOrMarvisPlatformName(platform string) bool {
+	switch platform {
+	case PlatformTraeCN, PlatformTraeIntl, PlatformMarvis:
+		return true
+	}
+	return false
 }

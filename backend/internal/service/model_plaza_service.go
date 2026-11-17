@@ -231,7 +231,7 @@ func (s *ModelPlazaService) ListGroups(ctx context.Context) ([]PlazaGroup, error
 		g := groupEnt[gid]
 		for j := range pg.Models {
 			s.fillDisplayPricing(ctx, &pg.Models[j], g)
-			pg.Models[j].OfficialPricing = s.lookupOfficialPricing(ctx, pg.Models[j].Name, officialMemo)
+			pg.Models[j].OfficialPricing = s.lookupOfficialPricing(ctx, pg.Models[j].Name, pg.Models[j].Platform, officialMemo)
 		}
 		out = append(out, *pg)
 	}
@@ -367,11 +367,12 @@ func plazaImageDisplayPricing(p *ChannelModelPricing, g *Group) *ChannelModelPri
 // lookupOfficialPricing 查询模型的官方参考价（与计费同源：LiteLLM → 内置兜底 → 模型策略），
 // 带 memo 避免同名模型重复解析。官方阶梯按无分组、无渠道的口径查阶梯表。
 // billingService 为 nil（测试场景）或查不到时返回 nil。
-func (s *ModelPlazaService) lookupOfficialPricing(ctx context.Context, modelName string, memo map[string]*PlazaOfficialPricing) *PlazaOfficialPricing {
+func (s *ModelPlazaService) lookupOfficialPricing(ctx context.Context, modelName, platform string, memo map[string]*PlazaOfficialPricing) *PlazaOfficialPricing {
 	if s.billingService == nil {
 		return nil
 	}
-	if cached, ok := memo[modelName]; ok {
+	memoKey := platform + "|" + modelName
+	if cached, ok := memo[memoKey]; ok {
 		return cached
 	}
 	var result *PlazaOfficialPricing
@@ -403,7 +404,18 @@ func (s *ModelPlazaService) lookupOfficialPricing(ctx context.Context, modelName
 	// 计费侧对 Marvis / Trae 按统一积分档位补算（见 openai_gateway_usage.go），
 	// 但它们的模型大多不在价格表里。这里必须用同一张档位表，否则广场显示「-」或
 	// 沿用旧美元价，而实际按档位扣积分，展示与扣费会对不上。
-	if result == nil {
+	//
+	// Marvis / Trae 的模型即使价格表里有条目，值也往往是早先的美元价（比实际扣的
+	// 积分低两三个数量级）。这两个平台一律以积分档位表为准，展示与扣费才对得上；
+	// WorkBuddy 走自己的官方定价，不受影响。
+	if isTraeOrMarvisPlatformName(platform) {
+		if inPer1M, outPer1M, _, matched := creditTierFor(modelName); matched {
+			result = &PlazaOfficialPricing{
+				InputPrice:  nonZeroPtr(inPer1M / 1_000_000),
+				OutputPrice: nonZeroPtr(outPer1M / 1_000_000),
+			}
+		}
+	} else if result == nil {
 		if inPer1M, outPer1M, _, matched := creditTierFor(modelName); matched {
 			result = &PlazaOfficialPricing{
 				InputPrice:  nonZeroPtr(inPer1M / 1_000_000),
@@ -411,6 +423,6 @@ func (s *ModelPlazaService) lookupOfficialPricing(ctx context.Context, modelName
 			}
 		}
 	}
-	memo[modelName] = result
+	memo[memoKey] = result
 	return result
 }

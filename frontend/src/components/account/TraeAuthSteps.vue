@@ -9,19 +9,22 @@
         >
         <div class="min-w-0 flex-1">
           <p class="text-sm font-medium text-gray-900 dark:text-white">
-            {{ t('admin.accounts.traeAuth.stepChannel') }}
+            {{ t('admin.accounts.traeAuth.step1') }}
           </p>
           <div class="mt-2 grid grid-cols-2 gap-2">
             <button
               v-for="opt in channelOptions"
               :key="opt.value"
               type="button"
-              :disabled="auth.loading.value"
+              class="flex items-center gap-2 rounded-lg border-2 p-3 text-left transition-all"
               :class="[
-                'flex items-center gap-2 rounded-lg border-2 p-3 text-left transition-all',
-                platform === opt.value ? opt.activeClass : 'border-gray-200 dark:border-dark-600'
+                platform === opt.value
+                  ? opt.activeClass
+                  : 'border-gray-200 hover:border-gray-300 dark:border-dark-600',
+                channelLocked ? 'cursor-not-allowed opacity-60' : ''
               ]"
-              @click="handleChannelChange(opt.value)"
+              :aria-disabled="channelLocked"
+              @click="channelLocked ? undefined : handleChannelChange(opt.value)"
             >
               <div
                 class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
@@ -45,7 +48,7 @@
         </div>
       </li>
 
-      <!-- 步骤 2：生成授权链接 -->
+      <!-- 步骤 2：生成授权链接（链接在按钮上方，与 Marvis 一致） -->
       <li class="flex gap-3">
         <span
           class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
@@ -53,66 +56,64 @@
         >
         <div class="min-w-0 flex-1">
           <p class="text-sm font-medium text-gray-900 dark:text-white">
-            {{ t('admin.accounts.traeAuth.step1') }}
+            {{ t('admin.accounts.traeAuth.step2') }}
           </p>
-          <button
-            v-if="!auth.authUrl.value"
-            type="button"
-            class="btn btn-primary btn-sm mt-2"
-            :disabled="auth.loading.value"
-            @click="handleGenerate"
-          >
-            {{ auth.loading.value ? t('common.loading') : t('admin.accounts.traeAuth.generate') }}
-          </button>
+
           <a
-            v-else
+            v-if="auth.authUrl.value"
             :href="auth.authUrl.value"
             target="_blank"
             rel="noopener noreferrer"
             class="mt-2 block break-all rounded-lg border border-primary-200 bg-primary-50 p-3 text-xs text-primary-700 underline dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300"
             >{{ auth.authUrl.value }}</a
           >
-          <p v-if="auth.authUrl.value" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {{ t('admin.accounts.traeAuth.callbackHint') }}
-          </p>
+
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              :disabled="auth.loading.value || !!auth.result.value"
+              @click="handleGenerate"
+            >
+              {{ generateLabel }}
+            </button>
+          </div>
         </div>
       </li>
 
       <!-- 步骤 3：粘贴回调地址 -->
-      <li v-if="auth.authUrl.value" class="flex gap-3">
+      <li class="flex gap-3">
         <span
-          class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
           >3</span
         >
         <div class="min-w-0 flex-1">
           <p class="text-sm font-medium text-gray-900 dark:text-white">
-            {{ t('admin.accounts.traeAuth.pasteLabel') }}
+            {{ t('admin.accounts.traeAuth.step3') }}
           </p>
-          <textarea
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {{ t('admin.accounts.traeAuth.step3Hint') }}
+          </p>
+          <input
             v-model="callbackInput"
-            rows="3"
-            class="input mt-2 w-full break-all text-xs"
-            :placeholder="t('admin.accounts.traeAuth.pastePlaceholder')"
-            :disabled="auth.loading.value"
-          ></textarea>
-          <div class="mt-2 flex items-center gap-2">
+            type="text"
+            class="input mt-2 text-xs"
+            :placeholder="t('admin.accounts.traeAuth.step3Placeholder')"
+            :disabled="!auth.authUrl.value || !!auth.result.value || auth.loading.value"
+          />
+
+          <div class="mt-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              class="btn btn-primary btn-sm"
-              :disabled="!callbackInput.trim() || auth.loading.value"
+              class="btn btn-sm"
+              :class="submitButtonClass"
+              :disabled="!canSubmitNow"
               @click="handleSubmit"
             >
-              {{
-                auth.loading.value
-                  ? t('admin.accounts.traeAuth.verifying')
-                  : t('admin.accounts.traeAuth.confirm')
-              }}
+              {{ submitLabel }}
             </button>
-            <span
-              v-if="auth.result.value"
-              class="text-xs text-emerald-600 dark:text-emerald-400"
-            >
-              {{ t('admin.accounts.traeAuth.successHint', { name: signedName }) }}
+            <span v-if="statusHint" class="text-xs text-emerald-600 dark:text-emerald-400">
+              {{ statusHint }}
             </span>
           </div>
         </div>
@@ -134,10 +135,11 @@ import { useI18n } from 'vue-i18n'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import { useTraeOAuth } from '@/composables/useTraeOAuth'
 
-// Trae 授权：选站点 → 生成链接 → 浏览器登录 → 粘贴回调地址。
+// Trae 授权：三步交互（选站点 → 生成链接 → 粘贴回调并完成登录），
+// 样式与文案与 Marvis 一致——两者都是「服务器收不到回调，只能把地址粘回来」。
 //
-// 为什么必须粘贴：Trae 授权页只接受 http://127.0.0.1:<port>/authorize，
-// 部署在服务器上的网关收不到回调，用户把地址栏内容贴回来即可（与 Marvis 同路）。
+// 与 Marvis 的差别只有第一步：Trae 的两个站点账号不通，需要先选站点。
+// 粘贴不会自动建号：成功后由父组件接收 authorized 事件，用户再点「创建」。
 const props = defineProps<{
   platform: 'trae_cn' | 'trae_intl'
   auth: ReturnType<typeof useTraeOAuth>
@@ -149,7 +151,6 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const callbackInput = ref('')
-const signedName = computed(() => props.auth.result.value?.name || props.auth.result.value?.uid || '')
 
 const channelOptions = computed(() => [
   {
@@ -167,6 +168,43 @@ const channelOptions = computed(() => [
     textActiveClass: 'text-sky-700 dark:text-sky-300'
   }
 ])
+
+// 渠道在请求进行中锁住，避免连点打出多个并发请求。
+const channelLocked = computed(() => props.auth.loading.value)
+
+const generateLabel = computed(() => {
+  if (props.auth.loading.value) return t('admin.accounts.traeAuth.waiting')
+  if (props.auth.result.value) return t('admin.accounts.traeAuth.loggedIn')
+  return t('admin.accounts.traeAuth.generate')
+})
+
+const submitLabel = computed(() => {
+  if (props.auth.loading.value) return t('admin.accounts.traeAuth.confirming')
+  if (props.auth.result.value) return t('admin.accounts.traeAuth.loggedIn')
+  if (props.auth.error.value) return t('admin.accounts.traeAuth.loginFailed')
+  return t('admin.accounts.traeAuth.confirm')
+})
+
+const submitButtonClass = computed(() => {
+  if (props.auth.result.value) return 'btn-primary opacity-60'
+  if (props.auth.error.value) return 'btn-danger'
+  return 'btn-primary'
+})
+
+const canSubmitNow = computed(
+  () =>
+    !!props.auth.authUrl.value &&
+    !props.auth.result.value &&
+    !props.auth.loading.value &&
+    callbackInput.value.trim().length > 0
+)
+
+const statusHint = computed(() => {
+  const result = props.auth.result.value
+  if (!result) return ''
+  const name = result.name || result.uid || ''
+  return t('admin.accounts.traeAuth.successHint', { name })
+})
 
 function handleChannelChange(value: 'trae_cn' | 'trae_intl') {
   if (value === props.platform) return

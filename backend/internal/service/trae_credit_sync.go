@@ -132,17 +132,9 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 		rows = append(rows, row)
 	}
 
-	s.mu.Lock()
-	today := time.Now().Format("2006-01-02")
-	var todayUsed float64
-	if s.lastUsedDay == today {
-		todayUsed = usedSum - s.lastUsed
-		if todayUsed < 0 {
-			todayUsed = 0
-		}
-	}
-	s.lastUsed = usedSum
-	s.lastUsedDay = today
+	// 今日消耗取 usedSum：上游额度按周期累计，每次同步拿到的就是本周期
+	// 已用量。之前用跨次差值，进程重启后第一次必然是 0。
+	todayUsed := usedSum
 
 	now := time.Now()
 	s.snapshot = &TraeCreditSnapshot{

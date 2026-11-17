@@ -160,18 +160,11 @@ func (s *MarvisCreditSyncService) Sync(ctx context.Context) *MarvisCreditSnapsho
 		rows = append(rows, row)
 	}
 
-	s.mu.Lock()
-	today := time.Now().Format("2006-01-02")
-	var todayUsed float64
-	if s.lastUsedDay == today {
-		// 同一天内：本次累计已用 - 上次累计已用 = 今日新增消耗。
-		todayUsed = usedSum - s.lastUsedTotal
-		if todayUsed < 0 {
-			todayUsed = 0
-		}
-	}
-	s.lastUsedTotal = usedSum
-	s.lastUsedDay = today
+	// 今日消耗直接取 usedSum：Marvis 的令牌额度按北京时间每天 0 点重置，
+	// used_tokens 天然就是「今日已用」，不需要跨次差值。
+	// 之前用差值估算，进程重启后第一次同步必然是 0（lastUsedDay 为空），
+	// 卡片要等下一次刷新才有数，属于无谓的口径损耗。
+	todayUsed := usedSum
 
 	s.snapshot = &MarvisCreditSnapshot{
 		Accounts:         rows,

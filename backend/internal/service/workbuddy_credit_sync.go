@@ -308,14 +308,11 @@ func (s *WorkBuddyCreditSyncService) Sync(ctx context.Context) {
 
 	// 官方口径的今日消耗：逐账号拉 get-user-request-usage 累加 credit。
 	// 这一步要翻页，比积分同步慢得多，单独记录时间戳，失败也不影响其余字段。
-	if usedCN, usedIntl, err := workBuddyTodayUsageForAccounts(ctx, targets); err == nil {
-		snap.TodayUsedCN = usedCN
-		snap.TodayUsedIntl = usedIntl
-		now := time.Now()
-		snap.TodayUsedUpdatedAt = &now
-	} else {
-		log.Printf("[wb-sync] 读取今日消耗失败: %v", err)
-	}
+	usedCN, usedIntl := workBuddyTodayUsageForAccounts(ctx, targets)
+	snap.TodayUsedCN = usedCN
+	snap.TodayUsedIntl = usedIntl
+	nowUsed := time.Now()
+	snap.TodayUsedUpdatedAt = &nowUsed
 
 	s.mu.Lock()
 	s.snapshot = snap

@@ -95,12 +95,13 @@ export default {
     },
     providers: {
       title: 'Platforms',
-      description: 'Two platforms, one endpoint',
+      description: 'Three platforms, one endpoint',
       supported: 'Supported',
       soon: 'Soon',
       claude: 'WorkBuddy China',
       gemini: 'WorkBuddy International',
       antigravity: 'Tencent Marvis',
+      trae: 'ByteDance Trae',
       more: 'More platforms'
     },
     // CTA section

@@ -14,6 +14,7 @@ export default {
       todayRequests: 'Today Requests',
       totalRequests: 'Total Requests',
       todayCost: 'Today Cost',
+      allPlatformCredits: 'All platforms credits',
       totalCost: 'Total Cost',
       newUsersToday: 'New Users Today',
       inputLabel: 'Input',

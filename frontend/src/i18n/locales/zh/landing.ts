@@ -95,7 +95,7 @@ export default {
     },
     providers: {
       title: '接入平台',
-      description: '一个 API，多种选择',
+      description: '三个平台，一个端点',
       supported: '已支持',
       soon: '规划中',
       claude: 'WorkBuddy 国内版',

@@ -381,8 +381,8 @@
           </p>
         </div>
 
-        <!-- 两个接入平台 -->
-        <div class="mb-16 grid gap-4 sm:grid-cols-2">
+        <!-- 三个接入平台 -->
+        <div class="mb-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div
             v-for="p in platformCards"
             :key="p.id"
@@ -454,9 +454,11 @@ const appStore = useAppStore()
 // Site settings - directly from appStore (already initialized from injected config)
 const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Auto2API')
 
-// 主页展示的接入平台。只列真实接入的两个 —— 与后端 domain/platformList
+// 主页展示的接入平台。只列真实接入的三个 —— 与后端 domain/platformList
 // 一致，不写「即将支持」的占位项。
-const platformCards = computed<Array<{ id: 'workbuddy_cn' | 'marvis'; name: string; desc: string }>>(() => [
+const platformCards = computed<
+  Array<{ id: 'workbuddy_cn' | 'marvis' | 'trae_cn'; name: string; desc: string }>
+>(() => [
   {
     id: 'workbuddy_cn',
     name: t('home.providers.claude'),
@@ -466,6 +468,11 @@ const platformCards = computed<Array<{ id: 'workbuddy_cn' | 'marvis'; name: stri
     id: 'marvis',
     name: t('home.providers.antigravity'),
     desc: 'QQ / 微信登录 · 4 个模型 · 含视觉模型'
+  },
+  {
+    id: 'trae_cn',
+    name: t('home.providers.trae'),
+    desc: '国内版 / 国际版 · 90+ 模型 · 浏览器授权'
   }
 ])
 const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))

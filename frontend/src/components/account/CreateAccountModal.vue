@@ -69,7 +69,7 @@
       <!-- Platform Selection：只有两个平台，WorkBuddy 的国内外站点收进第一步渠道选择 -->
       <div>
         <label class="input-label">{{ t('admin.accounts.platform') }}</label>
-        <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" data-tour="account-form-platform">
+        <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3" data-tour="account-form-platform">
           <button
             type="button"
             data-testid="platform-button-workbuddy"
@@ -129,7 +129,7 @@
             data-testid="platform-button-trae"
             @click="selectTraePlatform"
             :class="[
-              'flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all sm:col-span-2',
+              'flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all',
               isTraePlatform
                 ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
                 : 'border-gray-200 hover:border-amber-300 dark:border-dark-600 dark:hover:border-amber-700'

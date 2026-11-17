@@ -368,6 +368,14 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 	// WorkBuddy 必须在所有分流之前拦下：它的 provider profile 声明了
 	// 按入站协议分流，会先命中多协议分支并索要 API Key——而 WorkBuddy
 	// 是 OAuth 账号，只有 access token，最终报 "No API key available"。
+	// Trae 与 WorkBuddy 同理：OAuth 账号没有 API Key，必须走自己的对话链路。
+	if IsTraePlatform(account.Platform) {
+		testModelID := strings.TrimSpace(modelID)
+		if testModelID == "" {
+			testModelID = firstTraeModelID(account)
+		}
+		return s.testTraeAccountConnection(c, account, testModelID, prompt)
+	}
 	if IsWorkBuddyAccount(account) {
 		testModelID := strings.TrimSpace(modelID)
 		if testModelID == "" {

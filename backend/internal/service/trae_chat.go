@@ -428,3 +428,115 @@ func traeEventError(event map[string]any) string {
 	}
 	return firstNonEmpty(traeStringValue(event, "message", "msg"), "未知错误")
 }
+
+// testTraeAccountConnection 是账号「连接测试」的 Trae 实现。
+//
+// 走真实对话链路（llm_utils_chat + function 回退），把上游回答作为测试内容回显；
+// 不复用 OpenAI 兼容测试，那条路径会索要 API Key（Trae 是 OAuth 账号）。
+func (s *AccountTestService) testTraeAccountConnection(c *gin.Context, account *Account, modelID, prompt string) error {
+	site := traeSiteForPlatform(account.Platform)
+	if site == nil {
+		return s.sendErrorAndEnd(c, "Trae 平台配置缺失")
+	}
+	token := traeTokenOf(account.Credentials)
+	if token.Access == "" {
+		return s.sendErrorAndEnd(c, "账号缺少登录态，请重新授权")
+	}
+	if strings.TrimSpace(prompt) == "" {
+		prompt = "hi"
+	}
+	model := strings.TrimSpace(modelID)
+	if model == "" {
+		model = firstTraeModelID(account)
+	}
+	if model == "" {
+		return s.sendErrorAndEnd(c, "没有可用模型，请先同步模型目录")
+	}
+
+	body, err := json.Marshal(map[string]any{
+		"messages": []map[string]any{{"role": "user", "content": prompt}},
+		"model":    model,
+	})
+	if err != nil {
+		return s.sendErrorAndEnd(c, "构造测试请求失败: "+err.Error())
+	}
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+	c.Writer.Flush()
+	s.sendEvent(c, TestEvent{Type: "test_start", Model: model})
+
+	var lastErr error
+	for _, function := range traeChatFunctions {
+		payload, buildErr := buildTraeChatPayload(account, body, model, function)
+		if buildErr != nil {
+			return s.sendErrorAndEnd(c, buildErr.Error())
+		}
+		resp, callErr := traeChatUpstream(c.Request.Context(), site, token, payload)
+		if callErr != nil {
+			return s.sendErrorAndEnd(c, callErr.Error())
+		}
+		if resp.StatusCode != http.StatusOK {
+			raw, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<10))
+			_ = resp.Body.Close()
+			code := traeUpstreamCode(raw)
+			lastErr = fmt.Errorf("上游 HTTP %d: %s", resp.StatusCode, traeTrimBody(raw))
+			if traeChatFunctionFallbackCodes[code] {
+				continue
+			}
+			return s.sendErrorAndEnd(c, lastErr.Error())
+		}
+
+		var content strings.Builder
+		scanner := bufio.NewScanner(resp.Body)
+		scanner.Buffer(make([]byte, 0, 64<<10), 4<<20)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if !strings.HasPrefix(line, "data:") {
+				continue
+			}
+			payloadText := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+			if payloadText == "" || payloadText == "[DONE]" {
+				continue
+			}
+			var event map[string]any
+			if err := json.Unmarshal([]byte(payloadText), &event); err != nil {
+				continue
+			}
+			if msg := traeEventError(event); msg != "" {
+				_ = resp.Body.Close()
+				return s.sendErrorAndEnd(c, msg)
+			}
+			if text := traeDeltaText(event); text != "" {
+				content.WriteString(text)
+				s.sendEvent(c, TestEvent{Type: "content", Text: text})
+			}
+		}
+		_ = resp.Body.Close()
+
+		if strings.TrimSpace(content.String()) == "" {
+			s.sendEvent(c, TestEvent{Type: "content", Text: "（上游未返回文本内容）"})
+		}
+		s.sendEvent(c, TestEvent{Type: "test_complete", Success: true})
+		return nil
+	}
+	if lastErr == nil {
+		lastErr = fmt.Errorf("上游拒绝了这次请求")
+	}
+	return s.sendErrorAndEnd(c, lastErr.Error())
+}
+
+// firstTraeModelID 取账号映射里的第一个模型（无映射时返回空）。
+func firstTraeModelID(account *Account) string {
+	if account == nil {
+		return ""
+	}
+	for id := range account.GetModelMapping() {
+		if strings.TrimSpace(id) != "" {
+			return id
+		}
+	}
+	return ""
+}

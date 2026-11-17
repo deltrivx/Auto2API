@@ -252,3 +252,12 @@ func TraeAccountModels(ctx context.Context, account *Account) []map[string]any {
 	}
 	return out
 }
+
+// TraeCreditsSnapshot 读取账号额度（原生单位），供积分明细接口使用。
+func TraeCreditsSnapshot(ctx context.Context, account *Account) (*TraeCredits, error) {
+	site, token, err := traeAccountContext(account)
+	if err != nil {
+		return nil, err
+	}
+	return fetchTraeCredits(ctx, site, token)
+}

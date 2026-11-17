@@ -476,6 +476,44 @@ func (h *WorkBuddyTaskHandler) AccountCreditsDetail(c *gin.Context) {
 	}
 	ctx := c.Request.Context()
 
+	// Trae：额度来自上游（国内站积分 / 国际站美元，展示按 1 美元 = 1 积分折算），
+	// 与 WorkBuddy 共用同一张明细卡片。
+	if service.IsTraePlatform(account.Platform) {
+		credits, err := service.TraeCreditsSnapshot(ctx, account)
+		if err != nil {
+			response.Success(c, gin.H{
+				"account_id": account.ID,
+				"account":    account.Name,
+				"platform":   account.Platform,
+				"packages":   []any{},
+				"groups":     []any{},
+				"total":      0,
+				"error":      err.Error(),
+			})
+			return
+		}
+		remaining := credits.Limit - credits.Used
+		if remaining < 0 {
+			remaining = 0
+		}
+		response.Success(c, gin.H{
+			"account_id":   account.ID,
+			"account":      account.Name,
+			"platform":     account.Platform,
+			"total":        remaining,
+			"package_name": credits.Plan,
+			"unlimited":    credits.Unlimited,
+			"groups": []gin.H{{
+				"kind":  "credits",
+				"name":  "积分",
+				"used":  credits.Used,
+				"total": credits.Limit,
+			}},
+			"packages": []any{},
+		})
+		return
+	}
+
 	pkgs, pkgErr := service.WorkBuddyCreditPackagesOf(ctx, account)
 	credits, credErr := service.WorkBuddyCreditsOf(ctx, account)
 

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -276,6 +277,29 @@ func (s *OpenAIGatewayService) sendCCUpstreamRequest(
 	resp, err := s.doOpenAIUpstream(upstreamReq, proxyURL, account)
 	if err != nil {
 		return nil, s.handleOpenAIUpstreamTransportError(ctx, c, account, err, false)
+	}
+
+	// Marvis 内容过滤兜底（对齐 magpie-marvis 的 first_line_fallback）：
+	// 上游按「system 首行里的身份词对」拦请求，命中回 403 + 4100404。
+	// 这时把首行换成不含任何 agent 产品名的中性句，同一个账号重发一次。
+	// 不换 uskey、不换账号 —— 换账号会把一次内容问题放大成账号级的失败。
+	if resp != nil && resp.StatusCode == http.StatusForbidden && isMarvisAccount(account) {
+		errBody, _ := s.readOpenAIUpstreamError(resp)
+		if marvisIsContentFiltered(resp.StatusCode, errBody) {
+			if retryBody, changed := marvisWithFirstLine(body, marvisFallbackFirstLine); changed {
+				retryReq := upstreamReq.Clone(ctx)
+				retryReq.Body = io.NopCloser(bytes.NewReader(retryBody))
+				retryReq.ContentLength = int64(len(retryBody))
+				retryReq.GetBody = func() (io.ReadCloser, error) {
+					return io.NopCloser(bytes.NewReader(retryBody)), nil
+				}
+				if retryResp, rerr := s.doOpenAIUpstream(retryReq, proxyURL, account); rerr == nil {
+					slog.Warn("marvis.content_filter_retried",
+						"account_id", account.ID, "status", retryResp.StatusCode)
+					return retryResp, nil
+				}
+			}
+		}
 	}
 	return resp, nil
 }

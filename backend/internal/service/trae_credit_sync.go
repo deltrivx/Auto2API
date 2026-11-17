@@ -35,7 +35,9 @@ type TraeCreditSnapshot struct {
 	// AvailableCN / AvailableIntl 是按站点拆开的余额（均已折算成积分）。
 	AvailableCN   float64 `json:"available_cn"`
 	AvailableIntl float64 `json:"available_intl"`
-	TodayUsed     float64 `json:"today_used"`
+	// TodayUsed 是今日消耗（积分）。上游额度按周期累计，这里取周期内已用量，
+	// 与卡片展示口径保持一致。
+	TodayUsed float64 `json:"today_used"`
 }
 
 // TraeCreditSyncService 周期性拉取 Trae 账号额度。

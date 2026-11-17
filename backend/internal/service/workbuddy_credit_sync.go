@@ -75,7 +75,13 @@ type WorkBuddyCreditSnapshot struct {
 	Daily []WorkBuddyDailyPoint `json:"daily"`
 	// AutoClaimedCredits 是本轮自动领取到的积分总和。
 	AutoClaimedCredits float64 `json:"auto_claimed_credits"`
-	Syncing            bool    `json:"syncing"`
+	// TodayUsedCN / TodayUsedIntl 是上游官方口径的今日消耗（逐条请求 credit 之和）。
+	// 与本地 usage_logs 按定价表算出的钱是两套口径，卡片只认这两个。
+	TodayUsedCN   float64 `json:"today_used_cn"`
+	TodayUsedIntl float64 `json:"today_used_intl"`
+	// TodayUsedUpdatedAt 是上面两个值最后一次拉取的时间。
+	TodayUsedUpdatedAt *time.Time `json:"today_used_updated_at,omitempty"`
+	Syncing            bool       `json:"syncing"`
 }
 
 // WorkBuddyCreditSyncService 维护积分快照。
@@ -298,6 +304,17 @@ func (s *WorkBuddyCreditSyncService) Sync(ctx context.Context) {
 		snap.TaskClaimable += a.TaskClaimable
 		snap.AutoClaimedCredits += a.AutoClaimedCredits
 		snap.TodayTaskCredits += a.TodayTaskCredits
+	}
+
+	// 官方口径的今日消耗：逐账号拉 get-user-request-usage 累加 credit。
+	// 这一步要翻页，比积分同步慢得多，单独记录时间戳，失败也不影响其余字段。
+	if usedCN, usedIntl, err := workBuddyTodayUsageForAccounts(ctx, targets); err == nil {
+		snap.TodayUsedCN = usedCN
+		snap.TodayUsedIntl = usedIntl
+		now := time.Now()
+		snap.TodayUsedUpdatedAt = &now
+	} else {
+		log.Printf("[wb-sync] 读取今日消耗失败: %v", err)
 	}
 
 	s.mu.Lock()

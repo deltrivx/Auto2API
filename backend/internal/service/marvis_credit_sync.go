@@ -46,7 +46,8 @@ type MarvisCreditSnapshot struct {
 	// QQ 登录的账号之和 / 微信登录的账号之和。
 	AvailableQQ float64 `json:"available_qq"`
 	AvailableWX float64 `json:"available_wx"`
-	// TodayUsed 是今日消耗（用上次快照的差值估算，跨天归零）。
+	// TodayUsed 是今日消耗（积分）。Marvis 额度每日北京时间 0 点重置，
+	// 所以 used_tokens 本身就是今日已用，直接换算即可，不需要差值估算。
 	TodayUsed float64 `json:"today_used"`
 	Syncing   bool    `json:"syncing"`
 }

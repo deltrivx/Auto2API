@@ -57,11 +57,13 @@
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</p>
           <!-- 主值只显示实际消费，标准价放到 tooltip：
                两列并排会让人误读成「花了两个数」。 -->
-          <p class="text-xl font-bold text-purple-600 dark:text-purple-400" :title="`${t('dashboard.actual')}: ${formatCost(stats?.today_actual_cost || 0)} / ${t('dashboard.standard')}: ${formatCost(stats?.today_cost || 0)}`">
-            {{ formatCost(stats?.today_actual_cost || 0) }}<span class="ml-1 text-sm font-normal text-gray-400">{{ t('admin.accounts.creditsUnit') }}</span>
+          <!-- 主值 = 三个平台官方口径今日消耗之和（不是按定价表估算的值）。 -->
+          <p class="text-xl font-bold text-purple-600 dark:text-purple-400">
+            {{ formatCost(platformUsage.total) }}<span class="ml-1 text-sm font-normal text-gray-400">{{ t('admin.accounts.creditsUnit') }}</span>
           </p>
+          <!-- 第三行：按平台拆出今日消耗，三个数相加等于主值。 -->
           <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ t('common.total') }}: {{ formatCost(stats?.total_actual_cost || 0) }} {{ t('admin.accounts.creditsUnit') }}
+            WorkBuddy：{{ formatCost(platformUsage.workbuddy) }} {{ t('admin.accounts.creditsUnit') }} + Marvis：{{ formatCost(platformUsage.marvis) }} {{ t('admin.accounts.creditsUnit') }} + Trae：{{ formatCost(platformUsage.trae) }} {{ t('admin.accounts.creditsUnit') }}
           </p>
         </div>
       </div>
@@ -229,10 +231,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import CreditsOverviewCards from '@/components/dashboard/CreditsOverviewCards.vue'
+import {
+  getWorkBuddyCreditSnapshot,
+  getMarvisCreditSnapshot,
+  getTraeCreditSnapshot,
+  type WorkBuddyCreditSnapshot,
+  type MarvisCreditSnapshot,
+  type TraeCreditSnapshot
+} from '@/api/admin/workbuddy'
 import type { PlatformDashboardStats, UserDashboardStats as UserStatsType } from '@/api/usage'
 import type { PlatformQuotaItem } from '@/types'
 
@@ -253,6 +263,35 @@ const props = defineProps<{
   platformQuotas?: PlatformQuotaItem[] | null
 }>()
 const { t } = useI18n()
+
+// 「今日消费」卡片的三个分项。
+//
+// 数据全部取上游官方口径，不用本地 usage_logs 按定价表估算的金额：
+//   WorkBuddy  逐条请求的 credit 之和
+//   Marvis     钱包 used_tokens（额度每日 0 点重置，即今日）
+//   Trae       额度周期内已用量
+// 三者单位统一为积分，相加得到主值。
+const wbSnap = ref<WorkBuddyCreditSnapshot | null>(null)
+const mvSnap = ref<MarvisCreditSnapshot | null>(null)
+const trSnap = ref<TraeCreditSnapshot | null>(null)
+
+const platformUsage = computed(() => {
+  const workbuddy = (wbSnap.value?.today_used_cn ?? 0) + (wbSnap.value?.today_used_intl ?? 0)
+  const marvis = mvSnap.value?.today_used ?? 0
+  const trae = trSnap.value?.today_used ?? 0
+  return { workbuddy, marvis, trae, total: workbuddy + marvis + trae }
+})
+
+onMounted(async () => {
+  const [wb, mv, tr] = await Promise.allSettled([
+    getWorkBuddyCreditSnapshot(),
+    getMarvisCreditSnapshot(),
+    getTraeCreditSnapshot()
+  ])
+  if (wb.status === 'fulfilled') wbSnap.value = wb.value
+  if (mv.status === 'fulfilled') mvSnap.value = mv.value
+  if (tr.status === 'fulfilled') trSnap.value = tr.value
+})
 
 const PLATFORM_LABELS: Record<string, string> = {
   anthropic: 'Claude',

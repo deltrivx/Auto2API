@@ -529,6 +529,10 @@ export interface WorkBuddyCreditSnapshot {
   /** 按站点拆分的余额：国内版 / 国际版（两者之和等于 total_credits）。 */
   total_credits_cn?: number
   total_credits_intl?: number
+  /** 上游官方口径的今日消耗（按站点拆分，单位积分）。 */
+  today_used_cn?: number
+  today_used_intl?: number
+  today_used_updated_at?: string
   task_claimable: number
   today_task_credits: number
   auto_claimed_credits: number

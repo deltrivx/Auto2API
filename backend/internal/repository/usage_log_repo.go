@@ -29,6 +29,14 @@ const rawUsageLogModelColumn = "model"
 // 配合 `FROM usage_logs ul` JOIN 查询使用。
 const usageLogSuccessFilterUL = "ul.actual_cost > 0"
 
+// usageLogPlatformBreakdownFilterUL 是「按平台拆分」专用的过滤条件。
+//
+// 不能直接用 usageLogSuccessFilterUL：它要求 actual_cost > 0，而某个平台的模型
+// 一旦没进价格表，整组都会因金额为 0 而消失（Trae 就是这样从仪表盘里漏掉的）。
+// 这里放宽容成「有金额，或者有 token 计量」，仍能排除 tokens=0 且 cost=0 的
+// 失败占位行，同时不会因为缺定价而丢掉整个平台。
+const usageLogPlatformBreakdownFilterUL = "(ul.actual_cost > 0 OR (ul.input_tokens + ul.output_tokens + ul.cache_creation_tokens + ul.cache_read_tokens) > 0)"
+
 // usageLogEffectivePlatformExpr 用于按"有效平台"维度聚合 usage_logs：
 // 优先取请求实际走的分组 platform，若分组未设置 platform 再 fallback 到 account.platform。
 // Composite groups are a routing layer, so platform analytics must use the

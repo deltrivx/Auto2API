@@ -295,6 +295,12 @@ onMounted(async () => {
 
 const PLATFORM_LABELS: Record<string, string> = {
   anthropic: 'Claude',
+  // 三个自有平台的显示名，其余为通用厂商名。
+  workbuddy_cn: 'WorkBuddy 国内版',
+  workbuddy_intl: 'WorkBuddy 国际版',
+  marvis: '腾讯 Marvis',
+  trae_cn: 'Trae 国内版',
+  trae_intl: 'Trae 国际版',
   openai: 'OpenAI',
   gemini: 'Gemini',
   antigravity: 'Antigravity',
@@ -330,7 +336,8 @@ const platformCards = computed<FusedPlatformCard[]>(() => {
     if (hasAnyLimit(q)) platforms.add(platform)
   }
 
-  const PLATFORM_ORDER = ['anthropic', 'openai', 'gemini', 'antigravity', 'grok', 'typesafe']
+  const PLATFORM_ORDER = ['workbuddy_cn', 'workbuddy_intl', 'marvis', 'trae_cn', 'trae_intl',
+    'anthropic', 'openai', 'gemini', 'antigravity', 'grok', 'typesafe']
   const cards: FusedPlatformCard[] = []
 
   for (const p of platforms) {

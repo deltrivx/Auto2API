@@ -1477,6 +1477,22 @@ func (s *BillingService) getModelPricingAt(model string, pricingAt time.Time) (*
 		}
 	}
 
+	// 1.5 Trae 模型系列兜底价
+	//
+	// Trae 的模型目录有 90+ 条且随上游变化，不可能逐个进价格表。没有命中价格表的
+	// Trae 模型按系列给一组保底价，保证 actual_cost 非零——否则仪表盘按平台拆分
+	// 会因 actual_cost > 0 的过滤把整个 Trae 平台丢掉。
+	if inPerTok, outPerTok, ctxLimit, ok := traeModelSeriesPricing(model); ok && inPerTok > 0 {
+		if _, seen := s.fallbackWarnSeen.LoadOrStore("trae-series:"+model, struct{}{}); !seen {
+			log.Printf("[Billing] Using Trae series pricing for model: %s", model)
+		}
+		_ = ctxLimit // 上下文上限只用于展示，不参与计费
+		return s.applyModelSpecificPricingPolicyEx(model, &ModelPricing{
+			InputPricePerToken:  inPerTok,
+			OutputPricePerToken: outPerTok,
+		}, true, pricingAt), nil
+	}
+
 	// 2. 使用硬编码回退价格
 	fallback := s.getFallbackPricing(model)
 	if fallback != nil {

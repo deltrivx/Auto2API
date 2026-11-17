@@ -370,14 +370,18 @@ func ensureMarvisFingerprintCredentials(creds map[string]any) map[string]any {
 			return creds
 		}
 	}
-	// 以 openid 为种子：同一账号重新登录仍拿到同一套画像。
+	// 种子优先取 guid，其次 openid。
+	//
+	// guid 是上游在这次登录时分配的设备标识，MarvisExt 里的设备字段要和它
+	// 一致；用 guid 派生，重新授权换设备后画像自然跟着换。只有缺 guid 的
+	// 老账号才退回 openid。
 	key := ""
-	if s, ok := creds["openid"].(string); ok {
-		key = strings.TrimSpace(s)
+	if v, ok := creds["guid"].(string); ok {
+		key = strings.TrimSpace(v)
 	}
 	if key == "" {
-		if s, ok := creds["guid"].(string); ok {
-			key = strings.TrimSpace(s)
+		if v, ok := creds["openid"].(string); ok {
+			key = strings.TrimSpace(v)
 		}
 	}
 	fp := marvisFingerprintFor(key)

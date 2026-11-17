@@ -357,6 +357,8 @@ type Application struct {
 	MarvisWalletSync *service.MarvisWalletSyncService
 	// MarvisCreditSync 定时汇总 Marvis 各账号额度，供仪表盘读取。
 	MarvisCreditSync *service.MarvisCreditSyncService
+	// TraeCreditSync 定时汇总 Trae 各账号额度（国内站积分 / 国际站美元）。
+	TraeCreditSync *service.TraeCreditSyncService
 	// ChannelMonitorRunner 按各监控的 interval 定期打点上游，
 	// 缺了它监控列表的 last_checked_at 会一直停在启用那一刻。
 	ChannelMonitorRunner *service.ChannelMonitorRunner

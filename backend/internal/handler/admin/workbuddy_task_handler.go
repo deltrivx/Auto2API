@@ -543,10 +543,11 @@ func (h *WorkBuddyTaskHandler) traeCreditsDetail(c *gin.Context, account *servic
 		"package_name": credits.Plan,
 		"unlimited":    credits.Unlimited,
 		"groups": []gin.H{{
-			"kind":  "credits",
-			"name":  "积分",
-			"used":  credits.Used,
-			"total": credits.Limit,
+			"kind":   "credits",
+			"name":   "积分",
+			"used":   credits.Used,
+			"total":  credits.Limit,
+			"remain": remaining,
 		}},
 		"packages": []any{},
 	})

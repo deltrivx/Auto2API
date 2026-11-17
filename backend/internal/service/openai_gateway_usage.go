@@ -330,6 +330,18 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		}
 	}
 
+	// Trae 的模型不在价格表里，且 getModelPricingAt 只拿到模型名、无法区分平台，
+	// 所以在通用的价格回退里加系列价会误伤 WorkBuddy 的同名模型。
+	// 这里在能拿到 account 的位置补一次：确认是 Trae 平台且成本仍为 0 时，
+	// 按系列保底价重算，保证 actual_cost 非零。
+	if cost != nil && account != nil && IsTraePlatform(account.Platform) && cost.ActualCost == 0 && cost.TotalCost == 0 {
+		estimated := traeSeriesCost(billingModels[0], tokens)
+		if estimated > 0 {
+			cost.TotalCost = estimated
+			cost.ActualCost = estimated
+		}
+	}
+
 	// Determine billing type
 	isSubscriptionBilling := subscription != nil && apiKey.Group != nil && apiKey.Group.IsSubscriptionType()
 	billingType := BillingTypeBalance

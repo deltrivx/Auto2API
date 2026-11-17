@@ -76,3 +76,19 @@ func traeModelSeriesPricing(model string) (inputPerToken, outputPerToken float64
 	}
 	return 0, 0, 0, false
 }
+
+// traeSeriesCost 按系列保底价算一次请求的成本（USD）。
+//
+// 只在确认请求来自 Trae 平台、且通用计费链路算出 0 时调用，
+// 避免把 Trae 的系列价误用到其他平台的同名模型上。
+func traeSeriesCost(model string, tokens UsageTokens) float64 {
+	inPerTok, outPerTok, _, _ := traeModelSeriesPricing(model)
+	if inPerTok <= 0 && outPerTok <= 0 {
+		return 0
+	}
+	input := tokens.InputTokens + tokens.ImageInputTokens + tokens.CacheCreationTokens
+	cached := tokens.CacheReadTokens
+	// 缓存读取一般按输入价的 10% 计。
+	cost := float64(input)*inPerTok + float64(cached)*inPerTok*0.1 + float64(tokens.OutputTokens)*outPerTok
+	return cost
+}

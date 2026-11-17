@@ -330,15 +330,22 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		}
 	}
 
-	// Trae 的模型不在价格表里，且 getModelPricingAt 只拿到模型名、无法区分平台，
-	// 所以在通用的价格回退里加系列价会误伤 WorkBuddy 的同名模型。
-	// 这里在能拿到 account 的位置补一次：确认是 Trae 平台且成本仍为 0 时，
-	// 按系列保底价重算，保证 actual_cost 非零。
-	if cost != nil && account != nil && IsTraePlatform(account.Platform) && cost.ActualCost == 0 && cost.TotalCost == 0 {
-		estimated := traeSeriesCost(billingModels[0], tokens)
-		if estimated > 0 {
-			cost.TotalCost = estimated
-			cost.ActualCost = estimated
+	// Marvis 与 Trae 的积分消耗按 WorkBuddy 的官方积分体系对齐。
+	//
+	// 这两个平台的模型没有走完整的官方积分定价（Trae 甚至拿不到 token 计量），
+	// 直接用通用美元价会让它们的积分消耗比 WorkBuddy 低两个数量级——
+	// 同一个 deepseek-v4-flash，WorkBuddy 扣 112，Marvis 只扣 1。
+	//
+	// 这里在能拿到 account 的位置统一按积分档位表补算，保证三个自有平台
+	// 同一模型落到相近的积分档位。WorkBuddy 本来就走官方定价，不受影响。
+	if cost != nil && account != nil && cost.ActualCost == 0 && cost.TotalCost == 0 {
+		switch {
+		case IsTraePlatform(account.Platform), IsMarvisPlatform(account.Platform):
+			estimated := creditTierCost(billingModels[0], tokens)
+			if estimated > 0 {
+				cost.TotalCost = estimated
+				cost.ActualCost = estimated
+			}
 		}
 	}
 

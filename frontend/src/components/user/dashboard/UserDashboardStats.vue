@@ -64,8 +64,10 @@
           </p>
           <!-- 第三行：按平台拆出今日消耗，三个数相加等于主值。
                单位只在主值出现一次，这里省略——窄屏上重复三次「积分」会折成四五行。 -->
-          <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-            WB {{ formatCost(platformUsage.workbuddy) }} · MV {{ formatCost(platformUsage.marvis) }} · Trae {{ formatCost(platformUsage.trae) }}
+          <!-- 三平台分项。卡片内宽约 250px，三个平台名 + 三个两位小数放不下，
+               这里用更紧的分隔与缩写，并允许在极端窄屏下缩小字号而不是折行。 -->
+          <p class="whitespace-nowrap text-[11px] leading-tight text-gray-500 dark:text-gray-400">
+            WB {{ formatCost(platformUsage.workbuddy) }} · MV {{ formatCost(platformUsage.marvis) }} · TR {{ formatCost(platformUsage.trae) }}
           </p>
         </div>
       </div>

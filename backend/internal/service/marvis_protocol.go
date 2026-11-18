@@ -130,6 +130,18 @@ func marvisUSKey() string {
 	return base64.StdEncoding.EncodeToString(buf)
 }
 
+// marvisUSKeyFor 返回该账号固定的 uskey。
+//
+// 优先用凭据里已保存的值；没有则现生成一个，由调用方负责落库
+// （见 ApplyMarvisFingerprint）。固定 uskey 才能让上游把多次请求认成
+// 同一台设备，否则每次随机都会被按「新设备」风控。
+func marvisUSKeyFor(creds MarvisCredentials) string {
+	if v := strings.TrimSpace(creds.USKey); v != "" {
+		return v
+	}
+	return marvisUSKey()
+}
+
 // marvisNonce 生成一个 UUIDv4 形态的 nonce。
 func marvisNonce() string {
 	h := marvisRandomHex(16)
@@ -152,7 +164,7 @@ func marvisExtJSON(creds MarvisCredentials) string {
 	ext := map[string]any{
 		"osVersion":     osVersion,
 		"guid":          creds.GUID,
-		"uskey":         marvisUSKey(),
+		"uskey":         marvisUSKeyFor(creds),
 		"nonce":         marvisNonce(),
 		"reqScene":      1,
 		"taskType":      "user",
@@ -176,6 +188,12 @@ type MarvisCredentials struct {
 	LoginType string `json:"login_type,omitempty"`
 	// OSVersion 来自账号硬件画像，写进 MarvisExt 的 osVersion。
 	OSVersion string `json:"os_version,omitempty"`
+	// USKey 是该账号固定的设备指纹，首次使用时生成并持久化。
+	//
+	// 上游按 uskey 识别设备：每次请求随机生成一个新的，等于每次都自称
+	// 一台新设备，会持续触发 4100404 风控。固定成账号级之后就表现为
+	// 「同一台机器一直用」。
+	USKey string `json:"uskey,omitempty"`
 	// ExpiresAt 是 access token 的绝对过期时间（Unix 秒）。
 	ExpiresAt int64  `json:"expires_at,omitempty"`
 	Nickname  string `json:"nickname,omitempty"`

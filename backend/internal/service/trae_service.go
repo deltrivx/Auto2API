@@ -296,6 +296,32 @@ func (s *adminServiceImpl) traeDefaultModelMapping(ctx context.Context, input *C
 	return out
 }
 
+// traeDevModelNames 返回 模型名 → __dev 型号 的映射，随 model_mapping 一起落库。
+//
+// 发对话时必须带 __dev 型号（payload 的 model_name），否则上游返回
+// 「failed to get app config: record not found」。
+func (s *adminServiceImpl) traeDevModelNames(ctx context.Context, input *CreateAccountInput) map[string]string {
+	site := traeSiteForPlatform(input.Platform)
+	if site == nil || len(input.Credentials) == 0 {
+		return nil
+	}
+	token := traeTokenOf(input.Credentials)
+	if token.Access == "" {
+		return nil
+	}
+	models, err := fetchTraeModels(ctx, site, token)
+	if err != nil || len(models) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(models))
+	for _, m := range models {
+		if m.DevModel != "" {
+			out[m.ID] = m.DevModel
+		}
+	}
+	return out
+}
+
 // TraeAccountModels 返回账号当前可用的模型（供账号测试弹窗选择）。
 //
 // 直接问上游，不做本地目录；拉取失败返回空列表，前端会显示「无可用模型」，

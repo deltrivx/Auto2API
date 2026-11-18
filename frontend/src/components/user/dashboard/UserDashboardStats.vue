@@ -53,7 +53,9 @@
         <div class="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
           <Icon name="dollar" size="md" class="text-purple-600 dark:text-purple-400" :stroke-width="2" />
         </div>
-        <div>
+        <!-- flex-1 + min-w-0：让文字区吃满图标之外的剩余宽度，
+             否则它按内容自然宽度收缩，长副标题只能折行。 -->
+        <div class="min-w-0 flex-1">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</p>
           <!-- 主值只显示实际消费，标准价放到 tooltip：
                两列并排会让人误读成「花了两个数」。 -->
@@ -64,13 +66,9 @@
           </p>
           <!-- 第三行：按平台拆出今日消耗，三个数相加等于主值。
                单位只在主值出现一次，这里省略——窄屏上重复三次「积分」会折成四五行。 -->
-          <!-- 三平台分项。
-               注意不要用 nowrap + 定字号：放不下时会溢出卡片、被右边直接裁掉。
-               这里用 clamp 让字号随容器宽度收缩，最小 9px，同时保留折行兜底。 -->
-          <p
-            class="leading-tight text-gray-500 dark:text-gray-400"
-            style="font-size: clamp(9px, 3.2vw, 12px)"
-          >
+          <!-- 三平台分项。容器已经撑满宽度，这里用正常字号即可，
+               不再需要 clamp 压缩（压缩过的小字在手机上很难读）。 -->
+          <p class="text-xs leading-snug text-gray-500 dark:text-gray-400">
             WB {{ formatCost(platformUsage.workbuddy) }} ·
             MV {{ formatCost(platformUsage.marvis) }} ·
             TR {{ formatCost(platformUsage.trae) }}

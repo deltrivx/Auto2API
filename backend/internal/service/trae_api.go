@@ -141,8 +141,7 @@ func fetchTraeModels(ctx context.Context, site *traeSite, token traeToken) ([]tr
 	hosts := site.traeHostsFor(token.Region)
 	host := strings.TrimRight(hosts.ModelHost, "/")
 
-	// 参数与 magpie 的 batchLists 一致。只传 functions 也能拿到列表，
-	// 但上游对参数缺失的容忍度不稳定，补齐更稳妥。
+	// 一次批量问全部 function，参数与 magpie 的 batchLists 一致。
 	body, err := json.Marshal(map[string]any{
 		"functions":                 traeChatFunctions,
 		"agent_type":                "",
@@ -160,89 +159,153 @@ func fetchTraeModels(ctx context.Context, site *traeSite, token traeToken) ([]tr
 			}
 		}
 	}
+
+	// 批量失败时逐个 function 问，并把结果合并——不同 function 提供的模型
+	// 不同（solo_agent 有 deepseek-v4.1-flash，chat_v3 没有），
+	// 只取第一个会漏掉一部分模型。
+	merged := []traeModel{}
+	seen := map[string]struct{}{}
+	succeeded := 0
 	for _, function := range traeChatFunctions {
 		payload, _ := json.Marshal(map[string]any{"function": function})
 		raw, callErr := traeDoJSON(ctx, http.MethodPost, host+"/api/ide/v1/get_detail_param", site, token, payload)
 		if callErr != nil {
 			continue
 		}
-		if models := parseTraeModelCatalog(raw); len(models) > 0 {
-			for i := range models {
-				if models[i].Function == "" {
-					models[i].Function = function
-				}
-			}
-			return models, nil
+		models := parseTraeModelCatalog(raw)
+		if len(models) == 0 {
+			continue
 		}
+		succeeded++
+		for i := range models {
+			if models[i].Function == "" {
+				models[i].Function = function
+			}
+			if _, dup := seen[models[i].ID]; dup {
+				continue
+			}
+			seen[models[i].ID] = struct{}{}
+			merged = append(merged, models[i])
+		}
+	}
+	if len(merged) > 0 {
+		return merged, nil
+	}
+	if succeeded == 0 {
+		return nil, errors.New("trae: 模型目录为空（上游未返回可用列表）")
 	}
 	return nil, errors.New("trae: 模型目录为空（上游未返回可用列表）")
 }
 
-// parseTraeModelCatalog 从目录响应里提取模型。
-//
-// 上游的结构在不同版本间变过，这里按「递归找带 model 名字的条目」处理：
-// 只有同时出现模型 id 与可选上下文信息的对象才算一条，避免把配置项当成模型。
 func parseTraeModelCatalog(raw []byte) []traeModel {
-	var root any
+	// 严格按 magpie 的取法：只认 function_configs[].config_info_list[]
+	// 与 config_info_list[] 这两种官方层级。
+	//
+	// 早期这里递归遍历整棵 JSON 树，把嵌套结构里的 config_name 也当模型抓了
+	// 进来（例如 xxx-auto 这类上游并不存在的变体），结果 model_mapping 里
+	// 存了一批发不出去的模型名，调用时上游报「param is invalid」。
+	var root map[string]any
 	if err := json.Unmarshal(raw, &root); err != nil {
 		return nil
 	}
-	var models []traeModel
-	seen := map[string]struct{}{}
-	var walk func(node any, function string)
-	walk = func(node any, function string) {
-		switch typed := node.(type) {
-		case map[string]any:
-			if name := firstNonEmpty(
-				traeStringValue(typed, "config_name"),
-				traeStringValue(typed, "configName"),
-			); name != "" {
-				dev, maxM := traeDetailModels(typed)
-				if _, dup := seen[name]; !dup {
-					seen[name] = struct{}{}
-					item := traeModel{ID: name, Name: firstNonEmpty(traeStringValue(typed, "name", "display_name"), name), DevModel: dev, MaxModel: maxM, Function: function}
-					if ctxWindow, ok := typed["context_window_tokens"].(map[string]any); ok {
-						item.Context = int(traeNumberValue(ctxWindow, "dev", "max"))
-					}
-					if v := int(traeNumberValue(typed, "max_tokens", "max_output_tokens")); v > 0 {
-						item.MaxOutput = v
-					}
-					if effort, ok := typed["reasoning_effort_config"].(map[string]any); ok {
-						for _, level := range traeReasoningLevels(effort) {
-							item.Efforts = append(item.Efforts, level)
-						}
-					}
-					models = append(models, item)
+
+	type bucket struct {
+		function string
+		entries  []any
+	}
+	var buckets []bucket
+
+	// batch_get_detail_param: {function_configs: [{function, config_info_list}]}
+	if groups, ok := root["function_configs"].([]any); ok {
+		for _, g := range groups {
+			gm, ok := g.(map[string]any)
+			if !ok {
+				continue
+			}
+			list, ok := gm["config_info_list"].([]any)
+			if !ok {
+				continue
+			}
+			buckets = append(buckets, bucket{
+				function: traeStringValue(gm, "function", "function_name"),
+				entries:  list,
+			})
+		}
+	} else if data, ok := root["data"].(map[string]any); ok {
+		if groups, ok := data["function_configs"].([]any); ok {
+			for _, g := range groups {
+				gm, ok := g.(map[string]any)
+				if !ok {
+					continue
 				}
-			}
-			if fn := traeStringValue(typed, "function", "function_name"); fn != "" {
-				function = fn
-			}
-			for _, value := range typed {
-				walk(value, function)
-			}
-		case []any:
-			for _, value := range typed {
-				walk(value, function)
+				list, ok := gm["config_info_list"].([]any)
+				if !ok {
+					continue
+				}
+				buckets = append(buckets, bucket{
+					function: traeStringValue(gm, "function", "function_name"),
+					entries:  list,
+				})
 			}
 		}
 	}
-	walk(root, "")
-	if len(models) == 0 {
-		return nil
+
+	// get_detail_param: {config_info_list: [...]}（单 function，调用方补 function）
+	if len(buckets) == 0 {
+		if list, ok := root["config_info_list"].([]any); ok {
+			buckets = append(buckets, bucket{entries: list})
+		} else if data, ok := root["data"].(map[string]any); ok {
+			if list, ok := data["config_info_list"].([]any); ok {
+				buckets = append(buckets, bucket{entries: list})
+			}
+		}
 	}
-	// -max 变体：条目同时给了 __max 与更大的上下文窗口时补一条。
-	expanded := make([]traeModel, 0, len(models))
-	byID := make(map[string]traeModel, len(models))
-	for _, item := range models {
-		expanded = append(expanded, item)
-		byID[item.ID] = item
+
+	var models []traeModel
+	seen := map[string]struct{}{}
+	for _, b := range buckets {
+		for _, item := range b.entries {
+			entry, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			name := traeStringValue(entry, "config_name", "configName")
+			if name == "" {
+				continue
+			}
+			// 同一模型被多个 function 列出时取第一个（含 __dev 的）。
+			if _, dup := seen[name]; dup {
+				continue
+			}
+			dev, maxM := traeDetailModels(entry)
+			// 没有 __dev 型号的条目发不出去，直接跳过——
+			// 这类名字上游不接受，留在目录里只会让调用失败。
+			if dev == "" {
+				continue
+			}
+			seen[name] = struct{}{}
+			m := traeModel{
+				ID:       name,
+				Name:     firstNonEmpty(traeStringValue(entry, "name", "display_name"), name),
+				DevModel: dev,
+				MaxModel: maxM,
+				Function: b.function,
+			}
+			if ctxWindow, ok := entry["context_window_tokens"].(map[string]any); ok {
+				m.Context = int(traeNumberValue(ctxWindow, "dev", "max"))
+			}
+			if v := int(traeNumberValue(entry, "max_tokens", "max_output_tokens")); v > 0 {
+				m.MaxOutput = v
+			}
+			if effort, ok := entry["reasoning_effort_config"].(map[string]any); ok {
+				m.Efforts = traeReasoningLevels(effort)
+			}
+			models = append(models, m)
+		}
 	}
-	sort.SliceStable(expanded, func(i, j int) bool { return false })
-	return expanded
+	return models
 }
 
-// traeReasoningLevels 把 Trae 的档位名映射成网关通用档位。
 func traeReasoningLevels(config map[string]any) []string {
 	rawLevels, _ := config["options"].([]any)
 	if len(rawLevels) == 0 {
@@ -454,4 +517,17 @@ func traeDevModelNameOf(credentials map[string]any, model string) string {
 		return model
 	}
 	return model + "__dev"
+}
+
+// traeFunctionOf 返回某模型应走的 function（凭据里记录的上游归属）。
+//
+// 一个模型通常只被某一个 function 列出（如 Doubao-Seed-2.1-Turbo-auto 只在
+// solo_agent 下）。用别的 function 发它，上游回「param is invalid」。
+func traeFunctionOf(credentials map[string]any, model string) string {
+	if raw, ok := credentials["model_functions"].(map[string]any); ok {
+		if v, ok := raw[model].(string); ok {
+			return v
+		}
+	}
+	return ""
 }

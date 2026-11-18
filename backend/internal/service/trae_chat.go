@@ -181,8 +181,21 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 		lastErr  error
 		function string
 	)
-	for _, candidate := range traeChatFunctions {
-		devName := traeDevModelNameOf(account.Credentials, upstreamModel)
+	// 模型归属的 function 优先：上游对「只在 solo_agent 下存在的模型」
+	// 用 chat_v3 发会直接回 400（param is invalid），而该码不在回退列表里。
+	candidates := traeChatFunctions
+	if own := traeFunctionOf(account.Credentials, upstreamModel); own != "" {
+		ordered := make([]string, 0, len(traeChatFunctions)+1)
+		ordered = append(ordered, own)
+		for _, fn := range traeChatFunctions {
+			if fn != own {
+				ordered = append(ordered, fn)
+			}
+		}
+		candidates = ordered
+	}
+	devName := traeDevModelNameOf(account.Credentials, upstreamModel)
+	for _, candidate := range candidates {
 		payload, err := buildTraeChatPayload(account, body, upstreamModel, devName, candidate)
 		if err != nil {
 			return nil, err

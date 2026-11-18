@@ -40,7 +40,7 @@ var traeChatFunctionFallbackCodes = map[int]bool{4001: true, 4023: true, 1005: t
 //
 // session_id 以账号设备为盐、按对话首条用户消息派生：同一会话的后续轮次
 // （工具结果回传、重试）保持同一个 id，不同账号之间不会撞。
-func buildTraeChatPayload(account *Account, body []byte, model, function string) (map[string]any, error) {
+func buildTraeChatPayload(account *Account, body []byte, model, modelName, function string) (map[string]any, error) {
 	if account == nil {
 		return nil, fmt.Errorf("trae: 账号为空")
 	}
@@ -59,6 +59,11 @@ func buildTraeChatPayload(account *Account, body []byte, model, function string)
 		"stream":     true,
 		"request_id": traeSessionID(account, string(body)+"|"+fmt.Sprintf("%d", time.Now().UnixNano())),
 		"session_id": traeSessionID(account, string(body)),
+	}
+	// model_name 必须是 model_detail_list 里的 __dev 型号，否则上游报
+	// 「failed to get app config: record not found」并返回空正文。
+	if modelName != "" {
+		payload["model_name"] = modelName
 	}
 	if effort := strings.TrimSpace(gjson.GetBytes(body, "reasoning_effort").String()); effort != "" {
 		payload["reasoning_effort"] = traeReasoningEffort(effort)
@@ -177,7 +182,8 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 		function string
 	)
 	for _, candidate := range traeChatFunctions {
-		payload, err := buildTraeChatPayload(account, body, upstreamModel, candidate)
+		devName := traeDevModelNameOf(account.Credentials, upstreamModel)
+		payload, err := buildTraeChatPayload(account, body, upstreamModel, devName, candidate)
 		if err != nil {
 			return nil, err
 		}
@@ -595,7 +601,8 @@ func (s *AccountTestService) testTraeAccountConnection(c *gin.Context, account *
 
 	var lastErr error
 	for _, function := range traeChatFunctions {
-		payload, buildErr := buildTraeChatPayload(account, body, model, function)
+		devName := traeDevModelNameOf(account.Credentials, model)
+		payload, buildErr := buildTraeChatPayload(account, body, model, devName, function)
 		if buildErr != nil {
 			return s.sendErrorAndEnd(c, buildErr.Error())
 		}

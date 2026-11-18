@@ -296,6 +296,32 @@ func (s *adminServiceImpl) traeDefaultModelMapping(ctx context.Context, input *C
 	return out
 }
 
+// traeModelFunctions 返回 模型名 → 所属 function，随模型目录一起落库。
+//
+// 模型只在某一 function 下存在时，用别的 function 发它会得到
+// 「param is invalid」。记下来才能直接走对的入口。
+func (s *adminServiceImpl) traeModelFunctions(ctx context.Context, input *CreateAccountInput) map[string]string {
+	site := traeSiteForPlatform(input.Platform)
+	if site == nil || len(input.Credentials) == 0 {
+		return nil
+	}
+	token := traeTokenOf(input.Credentials)
+	if token.Access == "" {
+		return nil
+	}
+	models, err := fetchTraeModels(ctx, site, token)
+	if err != nil || len(models) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(models))
+	for _, m := range models {
+		if m.Function != "" {
+			out[m.ID] = m.Function
+		}
+	}
+	return out
+}
+
 // traeDevModelNames 返回 模型名 → __dev 型号 的映射，随 model_mapping 一起落库。
 //
 // 发对话时必须带 __dev 型号（payload 的 model_name），否则上游返回

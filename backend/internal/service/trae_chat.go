@@ -13,6 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"log"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 )
@@ -50,8 +53,12 @@ func buildTraeChatPayload(account *Account, body []byte, model, function string)
 		"config_name": model,
 		"model":       model,
 		"function":    function,
-		"request_id":  traeSessionID(account, string(body)+"|"+fmt.Sprintf("%d", time.Now().UnixNano())),
-		"session_id":  traeSessionID(account, string(body)),
+		// stream 必须显式为 true：Trae 的 llm_utils_chat 只有 SSE 形态，
+		// 缺这个字段时上游仍返回 SSE，但正文事件为空（实测 content 恒为空）。
+		// magpie 的 chatBody 同样固定写 true。
+		"stream":     true,
+		"request_id": traeSessionID(account, string(body)+"|"+fmt.Sprintf("%d", time.Now().UnixNano())),
+		"session_id": traeSessionID(account, string(body)),
 	}
 	if effort := strings.TrimSpace(gjson.GetBytes(body, "reasoning_effort").String()); effort != "" {
 		payload["reasoning_effort"] = traeReasoningEffort(effort)
@@ -228,6 +235,12 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 		var event map[string]any
 		if err := json.Unmarshal([]byte(payload), &event); err != nil {
 			continue
+		}
+		// TEMP-DEBUG: 抓上游事件原始结构，定位 content 为空的原因。
+		if os.Getenv("TRAE_DEBUG_EVENTS") == "1" {
+			if b, err := json.Marshal(event); err == nil {
+				log.Printf("[trae-debug] %s", string(b[:min(len(b), 600)]))
+			}
 		}
 		// 只处理正文类事件，与 magpie 的 ANSWER 集合一致。
 		// 不加这层过滤会把 error / usage / done 等事件里的同名字段当正文取出来。
@@ -635,4 +648,3 @@ func firstTraeModelID(account *Account) string {
 	}
 	return ""
 }
-

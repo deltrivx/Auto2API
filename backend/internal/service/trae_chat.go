@@ -238,6 +238,24 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 				log.Printf("[trae-debug] %s", string(b[:min(len(b), 600)]))
 			}
 		}
+		// 只处理正文类事件，与 magpie 的 ANSWER 集合一致。
+		// 不加这层过滤会把 error / usage / done 等事件里的同名字段当正文取出来。
+		if !traeIsAnswerEvent(event) {
+			// 仍要读取 usage 与结束原因，只是不产正文。
+			if used := traeUsageFromEvent(event); used != nil {
+				usage = used
+			}
+			if reason := traeFinishReason(event); reason != "" {
+				finishReason = reason
+			}
+			if errMsg := traeEventError(event); errMsg != "" {
+				if !clientStream {
+					c.JSON(http.StatusBadGateway, gin.H{"error": gin.H{"message": errMsg, "type": "upstream_error"}})
+				}
+				return nil, fmt.Errorf("trae: 上游错误: %s", errMsg)
+			}
+			continue
+		}
 		if txt := traeDeltaText(event); txt != "" {
 			content.WriteString(txt)
 			if clientStream {
@@ -350,18 +368,84 @@ func writeTraeChunk(c *gin.Context, model string, delta map[string]any, _ any, f
 
 // ---------- Trae SSE 事件解析 ----------
 
-// traeDeltaText 取事件里的正文增量。
-func traeDeltaText(event map[string]any) string {
-	for _, key := range []string{"content", "response"} {
-		if v, ok := event[key].(string); ok && v != "" {
-			return v
+// traeAnswerEvents 是会产生正文的事件名集合，与 magpie 的 ANSWER 完全一致。
+//
+// 事件名为空也算正文事件：部分上游版本不发 type 字段，正文直接放在顶层。
+var traeAnswerEvents = map[string]struct{}{
+	"": {}, "output": {}, "message": {}, "delta": {}, "content": {},
+	"text": {}, "answer": {}, "chunk": {}, "output_delta": {}, "message_delta": {},
+}
+
+// traeIsAnswerEvent 判断事件是否属于正文类。
+func traeIsAnswerEvent(event map[string]any) bool {
+	name := traeEventName(event)
+	_, ok := traeAnswerEvents[name]
+	return ok
+}
+
+// traeEventName 归一化事件名，对齐 magpie 的 eventName()：
+// 驼峰转下划线、非字母数字转下划线、转小写、去首尾下划线。
+func traeEventName(event map[string]any) string {
+	raw, _ := event["type"].(string)
+	if raw == "" {
+		raw, _ = event["event"].(string)
+	}
+	if raw == "" {
+		return ""
+	}
+	var b strings.Builder
+	prevLowerOrDigit := false
+	for _, r := range raw {
+		switch {
+		case r >= 'a' && r <= 'z':
+			b.WriteRune(r)
+			prevLowerOrDigit = true
+		case r >= 'A' && r <= 'Z':
+			if prevLowerOrDigit {
+				b.WriteRune('_')
+			}
+			b.WriteRune(r - 'A' + 'a')
+			prevLowerOrDigit = false
+		case r >= '0' && r <= '9':
+			b.WriteRune(r)
+			prevLowerOrDigit = true
+		default:
+			b.WriteRune('_')
+			prevLowerOrDigit = false
 		}
+	}
+	return strings.Trim(b.String(), "_")
+}
+
+// traeDeltaText 取事件里的正文增量。
+// traeDeltaText 取事件里的正文增量。
+//
+// 取值顺序严格对齐 magpie trae_index.mjs 的 parts()：
+//
+//	d.response (string)
+//	> d.content (string)
+//	> d.delta.content (string)
+//	> d.delta (string 本身)
+//
+// 最后一条最容易漏：上游在某些事件里把 delta 直接发成字符串，
+// 而结构体断言会把它挡掉，表现就是"回复为空"。
+func traeDeltaText(event map[string]any) string {
+	if v, ok := event["response"].(string); ok && v != "" {
+		return v
+	}
+	if v, ok := event["content"].(string); ok && v != "" {
+		return v
 	}
 	if delta, ok := event["delta"].(map[string]any); ok {
 		if v, ok := delta["content"].(string); ok {
 			return v
 		}
 	}
+	// delta 本身是字符串的情况。
+	if v, ok := event["delta"].(string); ok && v != "" {
+		return v
+	}
+	// 兼容 message 包裹（magpie 没有，但部分上游版本会这样发）。
 	if message, ok := event["message"].(map[string]any); ok {
 		if v, ok := message["content"].(string); ok {
 			return v
@@ -371,14 +455,17 @@ func traeDeltaText(event map[string]any) string {
 }
 
 // traeDeltaReasoning 取事件里的思考增量。
+// traeDeltaReasoning 取事件里的思考增量。
+//
+// 对齐 magpie：按 reasoning_content > reasoning > delta.reasoning_content > delta.reasoning
+// 的顺序取第一个非空值——空串不算答案，要继续往后找。
 func traeDeltaReasoning(event map[string]any) string {
-	for _, key := range []string{"reasoning_content", "reasoning"} {
-		if v, ok := event[key].(string); ok && v != "" {
-			return v
-		}
-	}
+	candidates := []any{event["reasoning_content"], event["reasoning"]}
 	if delta, ok := event["delta"].(map[string]any); ok {
-		if v, ok := delta["reasoning_content"].(string); ok {
+		candidates = append(candidates, delta["reasoning_content"], delta["reasoning"])
+	}
+	for _, c := range candidates {
+		if v, ok := c.(string); ok && v != "" {
 			return v
 		}
 	}

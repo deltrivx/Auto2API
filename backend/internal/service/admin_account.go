@@ -568,7 +568,11 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 		if _, has := input.Credentials["model_dev_names"]; !has {
 			needDev = true
 		}
-		if needMapping || needDev {
+		needFn := false
+		if _, has := input.Credentials["model_functions"]; !has {
+			needFn = true
+		}
+		if needMapping || needDev || needFn {
 			// 一次拉取同时拿到 model_mapping 与 model_dev_names，避免打两遍上游。
 			models := s.traeDefaultModelMapping(ctx, input)
 			devNames := s.traeDevModelNames(ctx, input)
@@ -582,6 +586,11 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 				}
 				if needDev && len(devNames) > 0 {
 					merged["model_dev_names"] = devNames
+				}
+				if needFn {
+					if fns := s.traeModelFunctions(ctx, input); len(fns) > 0 {
+						merged["model_functions"] = fns
+					}
 				}
 				input.Credentials = merged
 			}

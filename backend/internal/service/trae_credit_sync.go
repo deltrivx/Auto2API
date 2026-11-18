@@ -175,6 +175,13 @@ func (s *TraeCreditSyncService) Sync(ctx context.Context) *TraeCreditSnapshot {
 // Start 按间隔周期同步，直到 ctx 取消。
 func (s *TraeCreditSyncService) Start(ctx context.Context) {
 	go func() {
+		// 启动后等几秒再同步：此时 HTTP 服务刚起来，立刻拉 6 个账号的额度
+		// 会和首屏请求抢资源，反而让第一个用户等更久。
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(3 * time.Second):
+		}
 		s.Sync(ctx)
 		ticker := time.NewTicker(s.interval)
 		defer ticker.Stop()

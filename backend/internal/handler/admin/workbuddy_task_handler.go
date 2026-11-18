@@ -364,11 +364,13 @@ func (h *WorkBuddyTaskHandler) CreditSnapshot(c *gin.Context) {
 		response.Success(c, gin.H{"accounts": []any{}, "synced_at": nil})
 		return
 	}
+	var snap *service.WorkBuddyCreditSnapshot
 	if c.Query("sync") == "1" {
-		response.Success(c, h.creditSync.ForceSync(c.Request.Context()))
-		return
+		snap = h.creditSync.ForceSync(c.Request.Context())
+	} else {
+		snap = h.creditSync.Snapshot()
 	}
-	response.Success(c, h.creditSync.Snapshot())
+	respondSnapshot(c, snap, snap.SyncedAt)
 }
 
 // ExecuteTasks 在指定账号上执行指定任务（含事件上报）。
@@ -575,11 +577,13 @@ func (h *WorkBuddyTaskHandler) MarvisCreditSnapshot(c *gin.Context) {
 		})
 		return
 	}
+	var snap *service.MarvisCreditSnapshot
 	if c.Query("sync") == "1" {
-		response.Success(c, h.marvisCreditSync.Sync(c.Request.Context()))
-		return
+		snap = h.marvisCreditSync.Sync(c.Request.Context())
+	} else {
+		snap = h.marvisCreditSync.Snapshot()
 	}
-	response.Success(c, h.marvisCreditSync.Snapshot())
+	respondSnapshot(c, snap, snap.SyncedAt)
 }
 
 // TraeCreditSnapshot 返回 Trae 积分快照。
@@ -600,11 +604,17 @@ func (h *WorkBuddyTaskHandler) TraeCreditSnapshot(c *gin.Context) {
 		})
 		return
 	}
+	var snap *service.TraeCreditSnapshot
 	if c.Query("sync") == "1" {
-		response.Success(c, h.traeCreditSync.Sync(c.Request.Context()))
-		return
+		snap = h.traeCreditSync.Sync(c.Request.Context())
+	} else {
+		snap = h.traeCreditSync.Snapshot()
 	}
-	response.Success(c, h.traeCreditSync.Snapshot())
+	ts := time.Now()
+	if snap.SyncedAt != nil {
+		ts = *snap.SyncedAt
+	}
+	respondSnapshot(c, snap, ts)
 }
 
 // WithTraeCreditSync 注入 Trae 积分快照服务。

@@ -58,12 +58,14 @@
           <!-- 主值只显示实际消费，标准价放到 tooltip：
                两列并排会让人误读成「花了两个数」。 -->
           <!-- 主值 = 三个平台官方口径今日消耗之和（不是按定价表估算的值）。 -->
-          <p class="text-xl font-bold text-purple-600 dark:text-purple-400">
+          <!-- whitespace-nowrap：数字和单位必须同一行，否则窄屏上「积分」会被挤到下一行。 -->
+          <p class="whitespace-nowrap text-xl font-bold text-purple-600 dark:text-purple-400">
             {{ formatCost(platformUsage.total) }}<span class="ml-1 text-sm font-normal text-gray-400">{{ t('admin.accounts.creditsUnit') }}</span>
           </p>
-          <!-- 第三行：按平台拆出今日消耗，三个数相加等于主值。 -->
-          <p class="text-xs text-gray-500 dark:text-gray-400">
-            WorkBuddy：{{ formatCost(platformUsage.workbuddy) }} {{ t('admin.accounts.creditsUnit') }} + Marvis：{{ formatCost(platformUsage.marvis) }} {{ t('admin.accounts.creditsUnit') }} + Trae：{{ formatCost(platformUsage.trae) }} {{ t('admin.accounts.creditsUnit') }}
+          <!-- 第三行：按平台拆出今日消耗，三个数相加等于主值。
+               单位只在主值出现一次，这里省略——窄屏上重复三次「积分」会折成四五行。 -->
+          <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+            WB {{ formatCost(platformUsage.workbuddy) }} · Marvis {{ formatCost(platformUsage.marvis) }} · Trae {{ formatCost(platformUsage.trae) }}
           </p>
         </div>
       </div>

@@ -164,35 +164,37 @@ function normalizeWb(s: WorkBuddyCreditSnapshot | null): WorkBuddyCreditSnapshot
 // 首次无数据时带 sync=1 让后端同步跑一轮再返回，否则仪表盘会先显示骨架条。
 // 三个请求并发，不串行等。失败时保留上一次的值，避免刷新时闪回骨架。
 async function load(forceSync = false) {
+  // 冷启动判断：本次会话里没拉过，就第一次直接带 sync=1。
+  //
+  // 原先的写法是「先请求缓存，空了再请求一次 sync=1」，冷启动时会打两次上游，
+  // 而 Trae 强制同步要 1.5 秒——等于把最慢的路径走了两遍。
+  const coldKey = 'credits-cold-loaded'
+  const coldStart = !sessionStorage.getItem(coldKey)
+
   const [wb, mv, tr] = await Promise.all([
     (async () => {
       try {
-        let s = await getWorkBuddyCreditSnapshot(forceSync)
-        if ((s.accounts?.length ?? 0) === 0 && !forceSync) s = await getWorkBuddyCreditSnapshot(true)
-        return normalizeWb(s)
+        return normalizeWb(await getWorkBuddyCreditSnapshot(forceSync || coldStart))
       } catch {
         return snap.value
       }
     })(),
     (async () => {
       try {
-        let s = await getMarvisCreditSnapshot(forceSync)
-        if ((s.accounts?.length ?? 0) === 0 && !forceSync) s = await getMarvisCreditSnapshot(true)
-        return s
+        return await getMarvisCreditSnapshot(forceSync || coldStart)
       } catch {
         return marvis.value
       }
     })(),
     (async () => {
       try {
-        let s = await getTraeCreditSnapshot(forceSync)
-        if ((s.accounts?.length ?? 0) === 0 && !forceSync) s = await getTraeCreditSnapshot(true)
-        return s
+        return await getTraeCreditSnapshot(forceSync || coldStart)
       } catch {
         return trae.value
       }
     })()
   ])
+  sessionStorage.setItem(coldKey, '1')
   if (wb) snap.value = wb
   if (mv) marvis.value = mv
   if (tr) trae.value = tr

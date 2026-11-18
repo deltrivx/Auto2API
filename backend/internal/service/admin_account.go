@@ -560,13 +560,29 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 	// 与 WorkBuddy 同理——目录由上游 /api/ide/v1/* 按账号动态下发，不写默认值
 	// 账号的模型列表为空，调度时匹配不到任何请求。
 	if IsTraePlatform(input.Platform) && len(input.Credentials) > 0 {
+		needMapping := false
 		if _, has := input.Credentials["model_mapping"]; !has {
-			if models := s.traeDefaultModelMapping(ctx, input); len(models) > 0 {
-				merged := make(map[string]any, len(input.Credentials)+1)
+			needMapping = true
+		}
+		needDev := false
+		if _, has := input.Credentials["model_dev_names"]; !has {
+			needDev = true
+		}
+		if needMapping || needDev {
+			// 一次拉取同时拿到 model_mapping 与 model_dev_names，避免打两遍上游。
+			models := s.traeDefaultModelMapping(ctx, input)
+			devNames := s.traeDevModelNames(ctx, input)
+			if len(models) > 0 || len(devNames) > 0 {
+				merged := make(map[string]any, len(input.Credentials)+2)
 				for k, v := range input.Credentials {
 					merged[k] = v
 				}
-				merged["model_mapping"] = models
+				if needMapping && len(models) > 0 {
+					merged["model_mapping"] = models
+				}
+				if needDev && len(devNames) > 0 {
+					merged["model_dev_names"] = devNames
+				}
 				input.Credentials = merged
 			}
 		}

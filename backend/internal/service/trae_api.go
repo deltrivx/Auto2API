@@ -118,8 +118,13 @@ type traeModel struct {
 	MaxOutput int      `json:"max_output,omitempty"`
 	Efforts   []string `json:"efforts,omitempty"`
 	Function  string   `json:"function,omitempty"`
-	// DevModel 是该条目给本模型分配的 __dev 模型名。
+	// DevModel 是该条目 model_detail_list 里以 __dev 结尾的 model_name。
+	//
+	// 上游发对话时必须带这个值（payload 的 model_name 字段），
+	// 只带 config_name 会得到「failed to get app config: record not found」。
 	DevModel string `json:"dev_model,omitempty"`
+	// MaxModel 是 model_detail_list 里以 __max 结尾的 model_name，Max 模式用。
+	MaxModel string `json:"max_model,omitempty"`
 }
 
 // traeChatFunctions 是对话可用的 function，按优先级排列（与 magpie 一致）。
@@ -136,7 +141,18 @@ func fetchTraeModels(ctx context.Context, site *traeSite, token traeToken) ([]tr
 	hosts := site.traeHostsFor(token.Region)
 	host := strings.TrimRight(hosts.ModelHost, "/")
 
-	body, err := json.Marshal(map[string]any{"functions": traeChatFunctions})
+	// 参数与 magpie 的 batchLists 一致。只传 functions 也能拿到列表，
+	// 但上游对参数缺失的容忍度不稳定，补齐更稳妥。
+	body, err := json.Marshal(map[string]any{
+		"functions":                 traeChatFunctions,
+		"agent_type":                "",
+		"current_config_info":       map[string]any{"config_name": "", "is_custom_model": false},
+		"mode_type":                 0,
+		"access_type":               0,
+		"ab_force_vids":             "",
+		"ab_autotest_advanced_mode": 0,
+		"show_custom_model":         true,
+	})
 	if err == nil {
 		if raw, callErr := traeDoJSON(ctx, http.MethodPost, host+"/api/ide/v1/batch_get_detail_param", site, token, body); callErr == nil {
 			if models := parseTraeModelCatalog(raw); len(models) > 0 {
@@ -181,10 +197,10 @@ func parseTraeModelCatalog(raw []byte) []traeModel {
 				traeStringValue(typed, "config_name"),
 				traeStringValue(typed, "configName"),
 			); name != "" {
-				dev := firstNonEmpty(traeStringValue(typed, "model"), traeStringValue(typed, "__dev"))
+				dev, maxM := traeDetailModels(typed)
 				if _, dup := seen[name]; !dup {
 					seen[name] = struct{}{}
-					item := traeModel{ID: name, Name: firstNonEmpty(traeStringValue(typed, "name", "display_name"), name), DevModel: dev, Function: function}
+					item := traeModel{ID: name, Name: firstNonEmpty(traeStringValue(typed, "name", "display_name"), name), DevModel: dev, MaxModel: maxM, Function: function}
 					if ctxWindow, ok := typed["context_window_tokens"].(map[string]any); ok {
 						item.Context = int(traeNumberValue(ctxWindow, "dev", "max"))
 					}
@@ -382,4 +398,60 @@ func TraeCreditsAsPoints(c *TraeCredits) (limit, used float64) {
 		return c.Limit * traeUSDToCredits, c.Used * traeUSDToCredits
 	}
 	return c.Limit, c.Used
+}
+
+// traeDetailModels 从模型条目里取出 __dev / __max 两个 model_name。
+//
+// 上游把可用模型放在 config_info_list 里，每个条目的 model_detail_list
+// 才是真正发给上游的型号：
+//
+//	config_name:        "Doubao-Seed-2.1-Turbo"        ← 请求里的 config_name/model
+//	model_detail_list:  [{"model_name": "...__dev"}]   ← 请求里的 model_name
+//
+// 只传 config_name 不带 model_name，上游会回
+// 「failed to get app config: record not found」，表现为空回复。
+func traeDetailModels(entry map[string]any) (dev string, max string) {
+	raw, ok := entry["model_detail_list"].([]any)
+	if !ok {
+		return "", ""
+	}
+	for _, item := range raw {
+		detail, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		name := traeStringValue(detail, "model_name", "name")
+		if name == "" {
+			continue
+		}
+		switch {
+		case strings.HasSuffix(name, "__dev") && dev == "":
+			dev = name
+		case strings.HasSuffix(name, "__max") && max == "":
+			max = name
+		}
+	}
+	return dev, max
+}
+
+// traeDevModelNameOf 从账号凭据里取某个模型的 __dev 型号。
+//
+// 模型目录在账号创建/刷新时写进 credentials.model_mapping（模型名 → 模型名），
+// 这里额外读 model_dev_names（模型名 → __dev 型号）。老账号没有这个字段时
+// 退回「模型名 + __dev」的约定——上游所有条目都是这个命名。
+func traeDevModelNameOf(credentials map[string]any, model string) string {
+	model = strings.TrimSpace(model)
+	if model == "" {
+		return ""
+	}
+	if raw, ok := credentials["model_dev_names"].(map[string]any); ok {
+		if v, ok := raw[model].(string); ok && v != "" {
+			return v
+		}
+	}
+	// 已经是 __dev 结尾就直接用
+	if strings.HasSuffix(model, "__dev") {
+		return model
+	}
+	return model + "__dev"
 }

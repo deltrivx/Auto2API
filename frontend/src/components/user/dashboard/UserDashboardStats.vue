@@ -65,7 +65,7 @@
           <!-- 第三行：按平台拆出今日消耗，三个数相加等于主值。
                单位只在主值出现一次，这里省略——窄屏上重复三次「积分」会折成四五行。 -->
           <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-            WB {{ formatCost(platformUsage.workbuddy) }} · Marvis {{ formatCost(platformUsage.marvis) }} · Trae {{ formatCost(platformUsage.trae) }}
+            WB {{ formatCost(platformUsage.workbuddy) }} · MV {{ formatCost(platformUsage.marvis) }} · Trae {{ formatCost(platformUsage.trae) }}
           </p>
         </div>
       </div>

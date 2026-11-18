@@ -13,9 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"log"
-	"os"
-
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 )
@@ -231,12 +228,6 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 		var event map[string]any
 		if err := json.Unmarshal([]byte(payload), &event); err != nil {
 			continue
-		}
-		// TEMP-DEBUG: 抓上游事件原始结构，定位 content 为空的原因。
-		if os.Getenv("TRAE_DEBUG_EVENTS") == "1" {
-			if b, err := json.Marshal(event); err == nil {
-				log.Printf("[trae-debug] %s", string(b[:min(len(b), 600)]))
-			}
 		}
 		// 只处理正文类事件，与 magpie 的 ANSWER 集合一致。
 		// 不加这层过滤会把 error / usage / done 等事件里的同名字段当正文取出来。
@@ -644,3 +635,4 @@ func firstTraeModelID(account *Account) string {
 	}
 	return ""
 }
+

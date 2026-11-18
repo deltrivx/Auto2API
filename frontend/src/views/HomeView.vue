@@ -462,17 +462,20 @@ const platformCards = computed<
   {
     id: 'workbuddy_cn',
     name: t('home.providers.claude'),
-    desc: '国内版 / 国际版 · 60+ 模型 · 流式与工具调用'
+    // 不写模型数量：上游目录随时会变，写死在首页很快就会过期。
+    desc: '国内版 / 国际版 · 流式与工具调用'
   },
   {
     id: 'marvis',
     name: t('home.providers.antigravity'),
-    desc: 'QQ / 微信登录 · 4 个模型 · 含视觉模型'
+    desc: 'QQ / 微信登录 · 流式与视觉'
   },
   {
     id: 'trae_cn',
     name: t('home.providers.trae'),
-    desc: '国内版 / 国际版 · 90+ 模型 · 浏览器授权'
+    // Trae 的差异点在自动回退：模型分散在不同 function 上，
+    // 主 function 报错会自动换下一个。
+    desc: '国内版 / 国际版 · 流式 · 自动回退'
   }
 ])
 const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))

@@ -62,8 +62,10 @@ var creditTiers = []creditTier{
 		contextLimit: 200_000,
 	},
 	{
-		name:         "轻量",
-		prefixes:     []string{"hy3", "hy4", "step-", "doubao", "qwen", "minimax", "kimi-k2"},
+		name: "轻量",
+		prefixes: []string{"hy3", "hy4", "step-", "doubao", "qwen", "minimax", "kimi-k2",
+			// WorkBuddy 私有路由模型：上游 /v3/config 不给 credits，价格表也没有条目。
+			"balanced-model", "default-model", "codewise-"},
 		inputPer1M:   100,
 		outputPer1M:  97,
 		contextLimit: 128_000,
@@ -150,6 +152,20 @@ func creditTierCost(model string, tokens UsageTokens) float64 {
 		float64(cached)/perM*inPer1M*0.1 +
 		float64(tokens.OutputTokens)/perM*outPer1M
 	return cost
+}
+
+// isOwnedCreditPlatform 判断平台是否属于三个自有平台（WorkBuddy / Marvis / Trae）。
+//
+// 这三个平台的模型目录来自上游、型号变动频繁，不可能全部进价格表，
+// 因此它们的计费都允许用积分档位表兜底。
+func isOwnedCreditPlatform(platform string) bool {
+	switch platform {
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl,
+		PlatformMarvis,
+		PlatformTraeCN, PlatformTraeIntl:
+		return true
+	}
+	return false
 }
 
 // isTraeOrMarvisPlatformName 判断平台常量是否属于 Trae / Marvis。

@@ -176,7 +176,7 @@ export default {
   // Auth
   auth: {
     welcomeBack: '欢迎回来',
-    signInToAccount: '登录后即可使用 WorkBuddy 与 Marvis 的全部模型',
+    signInToAccount: '登录后即可使用多个平台的全部模型',
     signIn: '登录',
     signingIn: '登录中...',
     passkeySignIn: '使用 Passkey 登录',

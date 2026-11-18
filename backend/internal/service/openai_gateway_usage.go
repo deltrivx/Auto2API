@@ -330,17 +330,19 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 		}
 	}
 
-	// Marvis 与 Trae 的积分消耗按 WorkBuddy 的官方积分体系对齐。
+	// 三个自有平台的积分消耗统一按积分档位表兜底。
 	//
-	// 这两个平台的模型没有走完整的官方积分定价（Trae 甚至拿不到 token 计量），
-	// 直接用通用美元价会让它们的积分消耗比 WorkBuddy 低两个数量级——
-	// 同一个 deepseek-v4-flash，WorkBuddy 扣 112，Marvis 只扣 1。
+	// 为什么需要这一步：
+	//   - Trae 拿不到上游 token 计量，价格表里也没有它的模型；
+	//   - Marvis 在用通用美元价，与 WorkBuddy 的积分体系差两个数量级；
+	//   - WorkBuddy 的私有路由模型（hy4free、balanced-model、codewise-* 等）
+	//     不在价格表，上游 /v3/config 也不给 credits，算下来是 0。
 	//
-	// 这里在能拿到 account 的位置统一按积分档位表补算，保证三个自有平台
-	// 同一模型落到相近的积分档位。WorkBuddy 本来就走官方定价，不受影响。
+	// 结果都是同一个：请求成功但 actual_cost = 0，等于白送。
+	// 这里在能拿到 account 的位置统一补算，只在前面的计费链路完全得出 0 时生效，
+	// 已经算出卖价的请求（WorkBuddy 的常规模型）不受影响。
 	if cost != nil && account != nil && cost.ActualCost == 0 && cost.TotalCost == 0 {
-		switch {
-		case IsTraePlatform(account.Platform), IsMarvisPlatform(account.Platform):
+		if isOwnedCreditPlatform(account.Platform) {
 			estimated := creditTierCost(billingModels[0], tokens)
 			if estimated > 0 {
 				cost.TotalCost = estimated

@@ -4,14 +4,8 @@
       <!-- 与原生指标卡同构：图标在左（p-2 圆角块），文本在右 -->
       <div class="flex items-center gap-3">
         <div class="rounded-lg p-2" :class="card.bg">
-          <!-- 平台卡用官方 mark，其余沿用线条图标 -->
-          <PlatformIcon
-            v-if="card.platform"
-            :platform="card.platform"
-            size="md"
-            :class="card.color"
-          />
-          <Icon v-else :name="card.icon || 'chart'" size="md" :class="card.color" :stroke-width="2" />
+          <!-- 四张卡都绑定一个平台，统一用官方 mark，不再混用线条图标 -->
+          <PlatformIcon :platform="card.platform" size="md" class="text-gray-700 dark:text-gray-200" />
         </div>
         <div class="min-w-0">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ card.label }}</p>
@@ -33,7 +27,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAutoRefresh } from '@/composables/useAutoRefresh'
-import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import {
   getWorkBuddyCreditSnapshot,
@@ -82,8 +75,9 @@ type Card = {
   label: string
   value: string
   hint: string
-  platform?: 'workbuddy_cn' | 'marvis' | 'trae_cn'
-  icon?: 'chart' | 'trophy' | 'clock' | 'grid'
+  // 每张卡都对应一个平台，图标统一取该平台的官方 mark。
+  platform: 'workbuddy_cn' | 'marvis' | 'trae_cn'
+  // 数值与副标题的颜色，按平台区分，便于扫读。
   color: string
   bg: string
 }
@@ -118,7 +112,7 @@ const cards = computed<Card[]>(() => {
       value: fmt(wbTodayCost),
       // 两个分项是相加得出主数值的关系，用 + 而不是 · 更直观。
       hint: `${t('admin.accounts.creditsCheckinShort')}${fmt(todayCheckin)} + ${t('admin.accounts.creditsTaskShort')}${fmt(todayTask)}`,
-      icon: 'chart',
+      platform: 'workbuddy_cn',
       color: 'text-primary-600 dark:text-primary-400',
       bg: 'bg-primary-50 dark:bg-primary-900/20'
     },
@@ -129,7 +123,7 @@ const cards = computed<Card[]>(() => {
       // 副标题第二行 = 国内版所有账号总余额 + 国际版所有账号总余额。
       // 两个数都直接来自快照的站点拆分字段，不在前端做减法。
       hint: `${t('admin.accounts.creditsCNTotal')} ${fmt(Number(wb?.total_credits_cn ?? 0))} ${unit.value} + ${t('admin.accounts.creditsIntlTotal')} ${fmt(Number(wb?.total_credits_intl ?? 0))} ${unit.value}`,
-      icon: 'trophy',
+      platform: 'workbuddy_cn',
       color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-50 dark:bg-emerald-900/20'
     },

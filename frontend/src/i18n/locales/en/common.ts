@@ -176,7 +176,7 @@ export default {
   // Auth
   auth: {
     welcomeBack: 'Welcome Back',
-    signInToAccount: 'Sign in to use WorkBuddy and Marvis models',
+    signInToAccount: 'Sign in to use models from all connected platforms',
     signIn: 'Sign In',
     signingIn: 'Signing in...',
     passkeySignIn: 'Sign in with a passkey',

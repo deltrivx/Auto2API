@@ -13,6 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"log"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 )
@@ -228,6 +231,12 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 		var event map[string]any
 		if err := json.Unmarshal([]byte(payload), &event); err != nil {
 			continue
+		}
+		// TEMP-DEBUG: 抓上游事件原始结构，定位 content 为空的原因。
+		if os.Getenv("TRAE_DEBUG_EVENTS") == "1" {
+			if b, err := json.Marshal(event); err == nil {
+				log.Printf("[trae-debug] %s", string(b[:min(len(b), 600)]))
+			}
 		}
 		if txt := traeDeltaText(event); txt != "" {
 			content.WriteString(txt)

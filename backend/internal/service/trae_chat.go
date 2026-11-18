@@ -223,9 +223,20 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 	var reasoning strings.Builder
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64<<10), 4<<20)
+	// SSE 的 event 名是独立一行（`event: error`），不在 data 的 JSON 里。
+	// 不读它就无法识别上游的错误事件，失败会被当成"空回复"静默跳过。
+	currentEvent := ""
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-		if line == "" || !strings.HasPrefix(line, "data:") {
+		if line == "" {
+			currentEvent = ""
+			continue
+		}
+		if strings.HasPrefix(line, "event:") {
+			currentEvent = strings.TrimSpace(strings.TrimPrefix(line, "event:"))
+			continue
+		}
+		if !strings.HasPrefix(line, "data:") {
 			continue
 		}
 		payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
@@ -235,6 +246,12 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 		var event map[string]any
 		if err := json.Unmarshal([]byte(payload), &event); err != nil {
 			continue
+		}
+		// 把 SSE 的 event 名注入事件对象，供 traeEventError / traeUsageFromEvent 判定。
+		if currentEvent != "" {
+			if _, has := event["event"]; !has {
+				event["event"] = currentEvent
+			}
 		}
 		// TEMP-DEBUG: 抓上游事件原始结构，定位 content 为空的原因。
 		if os.Getenv("TRAE_DEBUG_EVENTS") == "1" {

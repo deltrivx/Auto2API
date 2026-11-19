@@ -4,6 +4,22 @@
 
 > 说明：v1.0.7 – v1.2.16 的条目缺失，此处从 v1.2.17 起重新按版本记录。
 
+## v1.2.26
+
+新增新手礼包领取（对照 AutoBuddy 实测实现）。
+
+`/billing/meter/claim-compensation` 上游已下线，但
+`POST https://www.codebuddy.cn/billing/meter/claim-gift` 仍可用，每账号一次。
+作为 `activity_gift` 并入互动任务列表（仅国内版），「已领取」识别为终态。
+
+## v1.2.25
+
+修复积分趋势图的获得积分。
+
+`workbuddy_credit_history` 在重构后已无写入方（`AddDailyCredits` 无调用点），
+`earned` 永远为 0。改为以 `workbuddy_task_runs` 为获得积分的权威来源，
+仅在当天没有历史汇总值时回填，避免重复累加；单账号回退路径同步处理。
+
 ## v1.2.24
 
 新增 HTTP 请求指标，清理 WorkBuddy 死代码。

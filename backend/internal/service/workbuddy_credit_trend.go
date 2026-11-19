@@ -32,6 +32,10 @@ type WorkBuddyCreditTrendStore interface {
 	CountCallsByDay(ctx context.Context, from, to time.Time) (map[string]int, error)
 	// SumCreditsByDayForAccount 返回单个账号区间内每天的 [消耗, 获得] 积分。
 	SumCreditsByDayForAccount(ctx context.Context, accountID int64, from, to time.Time) (map[string][2]float64, error)
+	// SumEarnedByDay 返回区间内每天由签到/任务实际获得的积分（明细口径）。
+	SumEarnedByDay(ctx context.Context, from, to time.Time) (map[string]float64, error)
+	// SumEarnedByDayForAccount 同上，但按账号过滤。
+	SumEarnedByDayForAccount(ctx context.Context, accountID int64, from, to time.Time) (map[string]float64, error)
 }
 
 // WorkBuddyCreditCreditHistoryStore 是写入侧：把当日汇总累加进表。
@@ -72,6 +76,15 @@ func WorkBuddyCreditTrend(ctx context.Context, days int) []WorkBuddyCreditDailyS
 				if b, ok := buckets[day]; ok {
 					b.Credits = pair[0]
 					b.Earned = pair[1]
+				}
+			}
+		}
+		// 汇总表在重构后已无写入方，earned 会一直为 0；用明细表补齐。
+		// 只在当天没有汇总值时回填，避免两处数据重复累加。
+		if earned, err := workBuddyCreditTrendStore.SumEarnedByDay(ctx, from, now); err == nil {
+			for day, v := range earned {
+				if b, ok := buckets[day]; ok && b.Earned == 0 {
+					b.Earned = v
 				}
 			}
 		}
@@ -173,10 +186,14 @@ func WorkBuddyAccountCreditTrend(ctx context.Context, account *Account, days int
 		now := time.Now()
 		from := now.AddDate(0, 0, -(days - 1))
 		if sums, err := workBuddyCreditTrendStore.SumCreditsByDayForAccount(ctx, account.ID, from, now); err == nil {
+			earned := map[string]float64{}
+			if e, err2 := workBuddyCreditTrendStore.SumEarnedByDayForAccount(ctx, account.ID, from, now); err2 == nil {
+				earned = e
+			}
 			out := make([]WorkBuddyCreditDailySummary, 0, days)
 			for i := days - 1; i >= 0; i-- {
 				key := now.AddDate(0, 0, -i).Format("2006-01-02")
-				out = append(out, WorkBuddyCreditDailySummary{Date: key, Credits: sums[key][0]})
+				out = append(out, WorkBuddyCreditDailySummary{Date: key, Credits: sums[key][0], Earned: earned[key]})
 			}
 			return out
 		}

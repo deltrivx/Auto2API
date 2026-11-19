@@ -134,3 +134,61 @@ func (r *workBuddyCreditHistoryRepo) SumCreditsByDayForAccount(
 	}
 	return out, rows.Err()
 }
+
+// SumEarnedByDay 返回区间内每天由签到/任务获得的积分。
+//
+// 数据源是 workbuddy_task_runs（逐次执行明细）。workbuddy_credit_history
+// 在重构后已无写入方，earned 会永久为 0，这里作为权威口径补上。
+func (r *workBuddyCreditHistoryRepo) SumEarnedByDay(ctx context.Context, from, to time.Time) (map[string]float64, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT to_char(occurred_at, 'YYYY-MM-DD') AS d,
+		       COALESCE(SUM(credit), 0)::float8 AS earned
+		FROM workbuddy_task_runs
+		WHERE occurred_at::date >= $1::date
+		  AND occurred_at::date <= $2::date
+		GROUP BY 1`, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	out := make(map[string]float64)
+	for rows.Next() {
+		var day string
+		var earned float64
+		if err := rows.Scan(&day, &earned); err != nil {
+			return nil, err
+		}
+		out[day] = earned
+	}
+	return out, rows.Err()
+}
+
+// SumEarnedByDayForAccount 同上，但只统计指定账号。
+func (r *workBuddyCreditHistoryRepo) SumEarnedByDayForAccount(
+	ctx context.Context, accountID int64, from, to time.Time,
+) (map[string]float64, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT to_char(occurred_at, 'YYYY-MM-DD') AS d,
+		       COALESCE(SUM(credit), 0)::float8 AS earned
+		FROM workbuddy_task_runs
+		WHERE account_id = $1
+		  AND occurred_at::date >= $2::date
+		  AND occurred_at::date <= $3::date
+		GROUP BY 1`, accountID, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	out := make(map[string]float64)
+	for rows.Next() {
+		var day string
+		var earned float64
+		if err := rows.Scan(&day, &earned); err != nil {
+			return nil, err
+		}
+		out[day] = earned
+	}
+	return out, rows.Err()
+}

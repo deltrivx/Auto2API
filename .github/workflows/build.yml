@@ -57,6 +57,10 @@ jobs:
           echo "frontend dist:"
           ls -la backend/internal/web/dist | head -20
 
+      - name: Compile service package tests
+        working-directory: backend
+        run: go test ./internal/service/ -run '^$' -count=1
+
       - name: Resolve version
         id: version
         run: echo "value=$(./backend/scripts/resolve-version.sh)" >> "$GITHUB_OUTPUT"

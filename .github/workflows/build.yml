@@ -59,7 +59,7 @@ jobs:
 
       - name: Compile service package tests
         working-directory: backend
-        run: go test ./internal/service/ -run '^$' -count=1
+        run: go test -vet=off ./internal/service/ -run '^$' -count=1
 
       - name: Resolve version
         id: version

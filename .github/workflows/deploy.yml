@@ -78,22 +78,32 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.t.outputs.tag }}"
-          curl -fsS -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/docker.yml/runs?per_page=50" \
-            -o runs.json
-          python3 - "$TAG" <<'PY'
-          import json, os, sys
+          for i in $(seq 1 40); do
+            curl -fsS -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/docker.yml/runs?per_page=50" \
+              -o runs.json
+            RES=$(python3 - "$TAG" <<'PY'
+          import json, sys
           tag = sys.argv[1]
-          data = json.load(open("runs.json"))
-          hits = [r for r in data.get("workflow_runs", [])
-                  if (r.get("head_branch") or "") == tag and r.get("event") == "push"]
+          runs = json.load(open("runs.json")).get("workflow_runs", [])
+          hits = [r for r in runs if (r.get("head_branch") or "") == tag and r.get("event") == "push"]
           if not hits:
-              sys.exit(f"未找到 {tag} 的 Docker 构建记录")
-          latest = hits[0]
-          print(f"Docker 构建 {latest['run_number']} -> {latest['conclusion']}")
-          if latest.get("conclusion") != "success":
-              sys.exit(f"{tag} 的镜像构建未成功：{latest.get('conclusion')}")
+              print("MISSING"); sys.exit(0)
+          r = hits[0]
+          if r.get("status") != "completed":
+              print(f"PENDING {r.get('status')}"); sys.exit(0)
+          print(f"DONE {r.get('conclusion')} run={r.get('run_number')}")
           PY
+          )
+            echo "[$i] $RES"
+            case "$RES" in
+              DONE\ success*) exit 0 ;;
+              DONE*) echo "::error::${TAG} 镜像构建失败：$RES"; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "::error::等待 ${TAG} 镜像构建超时"
+          exit 1
       - name: Summary
         run: |
           {

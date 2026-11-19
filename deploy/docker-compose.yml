@@ -29,7 +29,8 @@ services:
       - "${BIND_HOST:-0.0.0.0}:${SERVER_PORT:-8080}:8080"
     volumes:
       # Data persistence (config.yaml will be auto-generated here)
-      - auto2api_data:/app/data
+      # 直接挂载宿主路径：不使用命名卷，数据位置可预期、可直接备份
+      - ${AUTO2API_DATA_DIR:-./data/auto2api}:/app/data
       # Optional: Mount custom config.yaml (uncomment and create the file first)
       # Copy config.example.yaml to config.yaml, modify it, then uncomment:
       # - ./config.yaml:/app/data/config.yaml
@@ -251,7 +252,11 @@ services:
       -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-4GB}
       -c maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-64MB}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # 直接挂载宿主路径（PGDATA）
+      - ${POSTGRES_DATA_DIR:-./data/postgres}:/var/lib/postgresql/data
+      # postgres 镜像声明了 VOLUME /var/lib/postgresql，只覆盖子目录会留下匿名卷，
+      # 这里把上层目录也绑到宿主路径，容器只用 bind 挂载
+      - ${POSTGRES_ROOT_DIR:-./data/pgroot}:/var/lib/postgresql
     environment:
       # postgres:18-alpine 默认 PGDATA=/var/lib/postgresql/18/docker（位于镜像声明的匿名卷 /var/lib/postgresql 内）。
       # 若不显式设置 PGDATA，则即使挂载了 postgres_data 到 /var/lib/postgresql/data，数据也不会落盘到该命名卷，
@@ -288,7 +293,8 @@ services:
         soft: 100000
         hard: 100000
     volumes:
-      - redis_data:/data
+      # 直接挂载宿主路径
+      - ${REDIS_DATA_DIR:-./data/redis}:/data
     command:
       - redis-server
       - --save
@@ -314,17 +320,6 @@ services:
       start_period: 5s
     # 注意：不暴露端口到宿主机，应用通过内部网络连接
     # 如需调试，可临时添加：ports: ["127.0.0.1:6379:6379"]
-# =============================================================================
-# Volumes
-# =============================================================================
-volumes:
-  auto2api_data:
-    driver: local
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-
 # =============================================================================
 # Networks
 # =============================================================================

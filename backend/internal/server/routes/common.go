@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/DeltrivX/Auto2API/internal/errcode"
+	"github.com/DeltrivX/Auto2API/internal/metrics"
 	"github.com/gin-gonic/gin"
 )
 
@@ -37,6 +38,25 @@ func RegisterCommonRoutes(r *gin.Engine) {
 		fmt.Fprintf(c.Writer, "# TYPE auto2api_gc_runs counter\nauto2api_gc_runs %d\n", ms.NumGC)
 		fmt.Fprintf(c.Writer, "# HELP auto2api_upstream_errors_total 按平台与类别统计的上游错误次数\n")
 		fmt.Fprintf(c.Writer, "# TYPE auto2api_upstream_errors_total counter\n")
+		reqs, latSum, latCnt := metrics.Snapshot()
+		fmt.Fprintf(c.Writer, "# HELP auto2api_http_requests_total 按方法与状态段统计的请求数\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_http_requests_total counter\n")
+		for k, v := range reqs {
+			var method, class string
+			for i := 0; i < len(k); i++ {
+				if k[i] == '|' {
+					method, class = k[:i], k[i+1:]
+					break
+				}
+			}
+			fmt.Fprintf(c.Writer, "auto2api_http_requests_total{method=%q,status_class=%q} %d\n", method, class, v)
+		}
+		fmt.Fprintf(c.Writer, "# HELP auto2api_http_request_duration_seconds 请求累计耗时与次数\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_http_request_duration_seconds summary\n")
+		for method, sum := range latSum {
+			fmt.Fprintf(c.Writer, "auto2api_http_request_duration_seconds_sum{method=%q} %g\n", method, sum)
+			fmt.Fprintf(c.Writer, "auto2api_http_request_duration_seconds_count{method=%q} %d\n", method, latCnt[method])
+		}
 		for platform, classes := range errcode.Snapshot() {
 			for class, n := range classes {
 				fmt.Fprintf(c.Writer, "auto2api_upstream_errors_total{platform=%q,class=%q} %d\n", platform, class, n)

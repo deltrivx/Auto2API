@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DeltrivX/Auto2API/internal/errcode"
 	"github.com/DeltrivX/Auto2API/internal/pkg/apicompat"
 	"github.com/DeltrivX/Auto2API/internal/pkg/logger"
 	"github.com/DeltrivX/Auto2API/internal/util/responseheaders"
@@ -126,6 +127,8 @@ func (s *OpenAIGatewayService) failoverOpenAIUpstreamHTTPError(
 		}
 		upstreamDetail = truncateString(string(respBody), maxBytes)
 	}
+	// 统一归类并计数：平台 + 类别，供 /metrics 暴露，便于区分鉴权/风控/限流/参数/上游故障。
+	errcode.Observe(fmt.Sprint(account.Platform), resp.StatusCode, string(respBody))
 	appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
 		ProxyID:            opsUpstreamProxyID(account),
 		ProxyName:          opsUpstreamProxyName(account),

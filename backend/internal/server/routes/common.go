@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/DeltrivX/Auto2API/internal/errcode"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,6 +35,13 @@ func RegisterCommonRoutes(r *gin.Engine) {
 		fmt.Fprintf(c.Writer, "# TYPE auto2api_memory_heap_sys_bytes gauge\nauto2api_memory_heap_sys_bytes %d\n", ms.HeapSys)
 		fmt.Fprintf(c.Writer, "# HELP auto2api_gc_runs GC 次数\n")
 		fmt.Fprintf(c.Writer, "# TYPE auto2api_gc_runs counter\nauto2api_gc_runs %d\n", ms.NumGC)
+		fmt.Fprintf(c.Writer, "# HELP auto2api_upstream_errors_total 按平台与类别统计的上游错误次数\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_upstream_errors_total counter\n")
+		for platform, classes := range errcode.Snapshot() {
+			for class, n := range classes {
+				fmt.Fprintf(c.Writer, "auto2api_upstream_errors_total{platform=%q,class=%q} %d\n", platform, class, n)
+			}
+		}
 	})
 
 	// Claude Code 遥测日志（忽略，直接返回200）

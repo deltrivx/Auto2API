@@ -57,9 +57,13 @@ jobs:
           echo "frontend dist:"
           ls -la backend/internal/web/dist | head -20
 
+      - name: Test error classification
+        working-directory: backend
+        run: go test ./internal/errcode/ -count=1
+
       - name: Compile service package tests
         working-directory: backend
-        run: go test -vet=off ./internal/service/ -run '^$' -count=1
+        run: go test ./internal/service/ -run '^$' -count=1
 
       - name: Resolve version
         id: version

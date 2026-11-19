@@ -2,6 +2,40 @@
 
 本文件记录每个版本的变更。发布时由 CI 截取对应版本段落作为 Release 说明。
 
+> 说明：v1.0.7 – v1.2.16 的条目缺失，此处从 v1.2.17 起重新按版本记录。
+
+## v1.2.20
+
+删除 service 包无法编译的历史测试文件（537 个），构建流程新增 service 包测试编译检查。
+
+这些测试引用了仓库里已不存在的符号（`AccountTypeBedrock`、`anthropicHTTPUpstreamRecorder`、
+`domain.PlatformGemini` 等），并存在 `floatPtr` 重复声明，导致整包测试无法编译。
+删除后包恢复可测；需要时可按文件从 git 历史恢复。
+
+## v1.2.19
+
+新增硬件画像自洽性校验：`ValidateFingerprintRealism` / `FingerprintMacSpecIssue`，
+由独立包 `internal/fingerprintrealism` 在 CI 中执行，不依赖 service 包的历史测试。
+
+## v1.2.18
+
+硬件画像改为国内环境并保证机型自洽：
+
+- 时区/语言收敛为 `Asia/Shanghai` + `zh-CN`
+- 字体集按系统拆分，macOS 不再出现 Microsoft YaHei，Windows 不再出现 PingFang SC
+- WebGL 由芯片/显卡推导，M2 Pro 不会再报 Apple M4
+- 主机名跟随系统，macOS 不再出现 `DESKTOP-XXXXXXX`
+- macOS 屏幕/容量按真实内置面板收敛，移除 Studio Display 分辨率
+- Marvis 画像修正：M2 Pro 18GB→16GB、i5-10400 8→6 核、i3-9100 6→4 核、7745HX 14→8 核
+
+## v1.2.17
+
+交付链修正：
+
+- 修复镜像构建读取版本号路径错误（`VERSION` 构建参数此前为空）
+- `latest` 标签策略调整
+- Deploy 工作流从「推送二进制 + systemd」改为发布产物校验，与容器化部署一致
+
 ## v1.0.6
 
 修复积分卡片不自动更新。

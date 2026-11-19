@@ -137,6 +137,96 @@ func workBuddyStableMAC(key string) string {
 		b[0]&0xfe|0x02, b[1], b[2], b[3], b[4], b[5])
 }
 
+// workBuddyFingerprintAllocator 为一批账号分配互不冲突的指纹。
+type workBuddyFingerprintAllocator struct {
+	// accountID 用于登记表去重；0 表示尚未入库（此时退化为纯派生）。
+	accountID    int64
+	usedMachine  map[string]bool
+	usedMAC      map[string]bool
+	usedProfiles map[string]bool
+	usedUAs      map[string]bool
+}
+
+func newWorkBuddyFingerprintAllocator() *workBuddyFingerprintAllocator {
+	return &workBuddyFingerprintAllocator{
+		usedMachine:  make(map[string]bool),
+		usedMAC:      make(map[string]bool),
+		usedProfiles: make(map[string]bool),
+		usedUAs:      make(map[string]bool),
+	}
+}
+
+// workBuddyAssign 为一个账号分配指纹，并登记到已占用集合。
+//
+// key 为空时退化为 "default"（单账号自用场景）。
+func (a *workBuddyFingerprintAllocator) workBuddyAssign(key string) workBuddyFingerprint {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		key = "default"
+	}
+
+	// machineId：确定派生 + 撞车加盐。
+	machineID := workBuddyUUIDv5(workBuddyFingerprintNamespace, "wb-machine:"+key)
+	salt := 0
+	for a.usedMachine[machineID] && salt < workBuddyFingerprintMaxSalt {
+		salt++
+		machineID = workBuddyUUIDv5(workBuddyFingerprintNamespace,
+			fmt.Sprintf("wb-machine:%s#%d", key, salt))
+	}
+
+	sessionID := workBuddyUUIDv5(workBuddyFingerprintNamespace,
+		fmt.Sprintf("wb-session:%s#%d", key, salt))
+	mpMachineID := workBuddyUUIDv5(workBuddyFingerprintNamespace,
+		fmt.Sprintf("wb-mp-machine:%s#%d", key, salt))
+	webMachineID := workBuddyUUIDv5(workBuddyFingerprintNamespace,
+		fmt.Sprintf("wb-web-machine:%s#%d", key, salt))
+
+	// MAC：稳定派生 + 撞车换盐。
+	mac := workBuddyStableMAC(key)
+	macSalt := 0
+	for a.usedMAC[mac] && macSalt < workBuddyFingerprintMaxSalt {
+		macSalt++
+		mac = workBuddyStableMAC(fmt.Sprintf("%s#%d", key, macSalt))
+	}
+
+	// 画像由维度组合派生（见 workbuddy_fingerprint_dims.go）：
+	// 组合空间数万量级，账号再多也不会撞号，且每个组合都是自洽的真实设备。
+	profile, profileSalt := workBuddyAssignUniqueProfile(context.Background(), a.accountID, key)
+	_ = profileSalt
+	gpu, disk, screen, cpuModel := workBuddyProfileExtras(profile)
+
+	a.usedMachine[machineID] = true
+	a.usedMAC[mac] = true
+	a.usedProfiles[workBuddyProfileKey(profile)] = true
+	a.usedUAs[profile.UA] = true
+
+	return workBuddyFingerprint{
+		UID:           key,
+		MachineID:     machineID,
+		SessionID:     sessionID,
+		MPMachineID:   mpMachineID,
+		WebMachineID:  webMachineID,
+		MAC:           mac,
+		OS:            profile.OS,
+		Arch:          profile.Arch,
+		OSVersion:     profile.OSVersion,
+		CPUCores:      profile.CPUCores,
+		MemorySize:    profile.MemorySize,
+		UA:            profile.UA,
+		IDEVersion:    profile.IDEVersion,
+		GPU:           gpu,
+		Disk:          disk,
+		Screen:        screen,
+		CPUModel:      cpuModel,
+		Hostname:      profile.Hostname,
+		Timezone:      profile.Timezone,
+		Locale:        profile.Locale,
+		Fonts:         profile.Fonts,
+		WebGLVendor:   profile.WebGLVendor,
+		WebGLRenderer: profile.WebGLRenderer,
+	}
+}
+
 // workBuddyFingerprintForAccount 为单个账号生成指纹。
 //
 // 入口函数：uid 优先，退化为账号 ID。同一账号每次调用返回完全相同的值。

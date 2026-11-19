@@ -1,16 +1,39 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
+	"runtime"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+// processStart 用于计算进程运行时长。
+var processStart = time.Now()
 
 // RegisterCommonRoutes 注册通用路由（健康检查、状态等）
 func RegisterCommonRoutes(r *gin.Engine) {
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	// Prometheus 指标（最小集：进程与 Go 运行时，无第三方依赖）
+	r.GET("/metrics", func(c *gin.Context) {
+		var ms runtime.MemStats
+		runtime.ReadMemStats(&ms)
+		c.Header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+		fmt.Fprintf(c.Writer, "# HELP auto2api_uptime_seconds 进程运行时长（秒）\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_uptime_seconds gauge\nauto2api_uptime_seconds %.0f\n", time.Since(processStart).Seconds())
+		fmt.Fprintf(c.Writer, "# HELP auto2api_goroutines 当前 goroutine 数\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_goroutines gauge\nauto2api_goroutines %d\n", runtime.NumGoroutine())
+		fmt.Fprintf(c.Writer, "# HELP auto2api_memory_heap_alloc_bytes 堆内存已分配字节\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_memory_heap_alloc_bytes gauge\nauto2api_memory_heap_alloc_bytes %d\n", ms.HeapAlloc)
+		fmt.Fprintf(c.Writer, "# HELP auto2api_memory_heap_sys_bytes 向系统申请的堆字节\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_memory_heap_sys_bytes gauge\nauto2api_memory_heap_sys_bytes %d\n", ms.HeapSys)
+		fmt.Fprintf(c.Writer, "# HELP auto2api_gc_runs GC 次数\n")
+		fmt.Fprintf(c.Writer, "# TYPE auto2api_gc_runs counter\nauto2api_gc_runs %d\n", ms.NumGC)
 	})
 
 	// Claude Code 遥测日志（忽略，直接返回200）

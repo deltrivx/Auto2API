@@ -4,6 +4,23 @@
 
 > 说明：v1.0.7 – v1.2.16 的条目缺失，此处从 v1.2.17 起重新按版本记录。
 
+## v1.2.22
+
+上游错误统一归类并计入指标。
+
+新增 `internal/errcode`：按状态码与响应体归类为 `auth_expired` / `risk_blocked` /
+`rate_limited` / `bad_request` / `upstream_error`，风控（4100404）优先于鉴权判断。
+在 OpenAI 兼容网关的上游错误处理处统一计数，通过 `/metrics` 暴露
+`auto2api_upstream_errors_total{platform,class}`。不改变请求行为。
+
+## v1.2.21
+
+新增真实 `/metrics` 端点。
+
+此前 `/metrics` 命中的是前端 catch-all，返回 index.html，并不存在指标。
+现在输出 uptime、goroutine、堆内存、GC 次数，Prometheus 文本格式、无第三方依赖；
+同时在 embed 中间件的放行列表加入 `/metrics`，避免被 SPA 接管。
+
 ## v1.2.20
 
 删除 service 包无法编译的历史测试文件（537 个），构建流程新增 service 包测试编译检查。

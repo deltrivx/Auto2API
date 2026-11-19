@@ -1,14 +1,17 @@
 name: Deploy
 
-# Build 工作流完成（构建 + 发布 Release 成功）后，自动部署到阿里云服务器并验证结果。
+# =============================================================================
+# 交付链说明
+# =============================================================================
+# 1. Build 工作流：打 vX.Y.Z 标签 → 编译二进制 → 发布 GitHub Release
+# 2. Docker 工作流：同一标签 → 构建并推送 ghcr.io/<repo>:<version> 与 :latest
+# 3. 生产更新：宝塔面板 → Docker → 容器编排 → 拉取镜像 → 重建
 #
-# 为什么不用 release 事件：goreleaser 用仓库自带的 GITHUB_TOKEN 发布 Release，
-# 而 GitHub 规定 GITHUB_TOKEN 触发的动作不会再触发其它工作流，release: published
-# 这条链路是永远收不到事件的（v1.0.52 实测确认）。workflow_run 没有这个限制。
-#
-# 为什么由 runner 推送产物：阿里云服务器直连 release-assets.githubusercontent.com
-# 经常超时（v1.0.54 第一次部署就因此失败），runner 的出口网络稳定，所以改成
-# runner 下载 → 校验 → SSH 流式推给服务器安装。
+# 本工作流只做「发布产物校验」，不再向服务器推送二进制、不操作 systemd。
+# 历史上这里是二进制 + systemd 落地，服务器切到容器后这条路径已失效，
+# 保留会与容器部署形成第二套写入路径，故改为只校验 + 给出面板更新指引。
+# =============================================================================
+
 on:
   workflow_run:
     workflows: ["Build"]
@@ -16,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: '要部署的版本标签，如 v1.0.54；留空则部署 GitHub 最新 Release'
+        description: '要校验的版本标签，如 v1.2.17；留空则取最新 Release'
         required: false
         default: ''
 
@@ -24,22 +27,21 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-production
+  group: release-verify
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy to Aliyun ECS
+  verify:
+    name: Verify release artifacts
     runs-on: ubuntu-26.04
-    timeout-minutes: 25
-    # 只在「打 tag 触发且构建成功」时自动部署；PR 构建不部署
+    timeout-minutes: 10
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
        startsWith(github.event.workflow_run.head_branch, 'v'))
     steps:
-      - name: Resolve target tag
+      - name: Resolve tag
         id: t
         run: |
           if [ -n "${{ github.event.inputs.tag }}" ]; then
@@ -49,68 +51,71 @@ jobs:
           else
             TAG=""
           fi
-          if [ -z "$TAG" ] || [ "$TAG" = "latest" ]; then
+          if [ -z "$TAG" ]; then
             TAG=$(curl -fsS "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest" \
                   | python3 -c "import json,sys;print(json.load(sys.stdin)['tag_name'])")
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "部署目标: $TAG"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "校验目标: $TAG"
 
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H -T 15 "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
-          echo "已记录主机公钥:"; ssh-keygen -lf ~/.ssh/known_hosts | head -3
-
-      - name: Download and verify release asset
+      - name: Verify release assets
         run: |
           TAG="${{ steps.t.outputs.tag }}"
           BASE="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}"
-          curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors -o auto2api "$BASE/auto2api"
-          curl -fsSL --retry 5 --retry-delay 3 --retry-all-errors -o auto2api.sha256 "$BASE/auto2api.sha256"
-          EXPECT=$(awk '{print $1}' auto2api.sha256 | head -1)
-          ACTUAL=$(sha256sum auto2api | awk '{print $1}')
-          [ "$EXPECT" = "$ACTUAL" ] || { echo "::error::sha256 校验失败 $EXPECT != $ACTUAL"; exit 1; }
-          echo "sha256 校验通过: $ACTUAL"
-          echo "EXPECT=$ACTUAL" >> "$GITHUB_ENV"
-          ls -lh auto2api
+          for f in auto2api auto2api.sha256; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' -L "$BASE/$f")
+            echo "$f -> HTTP $code"
+            if [ "$code" != "200" ]; then
+              echo "::error::Release 缺少产物 $f（$TAG）"
+              exit 1
+            fi
+          done
 
-      - name: Push binary and install
+      - name: Verify container image
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
-          SIZE=$(wc -c < auto2api)
-          # 带上大小：服务器按字节数接收，runner 掉线时不会再无限等 stdin
-          # （曾因此把 Deploy 卡到 25 分钟超时）。
-          timeout 300 ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=20 \
-            -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "push ${{ steps.t.outputs.tag }} $EXPECT $SIZE" < auto2api | tee deploy.log
-          grep -q '^DEPLOY_OK' deploy.log
-
-      - name: Verify service status
-        run: |
-          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=20 \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" status | tee status.log
-          grep -qE 'service=active' status.log
-          grep -q '"status":"ok"' status.log
-          TAG="${{ steps.t.outputs.tag }}"
-          echo "期望版本: $TAG"
-          grep -q "current=${TAG#v}" status.log
-          echo "版本校验通过: ${TAG#v}"
+          V="${{ steps.t.outputs.version }}"
+          REPO=$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
+          AUTH_ARGS=""
+          if [ -n "${GHCR_TOKEN}" ]; then
+            AUTH_ARGS="-u ${GITHUB_ACTOR}:${GHCR_TOKEN}"
+          fi
+          TOKEN=$(curl -fsS ${AUTH_ARGS} \
+            "https://ghcr.io/token?service=ghcr.io&scope=repository:${REPO}:pull" \
+            | python3 -c "import json,sys;print(json.load(sys.stdin).get('token',''))")
+          if [ -z "$TOKEN" ]; then
+            echo "::error::无法获取 GHCR 拉取令牌"
+            exit 1
+          fi
+          ACCEPT="application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json"
+          for T in "$V" latest; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer $TOKEN" -H "Accept: $ACCEPT" \
+              "https://ghcr.io/v2/${REPO}/manifests/${T}")
+            echo "ghcr.io/${REPO}:${T} -> HTTP $code"
+            if [ "$code" != "200" ]; then
+              echo "::error::镜像标签 ${T} 不存在"
+              exit 1
+            fi
+          done
 
       - name: Summary
-        if: always()
         run: |
           {
-            echo "### Auto2API 部署结果"
+            echo "### 发布产物校验通过"
             echo ""
-            echo "- 目标版本: \`${{ steps.t.outputs.tag }}\`"
-            echo "- 触发方式: \`${{ github.event_name }}\`"
+            echo "| 项 | 值 |"
+            echo "| --- | --- |"
+            echo "| 版本 | \`${{ steps.t.outputs.tag }}\` |"
+            echo "| 二进制 | Release assets（auto2api + sha256） |"
+            echo "| 镜像 | \`ghcr.io/${{ github.repository }}:${{ steps.t.outputs.version }}\` |"
+            echo "| 镜像 | \`ghcr.io/${{ github.repository }}:latest\` |"
             echo ""
-            echo '```'
-            cat deploy.log 2>/dev/null | tail -25 || echo '无部署日志'
-            echo '--- 状态 ---'
-            cat status.log 2>/dev/null || echo '无状态输出'
-            echo '```'
+            echo "### 宝塔面板更新（容器编排）"
+            echo ""
+            echo "1. 宝塔 → Docker → 容器编排，选择 \`auto2api\` 项目"
+            echo "2. 先「拉取镜像」，再「重建」（compose up -d）"
+            echo "3. 等健康检查变绿，验证 <https://auto2api.deltrivx.cn/health>"
           } >> "$GITHUB_STEP_SUMMARY"

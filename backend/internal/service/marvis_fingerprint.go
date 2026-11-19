@@ -53,12 +53,12 @@ var marvisFingerprintPool = []marvisFingerprintProfile{
 		CPUModel: "Intel(R) Core(TM) i5-12400F",
 	},
 	{
-		OS: "Win32", Arch: "x64", OSVersion: "10.0.19045", CPUCores: 6, MemorySize: 16,
+		OS: "Win32", Arch: "x64", OSVersion: "10.0.19045", CPUCores: 8, MemorySize: 16,
 		GPU: "Intel(R) UHD Graphics 730", Disk: 512, Screen: "1920x1080",
 		CPUModel: "Intel(R) Core(TM) i5-10400",
 	},
 	{
-		OS: "MacIntel", Arch: "arm64", OSVersion: "14.5", CPUCores: 10, MemorySize: 16,
+		OS: "MacIntel", Arch: "arm64", OSVersion: "14.5", CPUCores: 10, MemorySize: 18,
 		GPU: "Apple M2 Pro", Disk: 512, Screen: "3024x1964",
 		CPUModel: "Apple M2 Pro",
 	},
@@ -83,7 +83,7 @@ var marvisFingerprintPool = []marvisFingerprintProfile{
 		CPUModel: "Intel(R) Core(TM) i9-14900K",
 	},
 	{
-		OS: "Win32", Arch: "x64", OSVersion: "10.0.22621", CPUCores: 4, MemorySize: 8,
+		OS: "Win32", Arch: "x64", OSVersion: "10.0.22621", CPUCores: 6, MemorySize: 8,
 		GPU: "Intel(R) UHD Graphics 630", Disk: 256, Screen: "1600x900",
 		CPUModel: "Intel(R) Core(TM) i3-9100",
 	},
@@ -93,7 +93,7 @@ var marvisFingerprintPool = []marvisFingerprintProfile{
 		CPUModel: "Intel(R) Core(TM) i9-9880H",
 	},
 	{
-		OS: "Win32", Arch: "x64", OSVersion: "10.0.22631", CPUCores: 8, MemorySize: 16,
+		OS: "Win32", Arch: "x64", OSVersion: "10.0.22631", CPUCores: 14, MemorySize: 24,
 		GPU: "NVIDIA GeForce RTX 4060", Disk: 1024, Screen: "2560x1600",
 		CPUModel: "AMD Ryzen 7 7745HX",
 	},
@@ -430,7 +430,15 @@ func MarvisFingerprintView(account *Account) map[string]any {
 	if fpSeed == "" {
 		fpSeed = marvisAccountSeed(account.Credentials)
 	}
-	extras := workBuddyDimensionExtras(fpSeed)
+	// 展示维度必须与本机的 OS 一致：Windows 机器不能出现 Mac 主机名/字体。
+	displayFamily := workBuddyOSWindows
+	switch fp["os"] {
+	case "MacIntel":
+		displayFamily = workBuddyOSMac
+	case "Linux x86_64":
+		displayFamily = workBuddyOSLinux
+	}
+	extras := workBuddyDimensionExtras(fpSeed, displayFamily)
 
 	credsView := marvisCredentialsOf(account)
 	out["account_id"] = account.ID

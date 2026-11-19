@@ -412,11 +412,11 @@ func workBuddyProfileExtras(profile workBuddyFingerprintProfile) (gpu string, di
 		// Apple Silicon：统一内存由 GPU 共享。
 		switch {
 		case profile.MemorySize >= 32:
-			return "Apple M4 Pro / 共享内存", 1024, "3456x2234", profile.CPUModel
+			return "Apple M4 Pro / 共享内存", 1024, "3456x2234", "Apple M4 Pro"
 		case profile.MemorySize >= 18:
-			return "Apple M4 / 共享内存", 512, "2560x1664", profile.CPUModel
+			return "Apple M4 / 共享内存", 512, "2560x1664", "Apple M4"
 		default:
-			return "Apple M4 / 共享内存", 512, "2560x1600", profile.CPUModel
+			return "Apple M4 / 共享内存", 512, "2560x1600", "Apple M4"
 		}
 	}
 	// Linux 工作站：独立显卡 + 常见分辨率。

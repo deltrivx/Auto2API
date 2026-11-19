@@ -414,18 +414,14 @@ func workBuddyHostname(h []byte, family workBuddyOSFamily) string {
 //
 // Trae 与 Marvis 没有 WorkBuddy 那套完整画像，但指纹弹窗要显示同样的字段集，
 // 所以用同一个种子（机器码 / openid）确定性派生：主机名、时区、语言、字体、WebGL。
-func workBuddyDimensionExtras(seed string) map[string]any {
+func workBuddyDimensionExtras(seed string, family workBuddyOSFamily) map[string]any {
 	if seed == "" {
 		seed = "extras"
 	}
-	h := workBuddySHA256([]byte("wb-extras:" + seed))
-	family := workBuddyOSWindows
-	switch roll := workBuddyPick16(h, 0, 10); {
-	case roll < 4:
-		family = workBuddyOSMac
-	case roll >= 8:
-		family = workBuddyOSLinux
+	if family == "" {
+		family = workBuddyOSWindows
 	}
+	h := workBuddySHA256([]byte("wb-extras:" + seed + ":" + string(family)))
 	fontSet := workBuddyFontSetsFor(family)
 	fonts := fontSet[workBuddyPick16(h, 21, len(fontSet))]
 	// WebGL 必须由该家族真实存在的芯片/显卡推导，不能用空值。

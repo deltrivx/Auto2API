@@ -160,3 +160,59 @@ func intIn(list []int, v int) bool {
 	}
 	return false
 }
+
+// ValidateDimensionExtras 检查展示维度（主机名/字体/WebGL/时区/语言）与系统族一致。
+//
+// Trae / Marvis 的指纹弹窗用的是这套派生维度，如果与账号自身 OS 不符，
+// 会出现「Windows 机器显示 Mac 主机名」这种一眼假的情况。
+func ValidateDimensionExtras() []string {
+	var issues []string
+	families := []workBuddyOSFamily{workBuddyOSMac, workBuddyOSWindows, workBuddyOSLinux}
+	for _, fam := range families {
+		for i := 0; i < 50; i++ {
+			ex := workBuddyDimensionExtras(fmt.Sprintf("seed-%d", i), fam)
+			host, _ := ex["hostname"].(string)
+			fonts, _ := ex["fonts"].([]string)
+			webgl, _ := ex["webgl_renderer"].(string)
+			tz, _ := ex["timezone"].(string)
+			loc, _ := ex["locale"].(string)
+
+			if tz != "Asia/Shanghai" || loc != "zh-CN" {
+				issues = append(issues, fmt.Sprintf("%s 时区/语言异常: %s %s", fam, tz, loc))
+			}
+			switch fam {
+			case workBuddyOSMac:
+				if strings.HasPrefix(host, "DESKTOP-") {
+					issues = append(issues, "mac 主机名: "+host)
+				}
+				if !strings.Contains(webgl, "Apple") {
+					issues = append(issues, "mac WebGL: "+webgl)
+				}
+				for _, f := range fonts {
+					if strings.Contains(f, "Microsoft YaHei") || strings.Contains(f, "SimSun") {
+						issues = append(issues, "mac 字体: "+f)
+						break
+					}
+				}
+			case workBuddyOSWindows:
+				if !strings.HasPrefix(host, "DESKTOP-") {
+					issues = append(issues, "win 主机名: "+host)
+				}
+				if strings.Contains(webgl, "Apple") {
+					issues = append(issues, "win WebGL: "+webgl)
+				}
+			case workBuddyOSLinux:
+				if strings.HasPrefix(host, "DESKTOP-") {
+					issues = append(issues, "linux 主机名: "+host)
+				}
+				if strings.Contains(webgl, "Apple") {
+					issues = append(issues, "linux WebGL: "+webgl)
+				}
+			}
+			if len(issues) > 20 {
+				return issues
+			}
+		}
+	}
+	return issues
+}

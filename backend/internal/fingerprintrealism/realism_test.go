@@ -39,3 +39,11 @@ func TestMacSpecsMatchOfficial(t *testing.T) {
 	}
 	t.Fatalf("macOS 机型规格不自洽：\n  %s", strings.Join(issues, "\n  "))
 }
+
+func TestDimensionExtrasMatchOS(t *testing.T) {
+	issues := service.ValidateDimensionExtras()
+	if len(issues) == 0 {
+		return
+	}
+	t.Fatalf("展示维度与系统族不一致：\n  %s", strings.Join(issues, "\n  "))
+}

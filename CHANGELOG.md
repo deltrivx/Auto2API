@@ -4,6 +4,24 @@
 
 > 说明：v1.0.7 – v1.2.16 的条目缺失，此处从 v1.2.17 起重新按版本记录。
 
+## v1.2.24
+
+新增 HTTP 请求指标，清理 WorkBuddy 死代码。
+
+- `internal/metrics` 中间件按「方法 + 状态段」计数，避免路径高基数；
+  `/metrics` 输出 `auto2api_http_requests_total` 与请求耗时 summary
+- 删除已无引用的 `workBuddyFingerprintPool` / `workBuddyFingerprintAllocateProfile`
+  （画像实际由维度派生）
+
+## v1.2.23
+
+指纹展示维度跟随账号自身系统族。
+
+此前 Trae / Marvis 的指纹弹窗按随机系统族派生主机名、字体、WebGL，
+会出现 Windows 机器显示 `MacBook-Pro`、macOS 出现 Microsoft YaHei 的矛盾。
+现在按账号 OS 传入 family，并修正兜底表中 Apple M4 Pro 的 GPU 与 CPU 型号不一致。
+新增 `ValidateDimensionExtras` 及对应测试。
+
 ## v1.2.22
 
 上游错误统一归类并计入指标。

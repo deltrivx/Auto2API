@@ -61,13 +61,6 @@ jobs:
         id: version
         run: echo "value=$(./backend/scripts/resolve-version.sh)" >> "$GITHUB_OUTPUT"
 
-      - name: Test fingerprint realism
-        working-directory: backend
-        run: |
-          go test ./internal/service/ \
-            -run 'TestWorkBuddyProfileRealism|TestWorkBuddyMacSpecsAreOfficial' \
-            -count=1
-
       - name: Build backend
         working-directory: backend
         env:

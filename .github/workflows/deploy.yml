@@ -25,6 +25,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: release-verify
@@ -72,35 +73,27 @@ jobs:
             fi
           done
 
-      - name: Verify container image
+      - name: Verify container image workflow
         env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          V="${{ steps.t.outputs.version }}"
-          REPO=$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')
-          AUTH_ARGS=""
-          if [ -n "${GHCR_TOKEN}" ]; then
-            AUTH_ARGS="-u ${GITHUB_ACTOR}:${GHCR_TOKEN}"
-          fi
-          TOKEN=$(curl -fsS ${AUTH_ARGS} \
-            "https://ghcr.io/token?service=ghcr.io&scope=repository:${REPO}:pull" \
-            | python3 -c "import json,sys;print(json.load(sys.stdin).get('token',''))")
-          if [ -z "$TOKEN" ]; then
-            echo "::error::无法获取 GHCR 拉取令牌"
-            exit 1
-          fi
-          ACCEPT="application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.manifest.v1+json,application/vnd.docker.distribution.manifest.v2+json"
-          for T in "$V" latest; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' \
-              -H "Authorization: Bearer $TOKEN" -H "Accept: $ACCEPT" \
-              "https://ghcr.io/v2/${REPO}/manifests/${T}")
-            echo "ghcr.io/${REPO}:${T} -> HTTP $code"
-            if [ "$code" != "200" ]; then
-              echo "::error::镜像标签 ${T} 不存在"
-              exit 1
-            fi
-          done
-
+          TAG="${{ steps.t.outputs.tag }}"
+          curl -fsS -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/docker.yml/runs?per_page=50" \
+            -o runs.json
+          python3 - "$TAG" <<'PY'
+          import json, os, sys
+          tag = sys.argv[1]
+          data = json.load(open("runs.json"))
+          hits = [r for r in data.get("workflow_runs", [])
+                  if (r.get("head_branch") or "") == tag and r.get("event") == "push"]
+          if not hits:
+              sys.exit(f"未找到 {tag} 的 Docker 构建记录")
+          latest = hits[0]
+          print(f"Docker 构建 {latest['run_number']} -> {latest['conclusion']}")
+          if latest.get("conclusion") != "success":
+              sys.exit(f"{tag} 的镜像构建未成功：{latest.get('conclusion')}")
+          PY
       - name: Summary
         run: |
           {

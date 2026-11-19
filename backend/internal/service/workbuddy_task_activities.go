@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/DeltrivX/Auto2API/internal/domain"
 )
 
 // WorkBuddy 互动模块（签到 / 抽奖 / 盲盒）作为任务并入看板。
@@ -24,6 +26,8 @@ const (
 	workBuddyActivityTravel   = "activity_travel"
 	workBuddyActivityRedeem   = "activity_redeem"
 	workBuddyActivityMakeup   = "activity_makeup"
+	// workBuddyActivityGift 是新手礼包，走 codebuddy 域，每账号一次。
+	workBuddyActivityGift = "activity_gift"
 )
 
 // WorkBuddyActivityTasksOf 返回该账号上「互动模块」转换出的任务列表。
@@ -208,6 +212,19 @@ func WorkBuddyActivityTasksOf(ctx context.Context, account *Account) []WorkBuddy
 		}
 	}
 
+	// 新手礼包：仅国内版有该端点，一次性奖励，已领取时上游会明确拒绝。
+	if account != nil && account.Platform == domain.PlatformWorkBuddyCN {
+		out = append(out, WorkBuddyTask{
+			Code:         workBuddyActivityGift,
+			Title:        "新手礼包",
+			Description:  "一次性礼包，首次领取后不再出现",
+			TaskType:     "once",
+			Status:       "not_accepted",
+			Tag:          "活动",
+			RewardCredit: -1,
+		})
+	}
+
 	return out
 }
 
@@ -294,6 +311,22 @@ func workBuddyBuddyQuota(ctx context.Context, account *Account) (int, bool, erro
 // WorkBuddyRunActivityTask 执行互动模块任务。
 func WorkBuddyRunActivityTask(ctx context.Context, account *Account, code string) (*WorkBuddyClaimResult, error) {
 	switch code {
+	case workBuddyActivityGift:
+		credit, err := workBuddyClaimGift(ctx, account)
+		if err != nil {
+			recordWorkBuddyTaskRun(ctx, &WorkBuddyTaskRun{
+				AccountID: account.ID, AccountName: account.Name,
+				Kind: "gift", TaskCode: code, TaskName: "新手礼包",
+				Result: "failed", Detail: err.Error(),
+			})
+			return &WorkBuddyClaimResult{Code: code, Title: "新手礼包", Err: err.Error()}, nil
+		}
+		recordWorkBuddyTaskRun(ctx, &WorkBuddyTaskRun{
+			AccountID: account.ID, AccountName: account.Name,
+			Kind: "gift", TaskCode: code, TaskName: "新手礼包",
+			Result: "success", Credit: credit,
+		})
+		return &WorkBuddyClaimResult{Code: code, Title: "新手礼包", Credit: credit}, nil
 	case workBuddyActivityCheckin:
 		res, err := WorkBuddyDoCheckin(ctx, account)
 		if err != nil {

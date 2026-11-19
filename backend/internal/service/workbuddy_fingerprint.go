@@ -137,6 +137,16 @@ func workBuddyStableMAC(key string) string {
 		b[0]&0xfe|0x02, b[1], b[2], b[3], b[4], b[5])
 }
 
+// workBuddyProfileKey 是画像的去重键（除 UA 外的硬件特征组合）。
+func workBuddyProfileKey(p workBuddyFingerprintProfile) string {
+	// 组合键必须覆盖所有会出现在管理端的维度，否则「CPU 型号/GPU/硬盘/屏幕
+	// 不同但核心与内存相同」的两台设备会被判为重复，去重表把大部分组合
+	// 提前淘汰掉，实际可用空间远小于维度相乘的理论值。
+	return fmt.Sprintf("%s|%s|%s|%s|%d|%d|%s|%d|%s",
+		p.OS, p.Arch, p.OSVersion, p.CPUModel, p.CPUCores, p.MemorySize,
+		p.GPU, p.Disk, p.Screen)
+}
+
 // workBuddyFingerprintAllocator 为一批账号分配互不冲突的指纹。
 type workBuddyFingerprintAllocator struct {
 	// accountID 用于登记表去重；0 表示尚未入库（此时退化为纯派生）。

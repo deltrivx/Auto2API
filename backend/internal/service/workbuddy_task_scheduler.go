@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"context"
 	"log"
 	"math/rand"
@@ -180,22 +181,85 @@ type workBuddyAutoTaskConfig struct {
 	AutoCheckin     bool
 	AutoClaim       bool
 	IncludeHighRisk bool
+	// Hour 是每天允许执行的小时（0-23）。凭据里 daily_auto_hour 为空时按 13 处理。
+	Hour int
 }
 
 // workBuddyAutoTaskConfigOf 从账号凭据里读出自动任务开关。
 //
 // 开关随凭据存放：账号被复制或迁移时配置一起走，不需要额外对表。
+//
+// 两种存放形式都要认：
+//   - 新：平铺的 daily_auto_enabled / daily_auto_tasks / daily_auto_hour（前端实际写入的格式）
+//   - 旧：嵌套的 auto_task 对象
+//
+// 之前只读 auto_task，而账号里存的是 daily_auto_*，结果调度器永远拿到空配置，
+// 表现为「自动任务开着但从不执行」。
 func workBuddyAutoTaskConfigOf(a *Account) workBuddyAutoTaskConfig {
-	cfg := workBuddyAutoTaskConfig{}
+	cfg := workBuddyAutoTaskConfig{Hour: 13}
 	if a == nil || a.Credentials == nil {
 		return cfg
 	}
+
 	if m, ok := a.Credentials["auto_task"].(map[string]any); ok {
-		cfg.AutoCheckin = workBuddyTaskBool(m, "auto_checkin")
-		cfg.AutoClaim = workBuddyTaskBool(m, "auto_claim")
-		cfg.IncludeHighRisk = workBuddyTaskBool(m, "include_high_risk")
+		cfg.AutoCheckin = cfg.AutoCheckin || workBuddyTaskBool(m, "auto_checkin")
+		cfg.AutoClaim = cfg.AutoClaim || workBuddyTaskBool(m, "auto_claim")
+		cfg.IncludeHighRisk = cfg.IncludeHighRisk || workBuddyTaskBool(m, "include_high_risk")
+	}
+
+	if !workBuddyTaskBool(a.Credentials, "daily_auto_enabled") {
+		return cfg
+	}
+	if h := int(workBuddyTaskFloat(a.Credentials, "daily_auto_hour")); h >= 0 && h <= 23 {
+		cfg.Hour = h
+	}
+	tasks := workBuddyStringList(a.Credentials["daily_auto_tasks"])
+	has := func(name string) bool {
+		for _, t := range tasks {
+			if t == name {
+				return true
+			}
+		}
+		return false
+	}
+	if has("checkin") {
+		cfg.AutoCheckin = true
+	}
+	for _, claim := range []string{"accept_all", "claim", "task", "chat_5", "daily_activity", "travel", "query", "glm52"} {
+		if has(claim) {
+			cfg.AutoClaim = true
+			break
+		}
+	}
+	if has("high_risk") || has("include_high_risk") {
+		cfg.IncludeHighRisk = true
 	}
 	return cfg
+}
+
+// workBuddyStringList 把凭据里的数组字段解析成字符串切片。
+func workBuddyStringList(v any) []string {
+	switch raw := v.(type) {
+	case []string:
+		return raw
+	case []any:
+		out := make([]string, 0, len(raw))
+		for _, item := range raw {
+			if s, ok := item.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	case string:
+		if raw == "" {
+			return nil
+		}
+		var out []string
+		if err := json.Unmarshal([]byte(raw), &out); err == nil {
+			return out
+		}
+	}
+	return nil
 }
 
 // workBuddyAutoAdvanceTasks 对账号上未完成的任务执行自动完成。

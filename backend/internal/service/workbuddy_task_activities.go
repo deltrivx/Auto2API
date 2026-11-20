@@ -462,7 +462,8 @@ func WorkBuddyRunActivityTask(ctx context.Context, account *Account, code string
 func IsWorkBuddyActivityTask(code string) bool {
 	switch code {
 	case workBuddyActivityCheckin, workBuddyActivityLottery, workBuddyActivityBlindbox,
-		workBuddyActivityTravel, workBuddyActivityRedeem, workBuddyActivityMakeup:
+		workBuddyActivityTravel, workBuddyActivityRedeem, workBuddyActivityMakeup,
+		workBuddyActivityGift, workBuddyActivityDailyActivity:
 		return true
 	}
 	return false

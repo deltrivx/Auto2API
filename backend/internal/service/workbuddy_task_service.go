@@ -642,7 +642,14 @@ func WorkBuddyRunSingleTask(ctx context.Context, account *Account, code string) 
 			// 回读状态：达标就立刻领奖。
 			if tasks2, err := WorkBuddyTasksOf(ctx, account); err == nil {
 				for i := range tasks2 {
-					if tasks2[i].Code == code && tasks2[i].Status == "completed" {
+					if tasks2[i].Code != code {
+						continue
+					}
+					// 状态到 completed，或进度已达标（cur>=target）都尝试领奖：
+					// 上游有时进度先变、状态滞后。
+					reached := tasks2[i].Status == "completed" ||
+						(tasks2[i].ProgressTarget > 0 && tasks2[i].ProgressCurrent >= tasks2[i].ProgressTarget)
+					if reached {
 						return WorkBuddyClaimTask(ctx, account, code)
 					}
 				}

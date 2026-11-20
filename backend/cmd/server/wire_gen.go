@@ -212,6 +212,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	marvisOAuthHandler := admin.NewMarvisOAuthHandler(marvisOAuthService, adminService)
 	traeOAuthHandler := admin.NewTraeOAuthHandler(traeOAuthService, adminService)
 	workBuddyCreditSyncService := service.NewWorkBuddyCreditSyncService(adminService, redisClient)
+	workBuddyTaskScheduler := service.NewWorkBuddyTaskScheduler(adminService)
 	marvisCreditSyncService := service.NewMarvisCreditSyncService(adminService, 5*time.Minute)
 	traeCreditSyncService := service.NewTraeCreditSyncService(adminService)
 	marvisWalletSyncService := service.NewMarvisWalletSyncService(adminService)
@@ -335,6 +336,8 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 		Server:               httpServer,
 		PromptAudit:          promptService,
 		Cleanup:              v,
+		TaskScheduler:        workBuddyTaskScheduler,
+		CreditSync:           workBuddyCreditSyncService,
 		MarvisWalletSync:     marvisWalletSyncService,
 		MarvisCreditSync:     marvisCreditSyncService,
 		TraeCreditSync:       traeCreditSyncService,

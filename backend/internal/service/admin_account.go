@@ -1942,6 +1942,7 @@ func (s *adminServiceImpl) workBuddyDefaultModelMapping(ctx context.Context, inp
 // 自动任务开关存在 workbuddy_auto_task_config；没有该行表示未开启。
 // 这里只做查询与开关映射，具体执行由调度器负责。
 func (s *adminServiceImpl) WorkBuddyAutoTaskAccounts(ctx context.Context) ([]WorkBuddyAutoTaskAccount, error) {
+	now := time.Now()
 	accounts, _, err := s.accountRepo.List(ctx, pagination.PaginationParams{Page: 1, PageSize: 500})
 	if err != nil {
 		return nil, err
@@ -1954,6 +1955,16 @@ func (s *adminServiceImpl) WorkBuddyAutoTaskAccounts(ctx context.Context) ([]Wor
 		}
 		cfg := workBuddyAutoTaskConfigOf(a)
 		if !cfg.AutoCheckin && !cfg.AutoClaim {
+			continue
+		}
+		// 时间窗口：
+		//   - 未到配置的小时 → 跳过；
+		//   - 已过配置的小时且今天没跑过 → 补跑（错过整点、容器重启也能补上）；
+		//   - 今天已经跑过 → 跳过，避免每 30 分钟重复执行。
+		if now.Hour() < cfg.Hour {
+			continue
+		}
+		if workBuddyAutoRanToday(a.Credentials, now) {
 			continue
 		}
 		out = append(out, WorkBuddyAutoTaskAccount{
@@ -1970,4 +1981,22 @@ func (s *adminServiceImpl) WorkBuddyAutoTaskAccounts(ctx context.Context) ([]Wor
 // MarkWorkBuddyAutoTaskRun 回写自动任务执行时间与结果，供面板展示。
 func (s *adminServiceImpl) MarkWorkBuddyAutoTaskRun(ctx context.Context, id int64, at time.Time, status string) error {
 	return markWorkBuddyAutoTaskRunRecord(ctx, s.accountRepo, id, at, status)
+}
+
+// workBuddyAutoRanToday 判断凭据里记录的上次执行时间是否落在「今天」。
+//
+// 时间由调度器写入（RFC3339，带时区）。解析失败按「没跑过」处理：
+// 签到与领奖本身幂等，宁可多跑一次，也不要整天漏跑。
+func workBuddyAutoRanToday(creds map[string]any, now time.Time) bool {
+	raw, _ := creds["daily_auto_last_run_at"].(string)
+	if raw == "" {
+		return false
+	}
+	at, err := time.Parse(time.RFC3339, raw)
+	if err != nil {
+		return false
+	}
+	y1, m1, d1 := at.In(now.Location()).Date()
+	y2, m2, d2 := now.Date()
+	return y1 == y2 && m1 == m2 && d1 == d2
 }

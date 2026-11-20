@@ -63,7 +63,7 @@ var workBuddyTaskEventPlans = []struct {
 			Repeat: 1,
 			Domain: workBuddyDomainWeb,
 			Fields: map[string]any{
-				"pageURL":     "https://copilot.tencent.com/library",
+				"pageURL":     "https://www.workbuddy.cn/space/d/o0KWYeynteVv06UnAZqIFm",
 				"elementId":   "library_doc_intro_click",
 				"elementName": "WorkBuddy资料库介绍",
 			},

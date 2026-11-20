@@ -1942,7 +1942,6 @@ func (s *adminServiceImpl) workBuddyDefaultModelMapping(ctx context.Context, inp
 // 自动任务开关存在 workbuddy_auto_task_config；没有该行表示未开启。
 // 这里只做查询与开关映射，具体执行由调度器负责。
 func (s *adminServiceImpl) WorkBuddyAutoTaskAccounts(ctx context.Context) ([]WorkBuddyAutoTaskAccount, error) {
-	now := time.Now()
 	accounts, _, err := s.accountRepo.List(ctx, pagination.PaginationParams{Page: 1, PageSize: 500})
 	if err != nil {
 		return nil, err
@@ -1957,10 +1956,6 @@ func (s *adminServiceImpl) WorkBuddyAutoTaskAccounts(ctx context.Context) ([]Wor
 		if !cfg.AutoCheckin && !cfg.AutoClaim {
 			continue
 		}
-		// 只在账号配置的小时内执行：调度器每 30 分钟一轮，不加这道门会全天反复跑。
-		if now.Hour() != cfg.Hour {
-			continue
-		}
 		out = append(out, WorkBuddyAutoTaskAccount{
 			Account:         a,
 			AutoCheckin:     cfg.AutoCheckin,
@@ -1970,4 +1965,9 @@ func (s *adminServiceImpl) WorkBuddyAutoTaskAccounts(ctx context.Context) ([]Wor
 		})
 	}
 	return out, nil
+}
+
+// MarkWorkBuddyAutoTaskRun 回写自动任务执行时间与结果，供面板展示。
+func (s *adminServiceImpl) MarkWorkBuddyAutoTaskRun(ctx context.Context, id int64, at time.Time, status string) error {
+	return markWorkBuddyAutoTaskRunRecord(ctx, s.accountRepo, id, at, status)
 }

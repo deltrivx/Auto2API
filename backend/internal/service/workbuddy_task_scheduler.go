@@ -132,6 +132,19 @@ type WorkBuddyAutoTaskAccount struct {
 // runAccount 处理单个账号。
 func (s *WorkBuddyTaskScheduler) runAccount(ctx context.Context, item WorkBuddyAutoTaskAccount) {
 	account := item.Account
+	ran, failed := false, false
+	defer func() {
+		status := "skipped"
+		if failed {
+			status = "failed"
+		} else if ran {
+			status = "success"
+		}
+		if err := s.markRun(ctx, account, status); err != nil {
+			log.Printf("[wb-task] %s 回写执行状态失败: %v", account.Name, err)
+		}
+	}()
+
 	if item.AutoCheckin {
 		st, err := WorkBuddyCheckinStatusOf(ctx, account)
 		if err != nil {
@@ -139,8 +152,10 @@ func (s *WorkBuddyTaskScheduler) runAccount(ctx context.Context, item WorkBuddyA
 		} else if st.Active && !st.TodayCheckedIn {
 			res, err := WorkBuddyDoCheckin(ctx, account)
 			if err != nil {
+				failed = true
 				log.Printf("[wb-task] %s 签到失败: %v", account.Name, err)
 			} else {
+				ran = true
 				log.Printf("[wb-task] %s 签到成功 +%.2f（连签 %d 天）",
 					account.Name, res.Credit, res.StreakDays)
 			}
@@ -154,9 +169,11 @@ func (s *WorkBuddyTaskScheduler) runAccount(ctx context.Context, item WorkBuddyA
 		}
 		results, err := WorkBuddyClaimAll(ctx, account, item.IncludeHighRisk, 10*time.Second)
 		if err != nil {
+			failed = true
 			log.Printf("[wb-task] %s 领奖失败: %v", account.Name, err)
 			return
 		}
+		ran = true
 		var okCount int
 		var total float64
 		for _, r := range results {
@@ -169,6 +186,14 @@ func (s *WorkBuddyTaskScheduler) runAccount(ctx context.Context, item WorkBuddyA
 			log.Printf("[wb-task] %s 领奖 %d 项，共 %.2f 积分", account.Name, okCount, total)
 		}
 	}
+}
+
+// markRun 回写本账号的执行时间与结果。
+func (s *WorkBuddyTaskScheduler) markRun(ctx context.Context, account *Account, status string) error {
+	if s == nil || s.adminService == nil || account == nil {
+		return nil
+	}
+	return s.adminService.MarkWorkBuddyAutoTaskRun(ctx, account.ID, time.Now(), status)
 }
 
 // autoTaskAccounts 返回开启了自动任务的 WorkBuddy 账号。

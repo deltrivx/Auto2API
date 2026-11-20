@@ -144,6 +144,8 @@ type AdminService interface {
 	BatchDeleteRedeemCodes(ctx context.Context, ids []int64) (int64, error)
 	ExpireRedeemCode(ctx context.Context, id int64) (*RedeemCode, error)
 	ResetAccountQuota(ctx context.Context, id int64) error
+	// MarkWorkBuddyAutoTaskRun 回写自动任务执行时间与结果。
+	MarkWorkBuddyAutoTaskRun(ctx context.Context, id int64, at time.Time, status string) error
 }
 
 type AdminGroupOperation string
@@ -436,6 +438,23 @@ type ShadowOptions struct {
 	Priority    int
 	Concurrency int
 	GroupIDs    []int64
+}
+
+// MarkWorkBuddyAutoTaskRun 回写自动任务的执行时间与结果，供面板展示。
+//
+// 只改凭据里的 daily_auto_last_run_at / daily_auto_last_status，
+// 不动其它字段，避免影响令牌与开关。
+func markWorkBuddyAutoTaskRunRecord(ctx context.Context, repo AccountRepository, id int64, at time.Time, status string) error {
+	acc, err := repo.GetByID(ctx, id)
+	if err != nil || acc == nil {
+		return err
+	}
+	if acc.Credentials == nil {
+		acc.Credentials = map[string]any{}
+	}
+	acc.Credentials["daily_auto_last_run_at"] = at.Format(time.RFC3339)
+	acc.Credentials["daily_auto_last_status"] = status
+	return repo.Update(ctx, acc)
 }
 
 type UpdateAccountInput struct {

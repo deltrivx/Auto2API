@@ -628,13 +628,30 @@ func WorkBuddyRunSingleTask(ctx context.Context, account *Account, code string) 
 			"/v2/activity/growth/tasks/accept", map[string]any{"task_codes": []string{code}})
 	}
 
-	// accepted / in_progress 表示任务已接取但没达标，此时领奖必然失败
-	// （上游返回 400 task not completed）。直接给出可读结论，不打无意义的请求。
+	// accepted / in_progress：任务已接取但未达标。参考实现（AutoBuddy 的
+	// t_library / t_theme 等）在这里补发事件推进进度，而不是直接放弃。
+	// 只有不需要真实会话的方案才尝试，避免发出上游不认的空事件。
 	if target.Status == "accepted" || target.Status == "in_progress" {
+		if plan, ok := WorkBuddyEventPlanOf(code); ok && !plan.NeedsRealSession {
+			_ = WorkBuddyReportEvents(ctx, account, WorkBuddyBuildReportEvents(plan))
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(4 * time.Second):
+			}
+			// 回读状态：达标就立刻领奖。
+			if tasks2, err := WorkBuddyTasksOf(ctx, account); err == nil {
+				for i := range tasks2 {
+					if tasks2[i].Code == code && tasks2[i].Status == "completed" {
+						return WorkBuddyClaimTask(ctx, account, code)
+					}
+				}
+			}
+		}
 		return &WorkBuddyClaimResult{
 			Code:  code,
 			Title: target.Title,
-			Err:   "任务未完成：需在客户端完成该行为后才会到账",
+			Err:   "任务未完成：已上报行为，等待上游确认",
 		}, nil
 	}
 	if target.Status == "claimed" {

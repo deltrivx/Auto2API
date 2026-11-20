@@ -312,8 +312,9 @@ func workBuddyAutoAdvanceTasks(ctx context.Context, account *Account, includeHig
 		if ctx.Err() != nil {
 			return
 		}
-		// 已完成 / 已领奖 / 进行中：一律跳过。
-		if t.Status == "completed" || t.Status == "claimed" || t.Status == "in_progress" {
+		// 已完成 / 已领奖：跳过。进行中仍可尝试上报推进（参考实现在
+		// in_progress 状态下同样补发事件），纯上报方案才会走到下面。
+		if t.Status == "completed" || t.Status == "claimed" {
 			continue
 		}
 		if !includeHighRisk && workBuddyTaskRiskOf(t.Code, t.Title) == WorkBuddyRiskHigh {

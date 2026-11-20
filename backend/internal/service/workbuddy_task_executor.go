@@ -1,6 +1,7 @@
 package service
 
 import (
+	"strings"
 	"context"
 	"fmt"
 	"time"
@@ -92,6 +93,61 @@ func WorkBuddyExecuteTask(
 				res.Credit = claim.Credit
 			}
 		}
+		return res
+	}
+
+	// 需要前置数据或时间窗口的任务：各自有专用链路。
+	lower := strings.ToLower(task.Code)
+	switch {
+	case task.Code == "first_buddy":
+		if credit, err := workBuddyEnsureFirstBuddy(ctx, account); err != nil {
+			res.Outcome, res.Message = "failed", err.Error()
+			return res
+		} else if done, _ := workBuddyTaskReached(ctx, account, task.Code); done {
+			res.Credit = credit
+			return workBuddyClaimTaskResult(ctx, account, task, res)
+		}
+		res.Outcome, res.Message = "reported", "已领养并上报，等待上游确认"
+		return res
+	case strings.Contains(lower, "appearance"):
+		if _, err := workBuddyApplyTheme(ctx, account); err != nil {
+			res.Outcome, res.Message = "failed", err.Error()
+			return res
+		}
+		if done, _ := workBuddyTaskReached(ctx, account, task.Code); done {
+			return workBuddyClaimTaskResult(ctx, account, task, res)
+		}
+		res.Outcome, res.Message = "reported", "已应用主题并上报"
+		return res
+	case strings.Contains(lower, "template"):
+		if err := workBuddyRunTemplateTask(ctx, account); err != nil {
+			res.Outcome, res.Message = "failed", err.Error()
+			return res
+		}
+		if done, _ := workBuddyTaskReached(ctx, account, task.Code); done {
+			return workBuddyClaimTaskResult(ctx, account, task, res)
+		}
+		res.Outcome, res.Message = "reported", "已用真实场景上报模板事件"
+		return res
+	case strings.Contains(lower, "expert"):
+		if err := workBuddyRunExpertTask(ctx, account); err != nil {
+			res.Outcome, res.Message = "failed", err.Error()
+			return res
+		}
+		if done, _ := workBuddyTaskReached(ctx, account, task.Code); done {
+			return workBuddyClaimTaskResult(ctx, account, task, res)
+		}
+		res.Outcome, res.Message = "reported", "已上报专家遥测"
+		return res
+	case lower == "black_cat":
+		if err := workBuddyRunBlackCatTask(ctx, account); err != nil {
+			res.Outcome, res.Message = "skipped", err.Error()
+			return res
+		}
+		if done, _ := workBuddyTaskReached(ctx, account, task.Code); done {
+			return workBuddyClaimTaskResult(ctx, account, task, res)
+		}
+		res.Outcome, res.Message = "reported", "夜间对话已完成"
 		return res
 	}
 

@@ -28,6 +28,8 @@ const (
 	workBuddyActivityMakeup   = "activity_makeup"
 	// workBuddyActivityGift 是新手礼包，走 codebuddy 域，每账号一次。
 	workBuddyActivityGift = "activity_gift"
+	// workBuddyActivityDailyActivity 是成长中心的每日活跃（chat_request_send）。
+	workBuddyActivityDailyActivity = "activity_daily_activity"
 )
 
 // WorkBuddyActivityTasksOf 返回该账号上「互动模块」转换出的任务列表。
@@ -212,6 +214,19 @@ func WorkBuddyActivityTasksOf(ctx context.Context, account *Account) []WorkBuddy
 		}
 	}
 
+	// 每日活跃：点亮成长中心连登，每天一条，幂等。
+	if account != nil && account.Platform == domain.PlatformWorkBuddyCN {
+		out = append(out, WorkBuddyTask{
+			Code:         workBuddyActivityDailyActivity,
+			Title:        "成长中心活跃",
+			Description:  "上报一次对话事件，点亮当日活跃",
+			TaskType:     "daily",
+			Status:       "not_accepted",
+			Tag:          "每日",
+			RewardCredit: 0,
+		})
+	}
+
 	// 新手礼包：仅国内版有该端点，一次性奖励，已领取时上游会明确拒绝。
 	if account != nil && account.Platform == domain.PlatformWorkBuddyCN {
 		out = append(out, WorkBuddyTask{
@@ -311,6 +326,11 @@ func workBuddyBuddyQuota(ctx context.Context, account *Account) (int, bool, erro
 // WorkBuddyRunActivityTask 执行互动模块任务。
 func WorkBuddyRunActivityTask(ctx context.Context, account *Account, code string) (*WorkBuddyClaimResult, error) {
 	switch code {
+	case workBuddyActivityDailyActivity:
+		if err := workBuddyReportDailyActivity(ctx, account); err != nil {
+			return &WorkBuddyClaimResult{Code: code, Title: "成长中心活跃", Err: err.Error()}, nil
+		}
+		return &WorkBuddyClaimResult{Code: code, Title: "成长中心活跃"}, nil
 	case workBuddyActivityGift:
 		credit, err := workBuddyClaimGift(ctx, account)
 		if err != nil {

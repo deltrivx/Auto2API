@@ -328,8 +328,18 @@ func WorkBuddyRunActivityTask(ctx context.Context, account *Account, code string
 	switch code {
 	case workBuddyActivityDailyActivity:
 		if err := workBuddyReportDailyActivity(ctx, account); err != nil {
+			recordWorkBuddyTaskRun(ctx, &WorkBuddyTaskRun{
+				AccountID: account.ID, AccountName: account.Name,
+				Kind: "daily_activity", TaskCode: code, TaskName: "成长中心活跃",
+				Result: "failed", Detail: err.Error(),
+			})
 			return &WorkBuddyClaimResult{Code: code, Title: "成长中心活跃", Err: err.Error()}, nil
 		}
+		recordWorkBuddyTaskRun(ctx, &WorkBuddyTaskRun{
+			AccountID: account.ID, AccountName: account.Name,
+			Kind: "daily_activity", TaskCode: code, TaskName: "成长中心活跃",
+			Result: "success",
+		})
 		return &WorkBuddyClaimResult{Code: code, Title: "成长中心活跃"}, nil
 	case workBuddyActivityGift:
 		credit, err := workBuddyClaimGift(ctx, account)

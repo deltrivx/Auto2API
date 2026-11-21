@@ -240,24 +240,40 @@ func (a *workBuddyFingerprintAllocator) workBuddyAssign(key string) workBuddyFin
 // workBuddyFingerprintForAccount 为单个账号生成指纹。
 //
 // 入口函数：uid 优先，退化为账号 ID。同一账号每次调用返回完全相同的值。
+// workBuddyFingerprintForAccount 返回与 magpie 对齐的身份。
+//
+// 不再按 uid 派生模拟硬件（Windows 机型 / 假 MAC / 字体 / WebGL / 屏幕），
+// 一律取本机真实值：machineId 是 magpie 同款哈希，其余字段来自主机。
+// sessionId 仍按 uid 稳定派生，保证同一账号的会话号不跳变。
 func workBuddyFingerprintForAccount(uid string) workBuddyFingerprint {
-	return newWorkBuddyFingerprintAllocator().workBuddyAssign(uid)
+	host := workBuddyHost()
+	fp := workBuddyFingerprint{
+		UID:        uid,
+		MachineID:  host.MachineID,
+		SessionID:  workBuddyUUIDv5(workBuddyFingerprintNamespace, "wb-session:"+uid),
+		OS:         host.OS,
+		Arch:       host.Arch,
+		OSVersion:  host.OSVersion,
+		CPUCores:   host.CPUCores,
+		MemorySize: int(host.MemorySize),
+		CPUModel:   host.CPUModel,
+		Hostname:   host.Hostname,
+		Timezone:   host.Timezone,
+		IDEVersion: "5.9.3",
+	}
+	// web / 小程序域各自一个 id，仍由 uid 稳定派生（上游按域分别记账）
+	fp.WebMachineID = workBuddyUUIDv5(workBuddyFingerprintNamespace, "wb-web:"+uid)
+	fp.MPMachineID = workBuddyUUIDv5(workBuddyFingerprintNamespace, "wb-mp:"+uid)
+	return fp
 }
 
-// workBuddyFingerprintHeaders 把指纹转换成 WorkBuddy 客户端发送的设备头。
+// workBuddyFingerprintHeaders 返回要额外发送的设备头。
 //
-// 这些头与 workbuddy_sign.go 的签名头一起发送；上游用它们判断设备一致性。
+// 对齐 magpie 后为空：它的聊天请求只带身份头（X-User-Id / X-Domain /
+// X-Product / X-IDE-* / X-Agent-*）与 SDK 头，从不发 machine id / MAC /
+// CPU / 内存这类「设备指纹」头。自造这些头反而是与真实客户端不一致的信号。
 func (f workBuddyFingerprint) workBuddyFingerprintHeaders() map[string]string {
-	return map[string]string{
-		"X-Machine-Id":  f.MachineID,
-		"X-Session-Id":  f.SessionID,
-		"X-Device-Mac":  f.MAC,
-		"X-OS":          f.OS,
-		"X-Arch":        f.Arch,
-		"X-OS-Version":  f.OSVersion,
-		"X-CPU-Cores":   strconv.Itoa(f.CPUCores),
-		"X-Memory-Size": strconv.Itoa(f.MemorySize),
-	}
+	return nil
 }
 
 // workBuddyUASuffixPattern 匹配 UA 末尾的 Chrome 版本号，供版本递增使用。
@@ -300,9 +316,11 @@ func WorkBuddyFingerprintOf(account *Account) map[string]any {
 		"memory_size":    fp.MemorySize,
 		"ua":             fp.UA,
 		"ide_version":    fp.IDEVersion,
-		"gpu":            workBuddyFingerprintGPU(fp),
-		"disk":           workBuddyFingerprintDisk(fp),
-		"screen":         workBuddyFingerprintScreen(fp),
+		// 对齐 magpie 后不再有模拟硬件：这三项为空即「未发送」，
+		// 不再按系统族补一个假值，避免面板显示不存在的设备。
+		"gpu":            fp.GPU,
+		"disk":           fp.Disk,
+		"screen":         fp.Screen,
 		"cpu_model":      workBuddyFingerprintCPUModel(fp),
 		"hostname":       fp.Hostname,
 		"timezone":       fp.Timezone,

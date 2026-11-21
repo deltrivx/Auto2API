@@ -167,7 +167,7 @@ func workBuddyReportDomainBatch(ctx context.Context, account *Account, domain wo
 			"os":           profile.OS,
 			"arch":         profile.Arch,
 			"osVersion":    profile.OSVersion,
-			"timezone":     "Asia/Shanghai",
+			"timezone":     fp.Timezone,
 			"cpuCores":     fp.CPUCores,
 			"memorySize":   fp.MemorySize,
 		}

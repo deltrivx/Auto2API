@@ -285,9 +285,8 @@ func traeToolCallFromAny(raw any, fallbackIndex int) (traeToolCall, bool) {
 	if name == "" && id == "" && args == "" {
 		return traeToolCall{}, false
 	}
-	if args == "" {
-		args = "{}"
-	}
+	// 不要在这里补 "{}"：参数可能分多帧到达，先塞默认值会被拼进真实参数前面
+	// （实测得到 {"city":"成都"} 之前多了个 {}）。空参数在 list() 里统一补。
 	return traeToolCall{ID: id, Index: index, Name: name, Arguments: args}, true
 }
 

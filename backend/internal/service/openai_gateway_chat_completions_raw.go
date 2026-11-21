@@ -393,6 +393,13 @@ func (s *OpenAIGatewayService) streamRawChatCompletions(
 		if clientDisconnected {
 			return
 		}
+		// 上游把 Anthropic 形状的 usage 塞在 SSE 帧里时同样补齐，
+		// 否则流式客户端读 prompt_tokens 得到 0。
+		if payload, ok := strings.CutPrefix(line, "data: "); ok && strings.Contains(payload, "\"usage\"") {
+			if normalized := normalizeOpenAIChatUsage([]byte(payload)); string(normalized) != payload {
+				line = "data: " + string(normalized)
+			}
+		}
 		if !clientOutputStarted && !refusalDetector.ShouldReleaseClientOutput() {
 			pendingLines = append(pendingLines, line)
 			return
@@ -576,6 +583,49 @@ func extractCCStreamUsage(payload string) *OpenAIUsage {
 	return &u
 }
 
+
+// normalizeOpenAIChatUsage 把 Anthropic 风格的 usage 补成 OpenAI 形状。
+//
+// Trae 等上游在 OpenAI 兼容端点上返回的 usage 用的是 input_tokens /
+// output_tokens，原样透传时 OpenAI SDK（以及绝大多数智能体框架）读
+// usage.prompt_tokens 会拿到 0 或 None，token 统计随之失真。这里补齐
+// prompt_tokens / completion_tokens / total_tokens，并保留原字段。
+func normalizeOpenAIChatUsage(payload []byte) []byte {
+	usage := gjson.GetBytes(payload, "usage")
+	if !usage.Exists() || !usage.IsObject() {
+		return payload
+	}
+	// 已经是 OpenAI 形状：不动
+	if usage.Get("prompt_tokens").Exists() || usage.Get("completion_tokens").Exists() {
+		return payload
+	}
+	inTok := usage.Get("input_tokens")
+	outTok := usage.Get("output_tokens")
+	if !inTok.Exists() && !outTok.Exists() {
+		return payload
+	}
+	in := inTok.Int()
+	out := outTok.Int()
+
+	updated := payload
+	if v, err := sjson.SetBytes(updated, "usage.prompt_tokens", in); err == nil {
+		updated = v
+	}
+	if v, err := sjson.SetBytes(updated, "usage.completion_tokens", out); err == nil {
+		updated = v
+	}
+	if v, err := sjson.SetBytes(updated, "usage.total_tokens", in+out); err == nil {
+		updated = v
+	}
+	// 上游若给了缓存命中数，按 OpenAI 的嵌套结构补上，方便下游统计
+	if cached := usage.Get("cache_read_input_tokens").Int(); cached > 0 {
+		if v, err := sjson.SetBytes(updated, "usage.prompt_tokens_details.cached_tokens", cached); err == nil {
+			updated = v
+		}
+	}
+	return updated
+}
+
 // bufferRawChatCompletions 透传上游 CC 非流式 JSON 响应。
 func (s *OpenAIGatewayService) bufferRawChatCompletions(
 	c *gin.Context,
@@ -609,6 +659,7 @@ func (s *OpenAIGatewayService) bufferRawChatCompletions(
 	}
 	respBody = applyOllamaCloudRawChatCompletionsResponse(account, respBody)
 	respBody = s.replaceModelInResponseBody(respBody, upstreamModel, originalModel)
+	respBody = normalizeOpenAIChatUsage(respBody)
 
 	if s.responseHeaderFilter != nil {
 		responseheaders.WriteFilteredHeaders(c.Writer.Header(), resp.Header, s.responseHeaderFilter)

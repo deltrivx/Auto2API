@@ -261,6 +261,11 @@ func workBuddyFingerprintForAccount(uid string) workBuddyFingerprint {
 		Timezone:   host.Timezone,
 		IDEVersion: "5.9.3",
 	}
+	// UA 用真实客户端那一串（与聊天请求同一个来源），而不是按 Chrome
+	// 版本号拼出来的假 UA；上报里的 userAgent 与请求头保持一致。
+	if site := workBuddySiteForPlatform("workbuddy_cn"); site != nil {
+		fp.UA = site.workBuddyCLIUserAgent()
+	}
 	// web / 小程序域各自一个 id，仍由 uid 稳定派生（上游按域分别记账）
 	fp.WebMachineID = workBuddyUUIDv5(workBuddyFingerprintNamespace, "wb-web:"+uid)
 	fp.MPMachineID = workBuddyUUIDv5(workBuddyFingerprintNamespace, "wb-mp:"+uid)

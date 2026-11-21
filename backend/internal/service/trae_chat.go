@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -71,7 +72,64 @@ func buildTraeChatPayload(account *Account, body []byte, model, modelName, funct
 	if v := gjson.GetBytes(body, "max_tokens"); v.Exists() {
 		payload["max_tokens"] = v.Int()
 	}
+	applyTraeTools(body, payload)
 	return payload, nil
+}
+
+// applyTraeTools 把 OpenAI 的 tools 转成 Trae 的写法。
+//
+// Trae 认的是 {type:function, function:{name, description, parameters}}
+// 且 parameters 必须是「JSON 字符串」而不是对象（照插件实测）。
+// tool_choice 只接受 auto/none/required 或具体函数名。
+func applyTraeTools(body []byte, payload map[string]any) {
+	tools := gjson.GetBytes(body, "tools")
+	if !tools.Exists() || !tools.IsArray() || len(tools.Array()) == 0 {
+		return
+	}
+	choice := strings.TrimSpace(gjson.GetBytes(body, "tool_choice").String())
+	if choice == "none" {
+		return
+	}
+	list := make([]map[string]any, 0, len(tools.Array()))
+	for _, t := range tools.Array() {
+		fn := t.Get("function")
+		name := strings.TrimSpace(fn.Get("name").String())
+		if name == "" {
+			continue
+		}
+		params := fn.Get("parameters")
+		raw := "{}"
+		if params.Exists() && params.Raw != "" {
+			raw = params.Raw
+		}
+		list = append(list, map[string]any{
+			"type": "function",
+			"function": map[string]any{
+				"name":        name,
+				"description": fn.Get("description").String(),
+				"parameters":  raw,
+			},
+		})
+	}
+	if len(list) == 0 {
+		return
+	}
+	payload["tools"] = list
+
+	tc := gjson.GetBytes(body, "tool_choice")
+	if tc.Exists() {
+		switch tc.Type {
+		case gjson.String:
+			payload["tool_choice"] = tc.String()
+		case gjson.JSON:
+			if name := strings.TrimSpace(tc.Get("function.name").String()); name != "" {
+				payload["tool_choice"] = name
+			}
+		}
+	}
+	if v := gjson.GetBytes(body, "parallel_tool_calls"); v.Exists() {
+		payload["parallel_tool_calls"] = v.Bool()
+	}
 }
 
 // convertTraeMessages 把 OpenAI 的 content 转成 Trae 的 [{type:text,text}] 形状。
@@ -105,9 +163,300 @@ func convertTraeMessages(raw any) []map[string]any {
 			}
 			text = b.String()
 		}
+		// 回放历史里的工具调用：Trae 认它自己的轮次形状
+		// （assistant 带 tool_calls，function_call 里 name + arguments 字符串）。
+		// 丢掉这些会让多轮工具对话在第二轮断掉。
+		if role == "assistant" {
+			if calls := traeAssistantCalls(msg); len(calls) > 0 {
+				turn := map[string]any{"role": "assistant", "tool_calls": calls}
+				if text != "" {
+					turn["content"] = []map[string]any{{"type": "text", "text": text}}
+				}
+				out = append(out, turn)
+				continue
+			}
+		}
+		if role == "tool" {
+			id := strings.TrimSpace(traeAnyString(msg["tool_call_id"]))
+			if id == "" {
+				id = strings.TrimSpace(traeAnyString(msg["tool_use_id"]))
+			}
+			if id != "" {
+				if text == "" {
+					// Trae 拒绝空结果的工具轮次（4027：调用读作未应答）
+					text = "(no output)"
+				}
+				out = append(out, map[string]any{
+					"role":         "tool",
+					"tool_call_id": id,
+					"content":      []map[string]any{{"type": "text", "text": text}},
+				})
+				continue
+			}
+		}
 		out = append(out, map[string]any{
 			"role":    role,
 			"content": []map[string]any{{"type": "text", "text": text}},
+		})
+	}
+	return out
+}
+
+
+
+// traeAnyString 把任意值宽松转成字符串（数字/字符串都接受）。
+func traeAnyString(v any) string {
+	switch t := v.(type) {
+	case nil:
+		return ""
+	case string:
+		return t
+	case json.Number:
+		return t.String()
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64)
+	default:
+		return fmt.Sprint(t)
+	}
+}
+
+
+// traeToolCall 是上游事件里的一条工具调用（增量）。
+type traeToolCall struct {
+	ID        string
+	Index     int
+	Name      string
+	Arguments string
+}
+
+// traeToolCallFromAny 从多种可能的形状里读出一条调用。
+//
+// Trae 的事件没有稳定 schema：有的放在 tool_calls 数组里（OpenAI 形状，
+// function 或 function_call 两种键），有的直接给 tool_name / params。
+// 与插件 nativeCall 一样逐项兜底，避免换一版上游就静默丢掉工具调用。
+func traeToolCallFromAny(raw any, fallbackIndex int) (traeToolCall, bool) {
+	item, ok := raw.(map[string]any)
+	if !ok {
+		return traeToolCall{}, false
+	}
+	id := strings.TrimSpace(traeAnyString(item["id"]))
+	if id == "" {
+		id = strings.TrimSpace(traeAnyString(item["tool_call_id"]))
+	}
+	index := fallbackIndex
+	if v, ok := item["index"].(float64); ok {
+		index = int(v)
+	}
+	var fn map[string]any
+	for _, key := range []string{"function", "function_call"} {
+		if m, ok := item[key].(map[string]any); ok {
+			fn = m
+			break
+		}
+	}
+	name := ""
+	if fn != nil {
+		name = strings.TrimSpace(traeAnyString(fn["name"]))
+	}
+	if name == "" {
+		name = strings.TrimSpace(traeAnyString(item["tool_name"]))
+	}
+	args := ""
+	for _, src := range []map[string]any{fn, item} {
+		if src == nil {
+			continue
+		}
+		for _, key := range []string{"arguments", "args", "params", "input", "parameters"} {
+			if v, ok := src[key]; ok && v != nil {
+				if str, ok := v.(string); ok {
+					args = str
+				} else if b, err := json.Marshal(v); err == nil {
+					args = string(b)
+				}
+				if args != "" {
+					break
+				}
+			}
+		}
+		if args != "" {
+			break
+		}
+	}
+	if name == "" && id == "" && args == "" {
+		return traeToolCall{}, false
+	}
+	if args == "" {
+		args = "{}"
+	}
+	return traeToolCall{ID: id, Index: index, Name: name, Arguments: args}, true
+}
+
+// traeToolCallsFromEvent 从一帧事件里取出工具调用。
+func traeToolCallsFromEvent(event map[string]any) []traeToolCall {
+	containers := []map[string]any{event}
+	for _, key := range []string{"delta", "data", "message", "output"} {
+		if m, ok := event[key].(map[string]any); ok {
+			containers = append(containers, m)
+		}
+	}
+	out := make([]traeToolCall, 0, 2)
+	for _, c := range containers {
+		raw, ok := c["tool_calls"]
+		if !ok {
+			// 单条形式：function_call 直接挂在容器上
+			if _, has := c["function_call"]; has {
+				raw = []any{c}
+			} else if _, has := c["tool_name"]; has {
+				raw = []any{c}
+			} else {
+				continue
+			}
+		}
+		list, ok := raw.([]any)
+		if !ok {
+			list = []any{raw}
+		}
+		for i, item := range list {
+			if call, ok := traeToolCallFromAny(item, i); ok {
+				out = append(out, call)
+			}
+		}
+	}
+	return out
+}
+
+// traeToolCallState 是一条工具调用在累积中的状态。
+type traeToolCallState struct {
+	ID        string
+	Index     int
+	Name      string
+	Arguments string
+	emitted   int
+}
+
+// traeToolCallSet 按 id/index 归并同一个调用的多次增量。
+type traeToolCallSet struct {
+	calls map[string]*traeToolCallState
+	order []string
+	seq   int
+}
+
+func (s *traeToolCallSet) seen(id string) bool {
+	_, ok := s.calls[id]
+	return ok
+}
+
+// merge 把一个事件里的增量并入，并返回需要下发给客户端的 delta 片段。
+func (s *traeToolCallSet) merge(in []traeToolCall) []map[string]any {
+	parts := make([]map[string]any, 0, len(in))
+	for _, c := range in {
+		key := c.ID
+		if key == "" {
+			key = fmt.Sprintf("idx-%d", c.Index)
+		}
+		st, ok := s.calls[key]
+		if !ok {
+			s.seq++
+			st = &traeToolCallState{ID: c.ID, Index: c.Index}
+			if st.ID == "" {
+				st.ID = fmt.Sprintf("call_%d", s.seq)
+			}
+			s.calls[key] = st
+			s.order = append(s.order, key)
+		}
+		if c.Name != "" && st.Name == "" {
+			st.Name = c.Name
+		}
+		// 参数可能整段重发，也可能只发新增片段：取增量部分
+		delta := ""
+		switch {
+		case c.Arguments == "":
+		case st.Arguments == "":
+			delta = c.Arguments
+		case strings.HasPrefix(c.Arguments, st.Arguments):
+			delta = c.Arguments[len(st.Arguments):]
+		case !strings.HasPrefix(st.Arguments, c.Arguments):
+			delta = c.Arguments
+			st.Arguments = ""
+		}
+		st.Arguments += delta
+		if st.Name == "" && delta == "" {
+			continue
+		}
+		fn := map[string]any{"arguments": delta}
+		if st.Name != "" && st.emitted == 0 {
+			fn["name"] = st.Name
+		}
+		item := map[string]any{
+			"index":    st.Index,
+			"function": fn,
+		}
+		if st.emitted == 0 {
+			item["id"] = st.ID
+			item["type"] = "function"
+		}
+		st.emitted++
+		parts = append(parts, item)
+	}
+	return parts
+}
+
+// list 返回累积完成的完整调用列表（非流式响应使用）。
+func (s *traeToolCallSet) list() []map[string]any {
+	out := make([]map[string]any, 0, len(s.order))
+	for _, key := range s.order {
+		st := s.calls[key]
+		if st == nil || st.Name == "" {
+			continue
+		}
+		args := st.Arguments
+		if strings.TrimSpace(args) == "" {
+			args = "{}"
+		}
+		out = append(out, map[string]any{
+			"id":   st.ID,
+			"type": "function",
+			"function": map[string]any{
+				"name":      st.Name,
+				"arguments": args,
+			},
+		})
+	}
+	return out
+}
+
+// traeAssistantCalls 取出一条 assistant 消息里的工具调用，转成 Trae 的形状。
+func traeAssistantCalls(msg map[string]any) []map[string]any {
+	raw, ok := msg["tool_calls"].([]any)
+	if !ok || len(raw) == 0 {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(raw))
+	for _, item := range raw {
+		call, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		fn, _ := call["function"].(map[string]any)
+		name := strings.TrimSpace(traeAnyString(fn["name"]))
+		if name == "" {
+			continue
+		}
+		args := traeAnyString(fn["arguments"])
+		if strings.TrimSpace(args) == "" {
+			args = "{}"
+		}
+		id := strings.TrimSpace(traeAnyString(call["id"]))
+		if id == "" {
+			id = fmt.Sprintf("call_%d", len(out)+1)
+		}
+		out = append(out, map[string]any{
+			"id":   id,
+			"type": "function",
+			"function_call": map[string]any{
+				"name":      name,
+				"arguments": args,
+			},
 		})
 	}
 	return out
@@ -240,6 +589,7 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 
 	var content strings.Builder
 	var reasoning strings.Builder
+	toolCalls := &traeToolCallSet{calls: map[string]*traeToolCallState{}}
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64<<10), 4<<20)
 	// SSE 的 event 名是独立一行（`event: error`），不在 data 的 JSON 里。
@@ -278,6 +628,21 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 				log.Printf("[trae-debug] %s", string(b[:min(len(b), 600)]))
 			}
 		}
+		// 工具调用帧不一定属于「正文事件」，必须在正文过滤之前取，
+		// 否则它们会被当成无关事件跳过，客户端永远拿不到 tool_calls。
+		if calls := traeToolCallsFromEvent(event); len(calls) > 0 {
+			if clientStream {
+				for _, delta := range toolCalls.merge(calls) {
+					writeTraeChunk(c, originalModel, map[string]any{"tool_calls": []map[string]any{delta}}, nil, "")
+				}
+			} else {
+				toolCalls.merge(calls)
+			}
+			if finishReason == "stop" || finishReason == "" {
+				finishReason = "tool_calls"
+			}
+		}
+
 		// 只处理正文类事件，与 magpie 的 ANSWER 集合一致。
 		// 不加这层过滤会把 error / usage / done 等事件里的同名字段当正文取出来。
 		if !traeIsAnswerEvent(event) {
@@ -328,6 +693,42 @@ func (s *OpenAIGatewayService) forwardTraeChatCompletions(
 	if usage.InputTokens == 0 && usage.OutputTokens == 0 {
 		usage.InputTokens = traeEstimatePromptTokens(body)
 		usage.OutputTokens = traeEstimateTokens(content.String()) + traeEstimateTokens(reasoning.String())
+	}
+
+	if !clientStream {
+		if calls := toolCalls.list(); len(calls) > 0 {
+			finishReason = "tool_calls"
+			c.JSON(http.StatusOK, gin.H{
+				"id":      "chatcmpl-trae",
+				"object":  "chat.completion",
+				"created": time.Now().Unix(),
+				"model":   originalModel,
+				"choices": []any{gin.H{
+					"index":         0,
+					"finish_reason": finishReason,
+					"message": gin.H{
+						"role":              "assistant",
+						"content":           strings.TrimSpace(content.String()),
+						"reasoning_content": strings.TrimSpace(reasoning.String()),
+						"tool_calls":        calls,
+					},
+				}},
+				"usage": gin.H{
+					"prompt_tokens":     usage.InputTokens,
+					"completion_tokens": usage.OutputTokens,
+					"total_tokens":      usage.InputTokens + usage.OutputTokens,
+				},
+			})
+			return &OpenAIForwardResult{
+				RequestID:       "trae-" + function,
+				ResponseID:      "chatcmpl-trae",
+				UpstreamHeaders: resp.Header,
+				Usage:           *usage,
+				Model:           originalModel,
+				BillingModel:    billingModel,
+				UpstreamModel:   upstreamModel,
+			}, nil
+		}
 	}
 
 	if clientStream {

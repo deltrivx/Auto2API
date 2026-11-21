@@ -361,6 +361,27 @@ func (s *GatewayService) readUpstreamErrorBody(resp *http.Response) ([]byte, err
 	return io.ReadAll(io.LimitReader(resp.Body, limit))
 }
 
+// upstreamRiskBlocked 判定上游的 401/403 其实是风控拦截，而不是凭据失效。
+//
+// Marvis 在设备指纹或出口 IP 被盯上时回 401（实测），WorkBuddy 回 403 并带
+// 4100404 / "Illegal API invocation from an unapproved channel"。这两种情况
+// 重新登录、换账号都无效，必须让调用方看见「换出口」而不是「换密钥」。
+func upstreamRiskBlocked(body []byte) bool {
+	s := strings.ToLower(string(body))
+	for _, marker := range []string{
+		"4100404",
+		"unapproved channel",
+		"illegal api invocation",
+		"risk_blocked",
+		"风控",
+	} {
+		if strings.Contains(s, marker) {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *GatewayService) handleErrorResponse(ctx context.Context, resp *http.Response, c *gin.Context, account *Account, requestedModel ...string) (*ForwardResult, error) {
 	// Upstream returned a non-success HTTP status; count Ollama Cloud / OpenCode Go activity.
 	scheduleOllamaCloudUsageActivity(s.deferredService, account)
@@ -489,10 +510,20 @@ func (s *GatewayService) handleErrorResponse(ctx context.Context, resp *http.Res
 		statusCode = http.StatusBadGateway
 		errType = "upstream_error"
 		errMsg = "Upstream authentication failed, please contact administrator"
+		if upstreamRiskBlocked(body) {
+			// 上游把风控拦截也回成 401（Marvis 实测）。它按设备指纹/出口 IP
+			// 判定，换账号、重新登录都无效，文案必须指向换出口。
+			errType = "risk_blocked"
+			errMsg = "Upstream risk control blocked this request (device fingerprint or egress IP), not an expired key; changing the account will not help, change the egress IP"
+		}
 	case 403:
 		statusCode = http.StatusBadGateway
 		errType = "upstream_error"
 		errMsg = "Upstream access forbidden, please contact administrator"
+		if upstreamRiskBlocked(body) {
+			errType = "risk_blocked"
+			errMsg = "Upstream risk control blocked this request (device fingerprint or egress IP), not an expired key; changing the account will not help, change the egress IP"
+		}
 	case 429:
 		statusCode = http.StatusTooManyRequests
 		errType = "rate_limit_error"

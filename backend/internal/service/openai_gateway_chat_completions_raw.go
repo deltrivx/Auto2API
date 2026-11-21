@@ -858,7 +858,20 @@ func (s *OpenAIGatewayService) bufferWorkBuddyStreamAsChatCompletion(
 		}},
 	}
 	if usage.InputTokens > 0 || usage.OutputTokens > 0 {
-		out["usage"] = usage
+		// 用 OpenAI 的字段名下发给客户端：OpenAIUsage 结构体的 json tag 是
+		// input_tokens / output_tokens（Anthropic 形状），直接塞进响应会让
+		// OpenAI SDK 读到 prompt_tokens=0。流式分支本来就是对的。
+		payload := map[string]any{
+			"prompt_tokens":     usage.InputTokens,
+			"completion_tokens": usage.OutputTokens,
+			"total_tokens":      usage.InputTokens + usage.OutputTokens,
+		}
+		if usage.CacheReadInputTokens > 0 {
+			payload["prompt_tokens_details"] = map[string]any{
+				"cached_tokens": usage.CacheReadInputTokens,
+			}
+		}
+		out["usage"] = payload
 	}
 
 	c.Writer.Header().Set("Content-Type", "application/json")

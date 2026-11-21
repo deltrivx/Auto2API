@@ -849,7 +849,7 @@ func aggregateWorkBuddySSEToChatCompletion(resp *http.Response) (*http.Response,
 		}},
 	}
 	if usage != nil {
-		out["usage"] = usage
+		out["usage"] = normalizeOpenAIChatUsageMap(usage)
 	}
 	raw, err := json.Marshal(out)
 	if err != nil {
@@ -862,6 +862,62 @@ func aggregateWorkBuddySSEToChatCompletion(resp *http.Response) (*http.Response,
 	resp.Header.Set("Content-Length", strconv.Itoa(len(raw)))
 	resp.Header.Set("Content-Type", "application/json")
 	return resp, nil
+}
+
+
+// normalizeOpenAIChatUsageMap 把 Anthropic 形状的 usage 补成 OpenAI 形状。
+//
+// WorkBuddy 上游的流式分片里 usage 用的是 input_tokens / output_tokens，
+// 聚合非流式响应时原样透传，客户端读 prompt_tokens 会拿到 0；
+// 同一条链路的流式分支是 OpenAI 形状，两边不一致。
+func normalizeOpenAIChatUsageMap(usage map[string]any) map[string]any {
+	if usage == nil {
+		return nil
+	}
+	if _, ok := usage["prompt_tokens"]; ok {
+		return usage
+	}
+	if _, ok := usage["completion_tokens"]; ok {
+		return usage
+	}
+	in, hasIn := usage["input_tokens"]
+	out, hasOut := usage["output_tokens"]
+	if !hasIn && !hasOut {
+		return usage
+	}
+	inN := anyToInt64(in)
+	outN := anyToInt64(out)
+	usage["prompt_tokens"] = inN
+	usage["completion_tokens"] = outN
+	usage["total_tokens"] = inN + outN
+	if cached := anyToInt64(usage["cache_read_input_tokens"]); cached > 0 {
+		details, _ := usage["prompt_tokens_details"].(map[string]any)
+		if details == nil {
+			details = map[string]any{}
+		}
+		details["cached_tokens"] = cached
+		usage["prompt_tokens_details"] = details
+	}
+	return usage
+}
+
+// anyToInt64 宽松地把 JSON 数字转成整数。
+func anyToInt64(v any) int64 {
+	switch t := v.(type) {
+	case nil:
+		return 0
+	case float64:
+		return int64(t)
+	case int64:
+		return t
+	case int:
+		return int64(t)
+	case json.Number:
+		if n, err := t.Int64(); err == nil {
+			return n
+		}
+	}
+	return 0
 }
 
 // workBuddyAggregatedToolCall 是拼接中的单个工具调用。

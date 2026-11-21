@@ -125,41 +125,15 @@ func applyWorkBuddyFingerprintHeaders(account *Account, h http.Header) {
 	}
 }
 
-// workBuddyFingerprint 返回账号的指纹。
+// workBuddyFingerprint 返回账号的身份。
 //
-// 优先读取凭据里持久化的值（保证跨进程重启稳定），缺失时按 uid 派生。
+// 对齐 magpie 后**不再读取历史持久化的指纹**：那些值是旧版本按 uid 派生出来的
+// 模拟硬件（Win32 机型、假 MAC、假内存），照用会让面板和实际上报不一致，
+// 也等于继续带着一套编造的身份。现在一律按真实主机现算。
 func (a *Account) workBuddyFingerprint() workBuddyFingerprint {
 	if a == nil {
 		return workBuddyFingerprint{}
 	}
-	uid := a.workBuddyUIDOf()
-
-	// 1. 已持久化的指纹。
-	if a.Credentials != nil {
-		if raw, ok := a.Credentials["fingerprint"]; ok {
-			if m, ok := raw.(map[string]any); ok {
-				fp := workBuddyFingerprint{
-					UID:          workBuddyStringField(m, "uid"),
-					MachineID:    workBuddyStringField(m, "machine_id"),
-					SessionID:    workBuddyStringField(m, "session_id"),
-					MPMachineID:  workBuddyStringField(m, "mp_machine_id"),
-					WebMachineID: workBuddyStringField(m, "web_machine_id"),
-					MAC:          workBuddyStringField(m, "mac"),
-					OS:           workBuddyStringField(m, "os"),
-					Arch:         workBuddyStringField(m, "arch"),
-					OSVersion:    workBuddyStringField(m, "os_version"),
-					CPUCores:     int(workBuddyIntField(m, "cpu_cores")),
-					MemorySize:   int(workBuddyIntField(m, "memory_size")),
-					UA:           workBuddyStringField(m, "ua"),
-					IDEVersion:   workBuddyStringField(m, "ide_version"),
-				}
-				if fp.MachineID != "" {
-					return fp
-				}
-			}
-		}
-	}
-
-	// 2. 按 uid 派生。
-	return workBuddyFingerprintForAccount(uid)
+	return workBuddyFingerprintForAccount(a.workBuddyUIDOf())
 }
+

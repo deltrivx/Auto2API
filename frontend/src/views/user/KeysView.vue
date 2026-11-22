@@ -517,7 +517,7 @@
               >
                 <span class="flex h-8 items-center justify-center gap-1.5" aria-hidden="true">
                   <span
-                    v-for="platform in KEY_GROUP_PROVIDER_ICONS[provider.value]"
+                    v-for="platform in provider.icons"
                     :key="platform"
                     class="flex h-8 w-8 items-center justify-center rounded-lg"
                     :class="platformBadgeLightClass(platform)"
@@ -537,7 +537,7 @@
             </label>
           </div>
           <p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400" aria-live="polite">
-            {{ groups.length === 0 ? t('common.noGroupsAvailable') : t(`keys.providerHints.${createProvider}`) }}
+            {{ groups.length === 0 ? t('common.noGroupsAvailable') : (createProviderOptions.find((p) => p.value === createProvider)?.hint ?? '') }}
           </p>
         </fieldset>
 
@@ -1235,7 +1235,8 @@ import { formatDateTime } from '@/utils/format'
 import { maskApiKey } from '@/utils/maskApiKey'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import { platformBadgeLightClass } from '@/utils/platformColors'
-import { KEY_GROUP_PROVIDERS, KEY_GROUP_PROVIDER_ICONS, getKeyGroupProvider, type KeyGroupProvider } from '@/utils/keyGroupProviders'
+import { buildKeyGroupTiles } from '@/utils/keyGroupProviders'
+import { GROUP_PLATFORM_OPTIONS } from '@/constants/platforms'
 import {
   CC_SWITCH_USAGE_SCRIPT,
   buildCcSwitchImportDeeplink,
@@ -1532,19 +1533,19 @@ const groupOptions = computed(() =>
   }))
 )
 
-const createProvider = ref<KeyGroupProvider>('anthropic')
-const createProviderOptions = computed(() => KEY_GROUP_PROVIDERS.map((value) => ({
-  value,
-  label: t(`keys.providers.${value}`),
-  count: groups.value.filter((group) => getKeyGroupProvider(group.platform) === value).length
-})))
+// createProvider 存的是平台 id（workbuddy_cn / trae_intl / …），
+// 磁贴由当前实际存在的分组派生，做到「创建密钥页与平台一一对应」。
+const createProvider = ref<string>('')
+const platformLabelOf = (platform: string) =>
+  GROUP_PLATFORM_OPTIONS.find((option) => option.value === platform)?.label ?? platform
+const createProviderOptions = computed(() => buildKeyGroupTiles(groups.value, platformLabelOf))
 
 const formGroupOptions = computed(() => showEditModal.value
   ? groupOptions.value
-  : groupOptions.value.filter((group) => getKeyGroupProvider(group.platform) === createProvider.value)
+  : groupOptions.value.filter((group) => group.platform === createProvider.value)
 )
 
-const selectCreateProvider = (provider: KeyGroupProvider) => {
+const selectCreateProvider = (provider: string) => {
   if (createProvider.value === provider) return
   createProvider.value = provider
   formData.value.group_id = null
@@ -1554,7 +1555,7 @@ const selectCreateProvider = (provider: KeyGroupProvider) => {
 watch([showCreateModal, createProviderOptions], ([isOpen, providers], [wasOpen]) => {
   if (!isOpen) return
   if (!wasOpen || !providers.some((provider) => provider.value === createProvider.value && provider.count > 0)) {
-    selectCreateProvider(providers.find((provider) => provider.count > 0)?.value ?? 'anthropic')
+    selectCreateProvider(providers[0]?.value ?? '')
   }
   if (!formGroupOptions.value.some((group) => group.value === formData.value.group_id)) {
     formData.value.group_id = null

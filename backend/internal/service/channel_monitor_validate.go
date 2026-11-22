@@ -210,15 +210,14 @@ func normalizeMonitorPrimaryModel(provider, checkMode, model string) string {
 // monitorAccountQuotaCapability 在创建/更新期拦截注定运行期永久 error 的
 // 「账号 × 额度通道」组合。
 //
-// 本分支只服务 WorkBuddy 与腾讯 Marvis，两者都是 OAuth 账号、额度各有
-// 独立端点（WorkBuddy 走积分、Marvis 走令牌钱包），因此这里只校验
-// 账号类型是否具备额度查询能力。
+// 本分支只服务 WorkBuddy，它们是 OAuth 账号、额度走独立端点
+// （WorkBuddy 走积分），因此这里只校验账号类型是否具备额度查询能力。
 func monitorAccountQuotaCapability(account *Account) error {
 	if account == nil {
 		return ErrChannelMonitorAccountNotSupportable
 	}
 	switch account.Platform {
-	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformMarvis:
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl:
 		if account.Type == AccountTypeOAuth {
 			return nil
 		}

@@ -99,6 +99,20 @@ type openAIPricingAtCtxKey struct{}
 // clampProfitControlThreshold 归一化利润门阈值。Validate/Normalize 已保证
 // margin+buffer < 1，这里只对存量脏数据兜底：阈值非有限或为负时按 0 处理
 // （等价于只放行免费上游）。装门点与 profit-preview 共用，避免口径漂移。
+
+// isSupportedGatewayPlatform 报告平台是否属于本分支服务的接入平台。
+//
+// 本分支只服务 WorkBuddy 两个站点与 Trae 两个站点 —— 它们都经 OpenAI 网关
+// 转发。这个判定用于替代散落各处的平台枚举。
+func isSupportedGatewayPlatform(platform string) bool {
+	switch platform {
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl:
+		return true
+	default:
+		return false
+	}
+}
+
 func clampProfitControlThreshold(threshold float64) float64 {
 	if math.IsNaN(threshold) || math.IsInf(threshold, 0) || threshold < 0 {
 		return 0

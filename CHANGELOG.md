@@ -4,6 +4,19 @@
 
 > 说明：v1.0.7 – v1.2.16 的条目缺失，此处从 v1.2.17 起重新按版本记录。
 
+## v1.2.43
+
+移除腾讯 Marvis 平台接入，只保留 WorkBuddy（国内 / 国际）与 Trae（国内 / 国际）
+四个渠道。
+
+- 删除后端 15 个 Marvis 专属文件（OAuth handler、回调 handler、网关协议、
+  设备指纹、令牌刷新、钱包与额度同步、模型目录、签到等）与迁移 `261_marvis_platform.sql`
+- 删除前端 3 个 Marvis 专属文件（`api/admin/marvis.ts`、`MarvisAuthSteps.vue`、
+  `useMarvisOAuth.ts`）
+- 平台注册表、wire 装配、路由注册、调度 / 计费 / 指纹 / 白名单等分支中
+  的 Marvis 逻辑一并去掉；`check:i18n` 的 zh / en 词条成对删除
+- 平台约束迁移 `266_trae_platforms.sql` 的允许集合去掉 `marvis`
+
 ## v1.2.26
 
 新增新手礼包领取（对照 AutoBuddy 实测实现）。

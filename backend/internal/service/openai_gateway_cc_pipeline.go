@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -167,10 +166,6 @@ func (s *OpenAIGatewayService) openAIChatCompletionsTargetURL(account *Account) 
 			baseURL = site.Endpoint + "/v2"
 		}
 	}
-	// Marvis 的基址同样是站点专属的（yybadaccess.3g.qq.com），凭据里没有 base_url。
-	if isMarvisAccount(account) {
-		baseURL = MarvisBaseURLForAccount(account)
-	}
 	if baseURL == "" {
 		baseURL = "https://api.openai.com"
 	}
@@ -220,8 +215,6 @@ func (s *OpenAIGatewayService) sendCCUpstreamRequest(
 	// WorkBuddy 上游会按客户端标识判定来源：Claude Code / Codex CLI 等
 	// 智能体在提示词与工具参数里夹带的品牌痕迹需在出站前清洗掉。
 	body = workBuddyNormalizeRequestBody(account, body)
-	// Marvis 上游只认槽位名，真实模型名会被回 400 无效模型 id。
-	body = marvisNormalizeChatBodyForUpstream(account, body)
 	upstreamCtx, releaseUpstreamCtx := detachUpstreamContext(ctx)
 	upstreamReq, err := http.NewRequestWithContext(upstreamCtx, http.MethodPost, targetURL, bytes.NewReader(body))
 	releaseUpstreamCtx()
@@ -244,8 +237,8 @@ func (s *OpenAIGatewayService) sendCCUpstreamRequest(
 	// 透传白名单中的客户端 header。详见 openaiCCRawAllowedHeaders 的设计说明。
 	// 透传必须是「先清后写」而不是 Add：Add 会把客户端的 User-Agent 与
 	// 后面 Set 的官方 UA 拼成 "客户端UA, 官方UA" 两条值。上游把这种拼接
-	// 当成伪造头，直接 4100404 风控 —— magpie-marvis 的 fetch 包装里专门
-	// 按小写判重就是为这个坑（它的注释写明：两条 UA 用逗号连起来就触发风控）。
+	// 当成伪造头，直接触发上游风控 —— 上游的 fetch 包装里专门按小写判重
+	// 就是为这个坑（两条 UA 用逗号连起来就触发风控）。
 	for key, values := range c.Request.Header {
 		lowerKey := strings.ToLower(key)
 		if openaiCCRawAllowedHeaders[lowerKey] {
@@ -270,9 +263,6 @@ func (s *OpenAIGatewayService) sendCCUpstreamRequest(
 	// X-Conversation-Request-ID / X-Conversation-Message-ID），
 	// 官方桌面端每次对话都带，缺失会被渠道校验判为非官方客户端。
 	applyWorkBuddyHeadersWithBody(account, upstreamReq.Header, body)
-	// Marvis 的鉴权方式是四个 Ual-Access-* 头 + 每次现签的设备指纹，
-	// 不是 Bearer。必须放在 UA 收敛与透传之后，否则会被覆盖。
-	applyMarvisHeaders(account, upstreamReq.Header)
 	// 官方 OpenCode / Command Code 上游收敛为规范客户端 UA：客户端透传的编程库
 	// UA 会命中其前置 Cloudflare bot 拦截（CF 1010/403），并被计入账号 403 strike。
 	applyOpenCodeUpstreamUserAgent(account, targetURL, upstreamReq.Header)
@@ -291,28 +281,6 @@ func (s *OpenAIGatewayService) sendCCUpstreamRequest(
 		return nil, s.handleOpenAIUpstreamTransportError(ctx, c, account, err, false)
 	}
 
-	// Marvis 内容过滤兜底（对齐 magpie-marvis 的 first_line_fallback）：
-	// 上游按「system 首行里的身份词对」拦请求，命中回 403 + 4100404。
-	// 这时把首行换成不含任何 agent 产品名的中性句，同一个账号重发一次。
-	// 不换 uskey、不换账号 —— 换账号会把一次内容问题放大成账号级的失败。
-	if resp != nil && resp.StatusCode == http.StatusForbidden && isMarvisAccount(account) {
-		errBody, _ := s.readOpenAIUpstreamError(resp)
-		if marvisIsContentFiltered(resp.StatusCode, errBody) {
-			if retryBody, changed := marvisWithFirstLine(body, marvisFallbackFirstLine); changed {
-				retryReq := upstreamReq.Clone(ctx)
-				retryReq.Body = io.NopCloser(bytes.NewReader(retryBody))
-				retryReq.ContentLength = int64(len(retryBody))
-				retryReq.GetBody = func() (io.ReadCloser, error) {
-					return io.NopCloser(bytes.NewReader(retryBody)), nil
-				}
-				if retryResp, rerr := s.doOpenAIUpstream(retryReq, proxyURL, account); rerr == nil {
-					slog.Warn("marvis.content_filter_retried",
-						"account_id", account.ID, "status", retryResp.StatusCode)
-					return retryResp, nil
-				}
-			}
-		}
-	}
 	return resp, nil
 }
 

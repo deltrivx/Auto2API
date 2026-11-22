@@ -48,7 +48,7 @@
         </div>
       </li>
 
-      <!-- 步骤 2：生成授权链接（链接在按钮上方，与 Marvis 一致） -->
+      <!-- 步骤 2：生成授权链接（链接在按钮上方） -->
       <li class="flex gap-3">
         <span
           class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
@@ -136,9 +136,9 @@ import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import { useTraeOAuth } from '@/composables/useTraeOAuth'
 
 // Trae 授权：三步交互（选站点 → 生成链接 → 粘贴回调并完成登录），
-// 样式与文案与 Marvis 一致——两者都是「服务器收不到回调，只能把地址粘回来」。
+// 服务器收不到回调，只能把地址粘回来。
 //
-// 与 Marvis 的差别只有第一步：Trae 的两个站点账号不通，需要先选站点。
+// 第一步与 WorkBuddy 不同：Trae 的两个站点账号不通，需要先选站点。
 // 粘贴不会自动建号：成功后由父组件接收 authorized 事件，用户再点「创建」。
 const props = defineProps<{
   platform: 'trae_cn' | 'trae_intl'

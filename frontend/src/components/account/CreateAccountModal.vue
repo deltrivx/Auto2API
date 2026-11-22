@@ -69,7 +69,7 @@
       <!-- Platform Selection：只有两个平台，WorkBuddy 的国内外站点收进第一步渠道选择 -->
       <div>
         <label class="input-label">{{ t('admin.accounts.platform') }}</label>
-        <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3" data-tour="account-form-platform">
+        <div class="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2" data-tour="account-form-platform">
           <button
             type="button"
             data-testid="platform-button-workbuddy"
@@ -94,33 +94,6 @@
             <div class="min-w-0">
               <span class="block text-sm font-medium text-gray-900 dark:text-white">WorkBuddy</span>
               <span class="block truncate text-xs text-gray-500 dark:text-gray-400">国内版 / 国际版</span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            data-testid="platform-button-marvis"
-            @click="selectMarvisPlatform"
-            :class="[
-              'flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all',
-              form.platform === 'marvis'
-                ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                : 'border-gray-200 hover:border-emerald-300 dark:border-dark-600 dark:hover:border-emerald-700'
-            ]"
-          >
-            <div
-              :class="[
-                'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                form.platform === 'marvis'
-                  ? 'bg-emerald-500 text-white'
-                  : 'bg-gray-100 text-gray-500 dark:bg-dark-600 dark:text-gray-400'
-              ]"
-            >
-              <PlatformIcon platform="marvis" size="sm" />
-            </div>
-            <div class="min-w-0">
-              <span class="block text-sm font-medium text-gray-900 dark:text-white">腾讯 Marvis</span>
-              <span class="block truncate text-xs text-gray-500 dark:text-gray-400">QQ / 微信登录</span>
             </div>
           </button>
 
@@ -156,7 +129,7 @@
         </div>
       </div>
 
-      <!-- WorkBuddy 登录：第 1 步选渠道（国内版 / 国际版），后两步与 Marvis 对齐 -->
+      <!-- WorkBuddy 登录：第 1 步选渠道（国内版 / 国际版），后两步是生成链接与粘贴回调 -->
       <div v-if="isWorkBuddyPlatform">
         <label class="input-label">登录</label>
         <div class="mt-2 rounded-lg border border-gray-200 p-4 dark:border-dark-600">
@@ -166,14 +139,6 @@
             @channel-change="handleWorkBuddyChannelChange"
             @authorized="handleWorkBuddyAuthorized"
           />
-        </div>
-      </div>
-
-      <!-- 腾讯 Marvis 登录：三步，与 WorkBuddy 同一套交互 -->
-      <div v-if="form.platform === 'marvis'">
-        <label class="input-label">登录</label>
-        <div class="mt-2 rounded-lg border border-gray-200 p-4 dark:border-dark-600">
-          <MarvisAuthSteps :auth="marvisOAuth" @authorized="handleMarvisAuthorized" />
         </div>
       </div>
 
@@ -3938,10 +3903,8 @@ import { useGeminiOAuth } from '@/composables/useGeminiOAuth'
 import { useAntigravityOAuth } from '@/composables/useAntigravityOAuth'
 import { useGrokOAuth } from '@/composables/useGrokOAuth'
 import { useWorkBuddyOAuth } from '@/composables/useWorkBuddyOAuth'
-import { useMarvisOAuth } from '@/composables/useMarvisOAuth'
 import { useTraeOAuth } from '@/composables/useTraeOAuth'
 import WorkBuddyAuthSteps from '@/components/account/WorkBuddyAuthSteps.vue'
-import MarvisAuthSteps from '@/components/account/MarvisAuthSteps.vue'
 import TraeAuthSteps from '@/components/account/TraeAuthSteps.vue'
 import type {
   Proxy,
@@ -4050,8 +4013,6 @@ const browserTimeZone = getBrowserTimeZone()
 const oauthStepTitle = computed(() => {
   // WorkBuddy 走自己的浏览器授权流程，标题不能沿用 Claude 的文案。
   if (isWorkBuddyPlatform.value) return t('admin.accounts.oauth.workbuddy.title')
-  // Marvis 同样是扫码授权，不沿用 Claude 的「Claude 账号授权」标题。
-  if (form.platform === 'marvis') return t('admin.accounts.oauth.marvis.title')
   if (form.platform === 'openai') return t('admin.accounts.oauth.openai.title')
   if (form.platform === 'gemini') return t('admin.accounts.oauth.gemini.title')
   if (form.platform === 'antigravity') return t('admin.accounts.oauth.antigravity.title')
@@ -4195,7 +4156,6 @@ const geminiOAuth = useGeminiOAuth() // For Gemini OAuth
 const antigravityOAuth = useAntigravityOAuth() // For Antigravity OAuth
 const grokOAuth = useGrokOAuth() // For Grok OAuth
 const workbuddyOAuth = useWorkBuddyOAuth() // For WorkBuddy OAuth
-const marvisOAuth = useMarvisOAuth() // For Tencent Marvis OAuth
 const traeOAuth = useTraeOAuth() // For Trae (CN / Global)
 
 // Computed: current OAuth state for template binding
@@ -4403,37 +4363,6 @@ function selectWorkBuddyPlatform(platform: 'workbuddy_cn' | 'workbuddy_intl') {
   // 不刷新会带着上一个站点的分组去创建，导致绑定到错误分组。
   form.group_ids = defaultGroupIDsForPlatform(platform)
   workbuddyOAuth.resetState()
-  marvisOAuth.reset()
-}
-
-/** 切换到腾讯 Marvis。登录方式与 WorkBuddy 不同，切换后清空两边的授权状态。 */
-function selectMarvisPlatform() {
-  form.platform = 'marvis'
-  accountCategory.value = 'oauth-based'
-  form.group_ids = defaultGroupIDsForPlatform('marvis')
-  workbuddyOAuth.resetState()
-  marvisOAuth.reset()
-}
-
-/**
- * Marvis 授权完成后直接建号。
- *
- * 与 WorkBuddy 的处理保持一致：名称留空时用昵称兜底，然后立刻提交，
- * 用户不需要再点「下一步」。
- */
-// Marvis 授权成功后**只回填账号名**，不自动建号。
-//
-// 用户还要确认名称、分组这些字段，最后由他点「创建」结束流程 ——
-// 提前建号会让「取消」变得没有意义。WorkBuddy 保持原有的一步到位。
-function handleMarvisAuthorized() {
-  const signed = marvisOAuth.result.value
-  if (!signed?.credentials?.access_token) {
-    appStore.showError('授权结果无效，请重试')
-    return
-  }
-  if (!form.name.trim()) {
-    form.name = signed.account_name || 'Marvis 账号'
-  }
 }
 
 /** 生成 WorkBuddy 授权链接。 */
@@ -4941,7 +4870,7 @@ const form = reactive({
 // 「Claude 账号授权 / 输入授权码」那套界面。
 //
 // ⚠ 这里必须是**白名单**：只有真正用 Claude 那套 code exchange 的平台才算。
-// 早先写成「排除法 + 默认 true」，每接一个新平台（WorkBuddy、Marvis）都会
+// 早先写成「排除法 + 默认 true」，每接一个新平台（WorkBuddy、Trae）都会
 // 先掉进 Claude 面板，得各自补一条排除才修好。默认 false 之后，新平台不会
 // 再误入。
 const isOAuthFlow = computed(() => {
@@ -5141,10 +5070,9 @@ watch(
     geminiOAuth.resetState()
     antigravityOAuth.resetState()
     grokOAuth.resetState()
-    // WorkBuddy / Marvis 之前漏了：重新打开弹窗时旧的授权链接与
+    // WorkBuddy 之前漏了：重新打开弹窗时旧的授权链接与
     // 「登录成功」状态会残留，用户看到的仍是上一次的授权会话。
     workbuddyOAuth.resetState()
-    marvisOAuth.reset()
   }
 )
 
@@ -5633,10 +5561,9 @@ const resetForm = () => {
   geminiOAuth.resetState()
   antigravityOAuth.resetState()
   grokOAuth.resetState()
-  // WorkBuddy / Marvis 的授权会话也要重置：否则关闭再打开时，
+  // WorkBuddy 的授权会话也要重置：否则关闭再打开时，
   // 上一次的授权链接和「登录成功」状态会原样留在界面上。
   workbuddyOAuth.resetState()
-  marvisOAuth.reset()
   oauthFlowRef.value?.reset()
   antigravityMixedChannelConfirmed.value = false
   upstreamModelsPreviewed.value = false
@@ -5857,7 +5784,7 @@ const handleVertexServiceAccountDrop = async (event: DragEvent) => {
 //
 // 与重新授权的差别：这里要带上表单里的其它字段（名称、分组、模型限制等），
 // 分组留空时后端会自动绑定该平台的默认分组。
-// WorkBuddy 授权成功后**只回填账号名**，不自动建号 —— 与 Marvis 一致。
+// WorkBuddy 授权成功后**只回填账号名**，不自动建号。
 // 名称留空时用账号标识兜底，用户确认后再点「创建」。
 function handleWorkBuddyAuthorized() {
   const result = workbuddyOAuth.result?.value
@@ -6055,27 +5982,6 @@ const handleSubmit = async () => {
     return
   }
 
-  // 腾讯 Marvis：同样是 OAuth 账号，凭据来自「粘贴回调地址」那一步。
-  if (form.platform === 'marvis') {
-    const mv = marvisOAuth.result?.value
-    if (!mv?.credentials?.access_token || !mv.credentials.openid) {
-      appStore.showError(t('admin.accounts.pleaseCompleteAuth'))
-      return
-    }
-    const mvCreds: Record<string, unknown> = {
-      openid: mv.credentials.openid,
-      access_token: mv.credentials.access_token,
-      refresh_token: mv.credentials.refresh_token ?? '',
-      guid: mv.credentials.guid,
-      login_type: mv.credentials.login_type ?? '1'
-    }
-    if (mv.credentials.expires_at) mvCreds.expires_at = mv.credentials.expires_at
-    if (mv.credentials.nickname) mvCreds.nickname = mv.credentials.nickname
-    if (mv.credentials.avatar) mvCreds.avatar = mv.credentials.avatar
-    await createAccountAndFinish(form.platform, 'oauth' as AccountType, mvCreds)
-    return
-  }
-
   // Trae：粘贴回调地址完成授权，凭据由服务端组装好（含设备身份），直接建号。
   if (isTraePlatform.value) {
     const traeResult = traeOAuth.result?.value
@@ -6221,10 +6127,9 @@ const goBackToBasicInfo = () => {
   geminiOAuth.resetState()
   antigravityOAuth.resetState()
   grokOAuth.resetState()
-  // WorkBuddy / Marvis 的授权会话也要重置：否则关闭再打开时，
+  // WorkBuddy 的授权会话也要重置：否则关闭再打开时，
   // 上一次的授权链接和「登录成功」状态会原样留在界面上。
   workbuddyOAuth.resetState()
-  marvisOAuth.reset()
   oauthFlowRef.value?.reset()
 }
 

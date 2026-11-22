@@ -506,7 +506,7 @@ func (s *AccountService) TestCredentials(ctx context.Context, id int64) error {
 	case PlatformOpenAI:
 		// TODO: 测试OpenAI API凭证
 		return nil
-	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformMarvis:
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl:
 		// WorkBuddy 是 OAuth 账号：凭证由 token 刷新与网关请求路径验证，
 		// 这里不做额外的探活。
 		return nil

@@ -43,8 +43,6 @@ const (
 	// 国产 OpenAI 兼容供应商（与 grok 一样经 OpenAI 网关转发）。
 	PlatformWorkBuddyCN   = domain.PlatformWorkBuddyCN
 	PlatformWorkBuddyIntl = domain.PlatformWorkBuddyIntl
-	// PlatformMarvis 是腾讯 Marvis 的模型网关（QQ / 微信 OAuth 登录）。
-	PlatformMarvis = domain.PlatformMarvis
 	// PlatformTraeCN / PlatformTraeIntl 是 Trae 的两个站点（浏览器 OAuth 登录）。
 	PlatformTraeCN    = domain.PlatformTraeCN
 	PlatformTraeIntl  = domain.PlatformTraeIntl

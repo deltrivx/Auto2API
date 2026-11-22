@@ -138,7 +138,7 @@ func NormalizeMaxReasoningEffort(raw string) string {
 
 func reasoningEffortValuesForPlatform(platform string) []string {
 	switch platform {
-	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformMarvis:
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl:
 		return workBuddyReasoningEffortValues
 	case PlatformOpenAI, PlatformComposite:
 		return openAIReasoningEffortValues

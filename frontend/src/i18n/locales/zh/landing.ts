@@ -15,8 +15,8 @@ export default {
     getStarted: '立即开始',
     goToDashboard: '进入控制台',
     // 新增：面向用户的价值主张
-    heroSubtitle: 'WorkBuddy × Marvis × Trae 统一接入网关',
-    heroDescription: '一个 OpenAI 兼容端点，直连 WorkBuddy、腾讯 Marvis 与字节 Trae 的全部模型。用标准的 /v1/chat/completions 调用，登录态、设备指纹与模型映射都由网关处理。',
+    heroSubtitle: 'WorkBuddy × Trae 统一接入网关',
+    heroDescription: '一个 OpenAI 兼容端点，直连 WorkBuddy 与字节 Trae 的全部模型。用标准的 /v1/chat/completions 调用，登录态、设备指纹与模型映射都由网关处理。',
     tags: {
       subscriptionToApi: 'OpenAI 兼容',
       stickySession: '多账号调度',
@@ -95,19 +95,18 @@ export default {
     },
     providers: {
       title: '接入平台',
-      description: '三个平台，一个端点',
+      description: '两个平台，一个端点',
       supported: '已支持',
       soon: '规划中',
       claude: 'WorkBuddy 国内版',
       gemini: 'WorkBuddy 国际版',
-      antigravity: '腾讯 Marvis',
       trae: '字节 Trae',
       more: '更多平台'
     },
     // CTA 区块
     cta: {
       title: '开始接入',
-      description: '登录后在控制台创建 API Key，即可调用 WorkBuddy、Marvis 与 Trae 的全部模型',
+      description: '登录后在控制台创建 API Key，即可调用 WorkBuddy 与 Trae 的全部模型',
       button: '进入控制台'
     },
     footer: {

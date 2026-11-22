@@ -70,7 +70,7 @@
             {{ auth.loading.value ? t('common.loading') : t('admin.accounts.workbuddyReauth.generate') }}
           </button>
           <template v-else>
-            <!-- 链接在上、按钮在下，与 Marvis 保持一致 -->
+            <!-- 链接在上、按钮在下 -->
             <a
               :href="auth.authUrl.value"
               target="_blank"
@@ -118,7 +118,7 @@ import { useWorkBuddyOAuth } from '@/composables/useWorkBuddyOAuth'
 
 // WorkBuddy 浏览器授权：三步流程（选渠道 → 生成链接 → 确认登录）。
 //
-// 与 Marvis 的组件保持同一套语义：渠道选定后锁定，授权成功只上报昵称，
+// 授权组件保持同一套语义：渠道选定后锁定，授权成功只上报昵称，
 // 真正建号由用户在弹窗底部点「创建」完成。
 const props = withDefaults(
   defineProps<{

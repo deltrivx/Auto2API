@@ -29,11 +29,6 @@ func RegisterGatewayRoutes(
 	compositeResolver *service.CompositeRouteResolver,
 	cfg *config.Config,
 ) {
-	// 腾讯 Marvis 的授权回调：公开端点，不经过 API Key 鉴权。
-	// 用户扫码完成后上游 302 到这里，我们接住 code 换登录态，
-	// 前端在 /admin/marvis/oauth/poll 等着拿结果。
-	r.GET("/api/v1/marvis/oauth/callback", h.OpenAIGateway.MarvisOAuthCallback)
-
 	bodyMemoryBudget := pkghttputil.NewBodyMemoryBudget(cfg.Gateway.RequestBodyMemoryBudgetBytes)
 	bodyLimit := middleware.RequestBodyLimit(cfg.Gateway.MaxBodySize, bodyMemoryBudget)
 	textBodyLimit := middleware.RequestBodyLimit(cfg.Gateway.TextMaxBodySize, bodyMemoryBudget)

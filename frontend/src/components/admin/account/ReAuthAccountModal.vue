@@ -91,13 +91,6 @@
         @authorized="handleTraeConfirm"
       />
 
-      <!-- Marvis 重新授权：与添加账号共用同一套三步流程 -->
-      <MarvisAuthSteps
-        v-if="authFlow === 'marvis'"
-        :auth="marvisOAuth"
-        @authorized="handleMarvisConfirm"
-      />
-
       <!-- 未登记平台的兜底：明确说明不支持，而不是套用别的平台的授权界面 -->
       <div
         v-if="!authFlow"
@@ -134,7 +127,7 @@
         <!-- 三个平台统一：步骤组件只「拿到登录态」，真正的保存由用户点这个按钮完成
              （对应「添加账号」里用户点「创建」）。避免完成授权即自动提交。 -->
         <button
-          v-if="authFlow === 'workbuddy' || authFlow === 'marvis' || authFlow === 'trae'"
+          v-if="authFlow === 'workbuddy' || authFlow === 'trae'"
           type="button"
           :disabled="!reauthReady || reauthSaving"
           class="btn btn-primary"
@@ -212,14 +205,12 @@ import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { AddMethod, AuthInputMethod } from '@/composables/useAccountOAuth'
 import { useWorkBuddyOAuth } from '@/composables/useWorkBuddyOAuth'
-import { useMarvisOAuth } from '@/composables/useMarvisOAuth'
 import { useTraeOAuth } from '@/composables/useTraeOAuth'
 import type { Account } from '@/types'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
 import OAuthAuthorizationFlow from '@/components/account/OAuthAuthorizationFlow.vue'
 import WorkBuddyAuthSteps from '@/components/account/WorkBuddyAuthSteps.vue'
-import MarvisAuthSteps from '@/components/account/MarvisAuthSteps.vue'
 import TraeAuthSteps from '@/components/account/TraeAuthSteps.vue'
 
 // Type for exposed OAuthAuthorizationFlow component
@@ -249,7 +240,6 @@ const { t } = useI18n()
 
 // OAuth composables
 const workbuddyOAuth = useWorkBuddyOAuth()
-const marvisOAuth = useMarvisOAuth()
 const traeOAuth = useTraeOAuth()
 
 // Refs
@@ -269,7 +259,7 @@ const isGemini = computed(() => props.account?.platform === 'gemini')
 const isAntigravity = computed(() => props.account?.platform === 'antigravity')
 const isGrok = computed(() => props.account?.platform === 'grok')
 // 平台展示信息统一查注册表。未登记的平台上，标签显示「未知平台」，
-// 而不是退回某个具体平台的名称——那正是之前 Marvis 显示成 Claude 的原因。
+// 而不是退回某个具体平台的名称——那正是历史上显示成 Claude 的原因。
 const platformSpec = computed(() => authPlatformSpec(props.account?.platform))
 const platformLabel = computed(() =>
   platformSpec.value ? t(platformSpec.value.labelKey) : t('admin.accounts.unknownPlatform')
@@ -278,14 +268,12 @@ const platformAccentClass = computed(() => {
   switch (platformSpec.value?.flow) {
     case 'workbuddy':
       return 'from-blue-500 to-blue-600'
-    case 'marvis':
-      return 'from-emerald-500 to-emerald-600'
     default:
       return 'from-gray-400 to-gray-500'
   }
 })
 
-// 授权流程由注册表决定：workbuddy/marvis 用各自的步骤组件，
+// 授权流程由注册表决定：workbuddy/trae 用各自的步骤组件，
 // 其余（未登记）不渲染任何授权面板，只提示该平台不支持重新授权。
 const authFlow = computed(() => platformSpec.value?.flow)
 
@@ -297,16 +285,6 @@ function handleWorkBuddyConfirm() {
   if (!props.account) return
   if (!workbuddyOAuth.result.value?.access_token) {
     appStore.showError('授权结果无效，请重试')
-    return
-  }
-  reauthReady.value = true
-}
-
-// handleMarvisConfirm 只标记就绪：保存交给底部「重新授权」按钮。
-function handleMarvisConfirm() {
-  const signed = marvisOAuth.result.value
-  if (!signed?.credentials?.access_token) {
-    appStore.showError('Authorization incomplete')
     return
   }
   reauthReady.value = true
@@ -327,7 +305,6 @@ async function handleReauthorize() {
   if (!props.account || reauthSaving.value) return
   let creds: Record<string, unknown> | null = null
   if (authFlow.value === 'workbuddy') creds = workbuddyOAuth.buildCredentials()
-  else if (authFlow.value === 'marvis') creds = (marvisOAuth.result.value?.credentials as Record<string, unknown>) ?? null
   else if (authFlow.value === 'trae') creds = (traeOAuth.result.value?.credentials as Record<string, unknown>) ?? null
   if (!creds || !creds.access_token) {
     appStore.showError('Authorization incomplete')
@@ -402,9 +379,6 @@ const resetState = () => {
   reauthReady.value = false
   reauthSaving.value = false
   workbuddyOAuth.resetState()
-  // Marvis 也要清：否则关掉弹窗再打开，第二步的授权链接和回调输入还在，
-  // 用户看到的是一个已经过期的旧链接。
-  marvisOAuth.reset()
   traeOAuth.reset()
   oauthFlowRef.value?.reset()
 }

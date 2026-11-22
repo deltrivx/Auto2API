@@ -519,9 +519,8 @@ export function getModelsByPlatform(platform: string): string[] {
     // 由后端 /admin/accounts/{id}/models 提供，同步按钮再向上游刷新。
     case 'workbuddy_cn':
     case 'workbuddy_intl':
-    // Marvis 的模型集合同样来自上游，不内置清单。
-    // 之前缺这一行会落到 default 分支，给 Marvis 账号预填 Claude 模型白名单。
-    case 'marvis': return []
+      // 这些平台的模型集合来自上游，不内置清单。
+      return []
     case 'openai': return openaiModels
     case 'anthropic':
     case 'claude': return claudeModels
@@ -559,8 +558,8 @@ export function getModelsByPlatform(platform: string): string[] {
     case 'perplexity': return perplexityModels
     default:
       // 平台清单中没有内置模型列表的多协议供应商：一律不预填白名单。
-      // 之前这里兜底返回 claudeModels，任何未登记的平台（含 Marvis）都会
-      // 拿到一份 Claude 模型清单，导致新账号只接受那几个模型。
+      // 之前这里兜底返回 claudeModels，任何未登记的平台都会拿到一份
+      // Claude 模型清单，导致新账号只接受那几个模型。
       return []
   }
 }
@@ -572,9 +571,9 @@ export function getPresetMappingsByPlatform(platform: string) {
   if (platform === 'grok' || platform === 'xai') return grokPresetMappings
   if (platform === 'antigravity') return antigravityPresetMappings
   if (platform === 'bedrock') return bedrockPresetMappings
-  // Marvis 与 WorkBuddy 类似：上游只认自己的槽位名，Claude 的预设映射
-  // 放上去只会变成必然 400 的请求，所以不给预设。
-  if (platform === 'marvis' || platform === 'workbuddy_cn' || platform === 'workbuddy_intl') {
+  // WorkBuddy 上游只认自己的槽位名，Claude 的预设映射放上去只会变成
+  // 必然 400 的请求，所以不给预设。
+  if (platform === 'workbuddy_cn' || platform === 'workbuddy_intl') {
     return []
   }
   return anthropicPresetMappings

@@ -412,7 +412,7 @@ func workBuddyHostname(h []byte, family workBuddyOSFamily) string {
 
 // workBuddyDimensionExtras 按种子派生四项与设备无关的展示维度。
 //
-// Trae 与 Marvis 没有 WorkBuddy 那套完整画像，但指纹弹窗要显示同样的字段集，
+// Trae 没有 WorkBuddy 那套完整画像，但指纹弹窗要显示同样的字段集，
 // 所以用同一个种子（机器码 / openid）确定性派生：主机名、时区、语言、字体、WebGL。
 func workBuddyDimensionExtras(seed string, family workBuddyOSFamily) map[string]any {
 	if seed == "" {

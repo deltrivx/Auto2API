@@ -1339,7 +1339,6 @@ function generateRoutedCodexFiles(
     cline: 'Cline',
     workbuddy_cn: 'WorkBuddy 国内版',
     workbuddy_intl: 'WorkBuddy 国际版',
-    marvis: '腾讯 Marvis',
     composite: 'Composite'
   }
   const label = labels[platform]

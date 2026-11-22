@@ -35,10 +35,9 @@ type PlatformSpec struct {
 
 // platformList 的顺序即平台的展示顺序。
 var platformList = []PlatformSpec{
-	// 本分支服务两个平台：WorkBuddy 两个站点，以及腾讯 Marvis。
+	// 本分支服务两个平台：WorkBuddy 与 Trae，各两个站点。
 	{ID: PlatformWorkBuddyCN, DisplayName: "WorkBuddy 国内版", Gateway: PlatformGatewayOpenAI},
 	{ID: PlatformWorkBuddyIntl, DisplayName: "WorkBuddy 国际版", Gateway: PlatformGatewayOpenAI},
-	{ID: PlatformMarvis, DisplayName: "腾讯 Marvis", Gateway: PlatformGatewayOpenAI},
 	{ID: PlatformTraeCN, DisplayName: "Trae 国内版", Gateway: PlatformGatewayOpenAI},
 	{ID: PlatformTraeIntl, DisplayName: "Trae 国际版", Gateway: PlatformGatewayOpenAI},
 }
@@ -98,7 +97,7 @@ func PlatformIDsWhere(match func(PlatformSpec) bool) []string {
 //
 // 只列本分支实际接入的平台；未登记的 id 会被下面的 IsConcretePlatform
 // 过滤掉，所以这里写全也安全。
-var compositePrecedenceHead = []string{PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformMarvis}
+var compositePrecedenceHead = []string{PlatformWorkBuddyCN, PlatformWorkBuddyIntl}
 
 // CompositePrecedencePlatformIDs 返回按平台依次回退时的顺序：组合分组在请求目标
 // 解析前逐平台查找定价 / 模型映射（先命中者生效）、拼接默认模型列表，以及调度快照

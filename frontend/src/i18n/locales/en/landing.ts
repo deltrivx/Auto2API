@@ -15,8 +15,8 @@ export default {
     getStarted: 'Get Started',
     goToDashboard: 'Go to Dashboard',
     // User-focused value proposition
-    heroSubtitle: 'The unified gateway for WorkBuddy and Marvis',
-    heroDescription: 'One OpenAI-compatible endpoint in front of WorkBuddy and Tencent Marvis. Call it with a standard /v1/chat/completions request — sign-in state, device fingerprints and model mapping are handled for you.',
+    heroSubtitle: 'The unified gateway for WorkBuddy and Trae',
+    heroDescription: 'One OpenAI-compatible endpoint in front of WorkBuddy and ByteDance Trae. Call it with a standard /v1/chat/completions request — sign-in state, device fingerprints and model mapping are handled for you.',
     tags: {
       subscriptionToApi: 'OpenAI compatible',
       stickySession: 'Session Persistence',
@@ -95,19 +95,18 @@ export default {
     },
     providers: {
       title: 'Platforms',
-      description: 'Three platforms, one endpoint',
+      description: 'Two platforms, one endpoint',
       supported: 'Supported',
       soon: 'Soon',
       claude: 'WorkBuddy China',
       gemini: 'WorkBuddy International',
-      antigravity: 'Tencent Marvis',
       trae: 'ByteDance Trae',
       more: 'More platforms'
     },
     // CTA section
     cta: {
       title: 'Ready to Get Started?',
-      description: 'Create an API key in the console and start calling WorkBuddy and Marvis models',
+      description: 'Create an API key in the console and start calling WorkBuddy and Trae models',
       button: 'Open console'
     },
     footer: {

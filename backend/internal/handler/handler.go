@@ -15,10 +15,9 @@ type AdminHandlers struct {
 	DataManagement *admin.DataManagementHandler
 	Backup         *admin.BackupHandler
 	OAuth          *admin.OAuthHandler
-	// 本分支只保留 WorkBuddy：其它平台的 OAuth handler 已从路由层移除，
+	// 本分支只保留 WorkBuddy 与 Trae：其它平台的 OAuth handler 已从路由层移除，
 	// 不再注入到 AdminHandlers。
 	WorkBuddyOAuth         *admin.WorkBuddyOAuthHandler
-	MarvisOAuth            *admin.MarvisOAuthHandler
 	TraeOAuth              *admin.TraeOAuthHandler
 	WorkBuddyTask          *admin.WorkBuddyTaskHandler
 	Proxy                  *admin.ProxyHandler

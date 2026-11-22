@@ -52,24 +52,21 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import { getWorkBuddyFingerprint, type WorkBuddyFingerprint } from '@/api/admin/workbuddy'
-import { getMarvisFingerprint, type MarvisFingerprint } from '@/api/admin/marvis'
 import { fetchDevice as getTraeDevice, type TraeDevice } from '@/api/admin/trae'
 
-// platform 决定走哪套指纹接口：WorkBuddy 与 Marvis 的设备标识含义不同，
-// 前者是完整硬件画像，后者只有 guid + 每次现签的 uskey。
+// platform 决定走哪套指纹接口：WorkBuddy 是完整硬件画像，
+// Trae 是 IDE 设备身份（device_id / machine_id）。
 const props = defineProps<{
   show: boolean
   accountId: number
   accountName?: string
   platform?: string
 }>()
-const isMarvis = computed(() => props.platform === 'marvis')
 const isTrae = computed(() => props.platform === 'trae_cn' || props.platform === 'trae_intl')
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 
 const fp = ref<WorkBuddyFingerprint | null>(null)
-const marvisFp = ref<MarvisFingerprint | null>(null)
 const traeDevice = ref<TraeDevice | null>(null)
 
 const loading = ref(false)
@@ -116,8 +113,7 @@ async function load() {
     if (isTrae.value) {
       const d = await getTraeDevice(props.accountId)
       traeDevice.value = d
-      marvisFp.value = null
-      // 与 WorkBuddy / Marvis 共用同一套展示结构：Trae 的设备字段映射到同名属性。
+      // 与 WorkBuddy 共用同一套展示结构：Trae 的设备字段映射到同名属性。
       fp.value = {
         uid: d.device_id,
         machine_id: d.machine_id,
@@ -144,38 +140,7 @@ async function load() {
       } as unknown as WorkBuddyFingerprint
       return
     }
-    if (isMarvis.value) {
-      const m = await getMarvisFingerprint(props.accountId)
-      marvisFp.value = m
-      // Marvis 与 WorkBuddy 共用同一套展示结构，字段一一对应。
-      fp.value = {
-        uid: m.uid,
-        machine_id: m.machine_id,
-        session_id: m.session_id,
-        mac: m.mac,
-        os: m.os,
-        arch: m.arch,
-        os_version: m.os_version,
-        cpu_cores: m.cpu_cores,
-        memory_size: m.memory_size,
-        ua: m.ua,
-        ide_version: m.ide_version,
-        gpu: m.gpu,
-        disk: m.disk,
-        screen: m.screen,
-        cpu_model: m.cpu_model,
-        hostname: (m as any).hostname || '',
-        timezone: (m as any).timezone || '',
-        locale: (m as any).locale || '',
-        fonts: (m as any).fonts || [],
-        webgl_vendor: (m as any).webgl_vendor || '',
-        webgl_renderer: (m as any).webgl_renderer || '',
-        persisted: m.persisted
-      } as unknown as WorkBuddyFingerprint
-    } else {
-      fp.value = await getWorkBuddyFingerprint(props.accountId)
-      marvisFp.value = null
-    }
+    fp.value = await getWorkBuddyFingerprint(props.accountId)
   } catch (e: any) {
     error.value = e?.message || 'failed'
     fp.value = null

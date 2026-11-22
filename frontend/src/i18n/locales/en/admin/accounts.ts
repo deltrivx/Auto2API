@@ -7,12 +7,9 @@ export default {
       creditsTodayWorkBuddy: 'WB CN today',
       creditsTotalWorkBuddy: 'WB CN total',
       creditsWorkBuddyAccountsHint: 'Available across all WorkBuddy accounts',
-      creditsMarvis: 'Marvis credits',
-      creditsMarvisAvailableHint: 'Available across all Marvis accounts',
       creditsCNTotal: 'CN',
       creditsIntlTotal: 'Intl',
       creditsTodayUsed: 'Used today: ',
-      creditsMarvisTotal: 'Marvis total credits',
       creditsTraeTotal: 'Trae total credits',
       cardTodayData: 'Today',
       cardTodayUsed: 'Used today',
@@ -45,7 +42,6 @@ export default {
       creditsTrendTitle: 'Last 14 days',
       pleaseCompleteAuth: 'Please complete authorization first',
       workbuddyAccount: 'WorkBuddy Account',
-      marvisAccount: 'Tencent Marvis account',
       unknownPlatform: 'Unknown platform',
       reauthUnsupported: 'This platform cannot be re-authorised here. Remove the account and add it again.',
       workbuddyReauth: {
@@ -89,28 +85,8 @@ export default {
         osVersion: 'OS version',
         rotate: 'Re-assign device',
       },
-      marvisAuth: {
-        loginQQ: 'QQ',
-        loginWeChat: 'WeChat',
-        step1: 'Choose a sign-in channel',
-        step2: 'Generate the link, open it and scan the QR code',
-        generate: 'Generate link',
-        waiting: 'Waiting for authorisation',
-        regenerate: 'Authorise again',
-        timeoutHint: 'Authorisation timed out — click the button to generate a new link',
-        step3: 'After signing in, paste the address from your browser address bar here, then click Complete sign-in.',
-        step3Hint: 'It looks like …/marvis_oauth?login_type=QC&code=…&state=…',
-        step3Placeholder: 'Paste the callback address, or just the code',
-        confirm: 'Complete sign-in',
-        confirming: 'Signing in…',
-        loginFailed: 'Sign-in failed',
-        loggedIn: 'Signed in',
-        successHint: '{name} signed in — click Create to add the account',
-      },
       fingerprintMenu: 'Hardware Fingerprint',
-      fingerprintMarvis: 'Device Identity',
       fingerprint: {
-        marvisHint: 'Tencent Marvis device identity: guid is bound to the account, uskey is signed per request (the upstream allows one uskey only twice).',
         dialogTitle: 'Hardware Fingerprint',
         hint: 'Device characteristics this account presents when the gateway forwards requests. Each account has its own set.',
         system: 'System',
@@ -1331,7 +1307,6 @@ export default {
       // OAuth flow
       oauth: {
         authorized: 'Authorised',
-        marvis: { title: 'Marvis account sign-in' },
         workbuddy: {
           title: 'WorkBuddy Authorization'
         },

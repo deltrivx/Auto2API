@@ -401,7 +401,7 @@ func defaultModelIDsForPlatform(platform string) []string {
 		// ⚠ 不要在这里回退到 Claude 模型表。
 		//
 		// 早先 default 返回 claude.DefaultModels，于是每接一个新平台
-		// （WorkBuddy、Marvis）都会先在模型列表里冒出一堆 claude-*——
+		// （WorkBuddy、Trae）都会先在模型列表里冒出一堆 claude-*——
 		// 上游根本不认这些 id，连接测试必然失败。没有内置目录的平台
 		// 就该返回空，让调用方去读账号自己的 model_mapping。
 		return nil

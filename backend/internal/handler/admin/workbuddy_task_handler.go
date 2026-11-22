@@ -18,8 +18,6 @@ type WorkBuddyTaskHandler struct {
 	adminService service.AdminService
 	// creditSync 提供云端积分快照；为空时积分接口返回空数据而不是报错。
 	creditSync *service.WorkBuddyCreditSyncService
-	// marvisCreditSync 提供 Marvis 积分快照（与 WorkBuddy 同构）。
-	marvisCreditSync *service.MarvisCreditSyncService
 	// traeCreditSync 提供 Trae 积分快照（国内站积分 / 国际站美元折算）。
 	traeCreditSync *service.TraeCreditSyncService
 }
@@ -559,38 +557,11 @@ func (h *WorkBuddyTaskHandler) traeCreditsDetail(c *gin.Context, account *servic
 	})
 }
 
-// MarvisCreditSnapshot 返回 Marvis 积分快照。
-//
-// GET /admin/workbuddy/credits/marvis?sync=1
-//
-// 与 WorkBuddy 快照同一形状，前端用同一套卡片渲染。带 sync=1 时
-// 现拉一次上游钱包，保证打开页面看到的不是十分钟前的旧值。
-func (h *WorkBuddyTaskHandler) MarvisCreditSnapshot(c *gin.Context) {
-	if h.marvisCreditSync == nil {
-		response.Success(c, gin.H{
-			"accounts":          []any{},
-			"synced_at":         nil,
-			"total_credits":     0,
-			"used_credits":      0,
-			"available_credits": 0,
-			"today_used":        0,
-		})
-		return
-	}
-	var snap *service.MarvisCreditSnapshot
-	if c.Query("sync") == "1" {
-		snap = h.marvisCreditSync.Sync(c.Request.Context())
-	} else {
-		snap = h.marvisCreditSync.Snapshot()
-	}
-	respondSnapshot(c, snap, snap.SyncedAt)
-}
-
 // TraeCreditSnapshot 返回 Trae 积分快照。
 //
 // GET /admin/workbuddy/credits/trae?sync=1
 //
-// 与 WorkBuddy / Marvis 快照同一形状，前端用同一套卡片渲染。带 sync=1 时
+// 与 WorkBuddy 快照同一形状，前端用同一套卡片渲染。带 sync=1 时
 // 现拉一次上游，保证打开页面看到的不是周期缓存里的旧值。
 func (h *WorkBuddyTaskHandler) TraeCreditSnapshot(c *gin.Context) {
 	if h.traeCreditSync == nil {
@@ -620,14 +591,5 @@ func (h *WorkBuddyTaskHandler) TraeCreditSnapshot(c *gin.Context) {
 // WithTraeCreditSync 注入 Trae 积分快照服务。
 func (h *WorkBuddyTaskHandler) WithTraeCreditSync(sync *service.TraeCreditSyncService) *WorkBuddyTaskHandler {
 	h.traeCreditSync = sync
-	return h
-}
-
-// WithMarvisCreditSync 注入 Marvis 积分快照服务。
-//
-// 用不可变式 setter 而不是再加一个构造参数：现有构造点不多，但改动
-// 构造函数会牵动 wire 装配，setter 让 wiring 只多一行。
-func (h *WorkBuddyTaskHandler) WithMarvisCreditSync(sync *service.MarvisCreditSyncService) *WorkBuddyTaskHandler {
-	h.marvisCreditSync = sync
 	return h
 }

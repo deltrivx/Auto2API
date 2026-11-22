@@ -15,7 +15,7 @@ type Class string
 const (
 	// AuthExpired 登录态或凭据失效，需要重新授权。
 	AuthExpired Class = "auth_expired"
-	// RiskBlocked 被上游风控拦截（如 Marvis 4100404）。
+	// RiskBlocked 被上游风控拦截（如上游 4100404）。
 	RiskBlocked Class = "risk_blocked"
 	// RateLimited 触发限流或额度耗尽。
 	RateLimited Class = "rate_limited"

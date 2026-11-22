@@ -2371,11 +2371,6 @@ func (h *AccountHandler) GetUsage(c *gin.Context) {
 	if acc, err := h.adminService.GetAccount(c.Request.Context(), accountID); err == nil && isWorkBuddyAccount(acc) {
 		h.workBuddyUsageResponse(c, acc)
 		return
-	} else if err == nil && acc.Platform == service.PlatformMarvis {
-		// Marvis 同样没有 Anthropic 配额窗口，通用查询会 500。
-		// 用令牌钱包表达用量，形状与 WorkBuddy 一致，前端可复用同一套展示。
-		h.marvisUsageResponse(c, acc)
-		return
 	}
 
 	var usage *service.UsageInfo
@@ -2654,14 +2649,6 @@ func (h *AccountHandler) respondAvailableModels(c *gin.Context, account *service
 		return
 	}
 
-	// 腾讯 Marvis：模型目录是固定的槽位表，对外显示真实模型名。
-	// 不在这里拦下会落到后面的 Claude 分支，连接测试里会出现一堆
-	// claude-* 模型——上游根本不认。
-	if service.IsMarvisPlatform(account.Platform) {
-		response.Success(c, service.MarvisAccountModels())
-		return
-	}
-
 	// Trae：模型目录由上游按账号下发，这里实时问一次（不落内置清单）。
 	if service.IsTraePlatform(account.Platform) {
 		response.Success(c, service.TraeAccountModels(c.Request.Context(), account))
@@ -2718,7 +2705,7 @@ func (h *AccountHandler) respondAvailableModels(c *gin.Context, account *service
 	// claude.DefaultModels 静态表，其它平台没有这个概念。
 	//
 	// ⚠ 必须在平台边界上截断。此前这里只判断 account.IsOAuth()，而
-	// WorkBuddy、Marvis 都是 OAuth 账号，于是它们各自进了这条分支，
+	// WorkBuddy、Trae 都是 OAuth 账号，于是它们各自进了这条分支，
 	// 连接测试里出现一堆 claude-* 模型 —— 上游根本不认。
 	if account.Platform != service.PlatformAnthropic {
 		// 非 Anthropic 平台：模型要么来自上面的平台分支，要么来自
@@ -3228,51 +3215,6 @@ func (h *AccountHandler) workBuddyUsageResponse(c *gin.Context, acc *service.Acc
 			"total":  credits.Total,
 			"remain": remain,
 			"groups": credits.Groups,
-		},
-	})
-}
-
-// marvisUsageResponse 用令牌钱包表达 Marvis 账号的用量。
-//
-// 返回形状与 workBuddyUsageResponse 对齐：seven_day 承载周期用量，
-// credits 携带明细，前端不需要为两个平台写两套渲染。
-func (h *AccountHandler) marvisUsageResponse(c *gin.Context, acc *service.Account) {
-	wallet, err := service.FetchMarvisWallet(c.Request.Context(), acc)
-	if err != nil {
-		response.Success(c, gin.H{
-			"source":    "marvis",
-			"available": false,
-			"message":   "积分查询失败: " + err.Error(),
-		})
-		return
-	}
-
-	total := float64(wallet.TotalTokens)
-	remain := float64(wallet.AvailTokens)
-	utilization := 0.0
-	if total > 0 {
-		utilization = float64(wallet.UsedTokens) / total * 100
-		if utilization < 0 {
-			utilization = 0
-		}
-		if utilization > 100 {
-			utilization = 100
-		}
-	}
-
-	response.Success(c, gin.H{
-		"source":     "marvis",
-		"updated_at": time.Now(),
-		"seven_day": gin.H{
-			"utilization":       utilization,
-			"resets_at":         nil,
-			"remaining_seconds": 0,
-			"used_requests":     wallet.UsedTokens,
-			"limit_requests":    wallet.TotalTokens,
-		},
-		"credits": gin.H{
-			"total":  total,
-			"remain": remain,
 		},
 	})
 }

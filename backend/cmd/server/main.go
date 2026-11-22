@@ -167,22 +167,7 @@ func runMainServer() {
 		defer cancelSync()
 		app.CreditSync.Start(syncCtx)
 	}
-	// Marvis 的令牌额度同样是上游权威：每天 0 点重置回 1000 万，
-	// 期间随用量下降。后台定时拉取，前端读缓存。
-	if app.MarvisWalletSync != nil {
-		marvisSyncCtx, cancelMarvisSync := context.WithCancel(context.Background())
-		defer cancelMarvisSync()
-		app.MarvisWalletSync.Start(marvisSyncCtx)
-	}
-	// 仪表盘的 Marvis 汇总走独立快照：它跨账号求和，而 WalletSync 只刷新
-	// 单账号字段。此前这里没有启动，看板一直显示首次查询时的账号数，
-	// 新加的账号不会计入总额。
-	if app.MarvisCreditSync != nil {
-		marvisCreditCtx, cancelMarvisCredit := context.WithCancel(context.Background())
-		defer cancelMarvisCredit()
-		app.MarvisCreditSync.Start(marvisCreditCtx)
-	}
-	// Trae 汇总快照：与 Marvis 同一套机制，不启动则看板停在首次同步的值。
+	// Trae 汇总快照：后台定时拉取上游额度并落库，不启动则看板停在首次同步的值。
 	if app.TraeCreditSync != nil {
 		traeCreditCtx, cancelTraeCredit := context.WithCancel(context.Background())
 		defer cancelTraeCredit()

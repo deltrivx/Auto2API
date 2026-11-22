@@ -11,7 +11,7 @@ import (
 // Trae 登录服务的对外接口（管理端直接调用）。
 //
 // 内部实现在 trae_oauth.go / trae_api.go，这里只做导出与错误收敛，
-// 与 WorkBuddy / Marvis 的服务层形状保持一致。
+// 与 WorkBuddy 的服务层形状保持一致。
 
 // TraeAuthInstruction 是生成授权链接的返回。
 type TraeAuthInstruction = traeAuthInstruction
@@ -176,7 +176,7 @@ func (s *TraeOAuthService) RotateDevice(account *Account) (map[string]any, error
 // DeviceInfo 返回账号当前设备与硬件画像（不含私钥）。
 //
 // 除了 Trae 真正会发出去的设备字段，这里还按同一套维度派生一份硬件画像，
-// 让「指纹」弹窗与 WorkBuddy / Marvis 完全同构（CPU / 内存 / GPU / 磁盘 / 屏幕）。
+// 让「指纹」弹窗与 WorkBuddy 完全同构（CPU / 内存 / GPU / 磁盘 / 屏幕）。
 // 画像由 machine_id 确定性派生，不落库也不会变。
 func (s *TraeOAuthService) DeviceInfo(account *Account) map[string]any {
 	token := traeTokenOf(account.Credentials)

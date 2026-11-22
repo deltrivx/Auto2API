@@ -20,7 +20,6 @@ const PROVIDER_BY_PLATFORM: Record<GroupPlatform, KeyGroupProvider> = {
   typesafe: 'other',
   workbuddy_cn: 'other',
   workbuddy_intl: 'other',
-  marvis: 'domestic',
   trae_cn: 'other',
   trae_intl: 'other',
   command_code: 'other',

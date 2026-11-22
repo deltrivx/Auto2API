@@ -877,7 +877,7 @@
       <!-- OAuth 模型区域：OAuth 类型没有 apikey 容器，需要独立的模型映射区块。
            WorkBuddy 同样是 OAuth 账号，模型清单由账号凭据的 model_mapping 提供。 -->
       <div
-        v-if="(account.platform === 'openai' || isWorkBuddyAccount || account.platform === 'marvis') && account.type === 'oauth'"
+        v-if="(account.platform === 'openai' || isWorkBuddyAccount) && account.type === 'oauth'"
         class="border-t border-gray-200 pt-4 dark:border-dark-600"
         :data-testid="account.platform === 'grok' ? 'grok-model-settings' : undefined"
       >
@@ -4867,13 +4867,12 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     }
   }
 
-  // WorkBuddy / Marvis：OAuth 账号的模型白名单与映射都落在 credentials.model_mapping。
+  // WorkBuddy：OAuth 账号的模型白名单与映射都落在 credentials.model_mapping。
   // 这一段必须在 oauth 路径上执行 —— 下面 apikey 分支里的同名处理对 OAuth
-  // 账号不可达，之前把 Marvis 加在那儿所以界面上一直是 0 个模型。
+  // 账号不可达，之前把这一段放错位置所以界面上一直是 0 个模型。
   if (
     (newAccount.platform === 'workbuddy_cn' ||
-      newAccount.platform === 'workbuddy_intl' ||
-      newAccount.platform === 'marvis') &&
+      newAccount.platform === 'workbuddy_intl') &&
     newAccount.type === 'oauth' &&
     newAccount.credentials
   ) {
@@ -5042,13 +5041,11 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     // Load model mappings for OAuth accounts.
     // WorkBuddy 同样是 OAuth 账号，且模型白名单就存在凭据的
     // model_mapping 里——漏掉它会让编辑页把已选模型显示为 0。
-    // Marvis 同理：它的白名单也落在 credentials.model_mapping。
     if (
       (newAccount.platform === 'openai' ||
         newAccount.platform === 'grok' ||
         newAccount.platform === 'workbuddy_cn' ||
-        newAccount.platform === 'workbuddy_intl' ||
-        newAccount.platform === 'marvis') &&
+        newAccount.platform === 'workbuddy_intl') &&
       newAccount.credentials
     ) {
       const oauthCredentials = newAccount.credentials as Record<string, unknown>
@@ -6011,8 +6008,7 @@ const handleSubmit = async () => {
     if (
       (props.account.platform === 'openai' ||
         props.account.platform === 'grok' ||
-        isWorkBuddyAccount.value ||
-        props.account.platform === 'marvis') &&
+        isWorkBuddyAccount.value) &&
       props.account.type === 'oauth'
     ) {
       const currentCredentials = isSparkShadow.value

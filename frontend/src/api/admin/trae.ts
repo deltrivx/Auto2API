@@ -3,7 +3,7 @@ import { apiClient } from '../client'
 /**
  * Trae（字节跳动 AI IDE）的登录与账号接口。
  *
- * 与 WorkBuddy/Marvis 的差别：Trae 的授权页只接受
+ * 与 WorkBuddy 的差别：Trae 的授权页只接受
  * http://127.0.0.1:<port>/authorize 作为回调，部署在服务器上的网关收不到。
  * 因此流程是「生成链接 → 浏览器授权 → 把地址栏里的回调地址粘回来」。
  */

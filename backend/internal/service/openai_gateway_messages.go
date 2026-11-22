@@ -33,7 +33,7 @@ func reasoningEffortPolicyAppliesToAccount(account *Account) bool {
 		return false
 	}
 	switch account.Platform {
-	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformMarvis, PlatformOpenAI:
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformOpenAI:
 		return true
 	default:
 		return false

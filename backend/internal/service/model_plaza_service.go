@@ -401,16 +401,16 @@ func (s *ModelPlazaService) lookupOfficialPricing(ctx context.Context, modelName
 	}
 	// 价格表没命中时用积分档位表兜底。
 	//
-	// 计费侧对 Marvis / Trae 按统一积分档位补算（见 openai_gateway_usage.go），
+	// 计费侧对 Trae 按统一积分档位补算（见 openai_gateway_usage.go），
 	// 但它们的模型大多不在价格表里。这里必须用同一张档位表，否则广场显示「-」或
 	// 沿用旧美元价，而实际按档位扣积分，展示与扣费会对不上。
 	//
-	// Marvis / Trae 的模型即使价格表里有条目，值也往往是早先的美元价（比实际扣的
-	// 积分低两三个数量级）。这两个平台一律以积分档位表为准，展示与扣费才对得上；
+	// Trae 的模型即使价格表里有条目，值也往往是早先的美元价（比实际扣的
+	// 积分低两三个数量级）。该平台一律以积分档位表为准，展示与扣费才对得上；
 	// WorkBuddy 的常规模型走自己的官方定价，不受影响；只有价格表里查不到的
 	// 私有路由模型（auto / balanced-model / codewise-* 等）才用档位兜底，
 	// 与计费侧的补算保持一致——那边对这些模型也会按档位扣积分。
-	if isTraeOrMarvisPlatformName(platform) || result == nil {
+	if isTraePlatformName(platform) || result == nil {
 		if isOwnedCreditPlatform(platform) {
 			if inPer1M, outPer1M, _, matched := creditTierFor(modelName); matched {
 				result = &PlazaOfficialPricing{

@@ -1218,15 +1218,6 @@ func (s *OpenAIGatewayService) GetAccessToken(ctx context.Context, account *Acco
 			}
 			return token, "oauth", nil
 		}
-		// Marvis 的 Authorization 头不参与校验，真正生效的是 Ual-Access-*
-		// 四件套（见 applyMarvisHeaders）。这里给占位值，保证 SDK 形态的请求头齐全。
-		if isMarvisAccount(account) {
-			creds := marvisCredentialsOf(account)
-			if creds.AccessToken == "" {
-				return "", "", fmt.Errorf("Marvis 账号缺少 access_token，请重新登录")
-			}
-			return marvisRequestPlaceholderToken(account), "oauth", nil
-		}
 		// 使用 TokenProvider 获取缓存的 token
 		if s.openAITokenProvider != nil {
 			accessToken, err := s.openAITokenProvider.GetAccessToken(ctx, account)

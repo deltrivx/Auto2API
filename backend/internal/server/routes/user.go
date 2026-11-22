@@ -91,27 +91,10 @@ func RegisterUserRoutes(
 			}
 		}
 
-		// Marvis 只读视图：积分明细与硬件指纹属于「查看类」能力，
-		// 普通用户对全部可见账号都应能看，不必是自己创建的账号。
-		// 变更类接口（重新授权/刷新令牌/删除）仍留在 /admin，普通用户无权限。
-		if h.Admin != nil && h.Admin.MarvisOAuth != nil {
-			marvis := authenticated.Group("/marvis")
-			{
-				marvis.GET("/accounts/:id/fingerprint", h.Admin.MarvisOAuth.Fingerprint)
-				marvis.GET("/accounts/:id/wallet", h.Admin.MarvisOAuth.Wallet)
-				// 添加账号所需的授权链接与换码。
-				marvis.POST("/oauth/auth-url", h.Admin.MarvisOAuth.GenerateAuthURL)
-				marvis.POST("/oauth/poll", h.Admin.MarvisOAuth.Poll)
-				marvis.POST("/oauth/exchange", h.Admin.MarvisOAuth.Exchange)
-			}
-		}
-
 		if h.Admin != nil && h.Admin.WorkBuddyTask != nil {
 			wb := authenticated.Group("/workbuddy")
 			{
 				wb.GET("/credits/snapshot", h.Admin.WorkBuddyTask.CreditSnapshot)
-				// Marvis 积分快照：仪表盘第 3 张卡用，普通用户也要能读。
-				wb.GET("/credits/marvis", h.Admin.WorkBuddyTask.MarvisCreditSnapshot)
 				wb.GET("/tasks/board", h.Admin.WorkBuddyTask.Board)
 				wb.GET("/tasks/trend", h.Admin.WorkBuddyTask.CreditTrend)
 				wb.GET("/tasks/catalog", h.Admin.WorkBuddyTask.Catalog)

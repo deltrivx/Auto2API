@@ -440,7 +440,6 @@ func registerWorkBuddyOAuthRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		workbuddy.GET("/tasks/board", h.Admin.WorkBuddyTask.Board)
 		workbuddy.GET("/tasks/trend", h.Admin.WorkBuddyTask.CreditTrend)
 		workbuddy.GET("/credits/snapshot", h.Admin.WorkBuddyTask.CreditSnapshot)
-		workbuddy.GET("/credits/marvis", h.Admin.WorkBuddyTask.MarvisCreditSnapshot)
 		workbuddy.GET("/credits/trae", h.Admin.WorkBuddyTask.TraeCreditSnapshot)
 		workbuddy.GET("/tasks/:code/detail", h.Admin.WorkBuddyTask.TaskDetail)
 		workbuddy.POST("/tasks/:code/run", h.Admin.WorkBuddyTask.RunTaskAll)
@@ -453,22 +452,7 @@ func registerWorkBuddyOAuthRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		workbuddy.POST("/oauth/refresh", h.Admin.WorkBuddyOAuth.Refresh)
 	}
 
-	// 腾讯 Marvis：与 WorkBuddy 平行的另一条登录线。
-	// 授权在 QQ / 微信开放平台完成，服务端拿不到回调，因此是
-	// 「生成链接 → 用户登录 → 粘贴回调地址 → 换登录态」。
-	marvis := admin.Group("/marvis")
-	{
-		marvis.POST("/oauth/auth-url", h.Admin.MarvisOAuth.GenerateAuthURL)
-		marvis.POST("/oauth/poll", h.Admin.MarvisOAuth.Poll)
-		marvis.POST("/oauth/exchange", h.Admin.MarvisOAuth.Exchange)
-		marvis.POST("/oauth/refresh", h.Admin.MarvisOAuth.Refresh)
-		marvis.GET("/models", h.Admin.MarvisOAuth.Models)
-		marvis.GET("/accounts/:id/fingerprint", h.Admin.MarvisOAuth.Fingerprint)
-		marvis.GET("/accounts/:id/wallet", h.Admin.MarvisOAuth.Wallet)
-		marvis.GET("/accounts/:id/discover-models", h.Admin.MarvisOAuth.DiscoverModels)
-	}
-
-	// Trae：与 Marvis 同一条接入路径——授权页只接受 127.0.0.1 回调，
+	// Trae：与 WorkBuddy 同一条接入路径——授权页只接受 127.0.0.1 回调，
 	// 服务器收不到，所以由用户把地址栏里的回调地址粘贴回来换登录态。
 	trae := admin.Group("/trae")
 	{

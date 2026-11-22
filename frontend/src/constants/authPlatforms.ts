@@ -8,7 +8,7 @@
 //   labelKey  —— 弹窗里显示的平台名 i18n key
 //   flow      —— 使用哪套授权组件：与添加账号页共用同一套步骤组件
 
-export type AuthFlowKind = 'workbuddy' | 'marvis' | 'trae' | 'code-exchange'
+export type AuthFlowKind = 'workbuddy' | 'trae' | 'code-exchange'
 
 export interface AuthPlatformSpec {
   labelKey: string
@@ -24,10 +24,6 @@ export const AUTH_PLATFORMS: Record<string, AuthPlatformSpec> = {
   workbuddy_intl: {
     labelKey: 'admin.accounts.workbuddyAccount',
     flow: 'workbuddy'
-  },
-  marvis: {
-    labelKey: 'admin.accounts.marvisAccount',
-    flow: 'marvis'
   },
   trae_cn: {
     labelKey: 'admin.accounts.traeAccount',

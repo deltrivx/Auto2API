@@ -163,7 +163,7 @@ func intIn(list []int, v int) bool {
 
 // ValidateDimensionExtras 检查展示维度（主机名/字体/WebGL/时区/语言）与系统族一致。
 //
-// Trae / Marvis 的指纹弹窗用的是这套派生维度，如果与账号自身 OS 不符，
+// Trae 的指纹弹窗用的是这套派生维度，如果与账号自身 OS 不符，
 // 会出现「Windows 机器显示 Mac 主机名」这种一眼假的情况。
 func ValidateDimensionExtras() []string {
 	var issues []string

@@ -30,18 +30,12 @@ const (
 	// 与 WorkBuddy/<version> 形式的 User-Agent），见 service 包的 workbuddy_*。
 	PlatformWorkBuddyCN   = "workbuddy_cn"
 	PlatformWorkBuddyIntl = "workbuddy_intl"
-	// PlatformMarvis 是腾讯 Marvis（应用宝 AI 助手）的模型网关。
-	//
-	// 与 WorkBuddy 一样是 OAuth 账号：QQ / 微信扫码登录，无 API Key。
-	// 推理端点 /v1/chat/completions 是标准 OpenAI 形状，但请求必须带
-	// Ual-Access-* 四个头与 Ual-Access-MarvisExt 设备指纹，见 service 包的 marvis_*。
-	PlatformMarvis = "marvis"
 	// PlatformTraeCN / PlatformTraeIntl 是字节跳动 Trae（AI IDE）的国内站与国际站。
 	//
 	// 与 WorkBuddy 一样，两站是独立站点：账号不通、模型目录几乎不重叠、额度单位
 	// 也不同（国内站积分，国际站美元）。认证是浏览器 OAuth，但授权页只接受
 	// http://127.0.0.1:<port>/authorize 回调，所以服务端部署的 Auto2API 走
-	// 「生成链接 → 浏览器授权 → 粘贴回调地址」的接入方式（与 Marvis 相同）。
+	// 「生成链接 → 浏览器授权 → 粘贴回调地址」的接入方式。
 	//
 	// 对话走 IDE 的 /api/agent/v3/llm_utils_chat（SSE），请求必须固定设备身份
 	// （device_id / machine_id / ECDSA 密钥），见 service 包的 trae_*。

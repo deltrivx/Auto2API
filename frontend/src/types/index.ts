@@ -930,7 +930,7 @@ export interface UpdateGroupRequest {
 // ==================== Account & Proxy Types ====================
 
 /** 前端内置专属界面（图标、配色、表单等）的平台。 */
-export type KnownAccountPlatform = 'workbuddy_cn' | 'workbuddy_intl' | 'marvis'
+export type KnownAccountPlatform = 'workbuddy_cn' | 'workbuddy_intl'
 /**
  * 账号平台：内置平台，或后端平台清单中新登记的平台（任意字符串）。
  * `string & {}` 保留内置平台的字面量补全。

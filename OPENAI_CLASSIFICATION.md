@@ -24,7 +24,7 @@
 - `internal/pkg/openai/`（含 codex_gpt61_*.json 等）
 - `internal/pkg/openai_compat/`
 
-**理由**：网关本体。WorkBuddy 与 Marvis 都是 OpenAI 协议上游，
+**理由**：网关本体。WorkBuddy 与 Trae 都是 OpenAI 协议上游，
 对外提供 /v1/chat/completions 靠这层收发。AutoBuddy 同样保留。
 
 ## C 类：调度 / 转发 —— 必须保留

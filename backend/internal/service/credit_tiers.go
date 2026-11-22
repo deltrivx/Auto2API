@@ -4,7 +4,7 @@ package service
 //
 // Auto2API 的计价单位是「积分」，而 WorkBuddy 有一套官方积分计费体系，
 // 因此以它为锚：同一个模型在各平台应当落到相近的积分档位，否则会出现
-// 「同样跑 deepseek-v4-flash，WorkBuddy 扣 112、Marvis 只扣 1」的荒谬差距。
+// 「同样跑 deepseek-v4-flash，WorkBuddy 扣 112、别家只扣 1」的荒谬差距。
 //
 // 档位值取自 WorkBuddy 线上真实计价的统计中位数（USD/1M token 口径的积分值），
 // 不是凭空拍的：
@@ -154,27 +154,26 @@ func creditTierCost(model string, tokens UsageTokens) float64 {
 	return cost
 }
 
-// isOwnedCreditPlatform 判断平台是否属于三个自有平台（WorkBuddy / Marvis / Trae）。
+// isOwnedCreditPlatform 判断平台是否属于自有平台（WorkBuddy / Trae）。
 //
-// 这三个平台的模型目录来自上游、型号变动频繁，不可能全部进价格表，
+// 这些平台的模型目录来自上游、型号变动频繁，不可能全部进价格表，
 // 因此它们的计费都允许用积分档位表兜底。
 func isOwnedCreditPlatform(platform string) bool {
 	switch platform {
 	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl,
-		PlatformMarvis,
 		PlatformTraeCN, PlatformTraeIntl:
 		return true
 	}
 	return false
 }
 
-// isTraeOrMarvisPlatformName 判断平台常量是否属于 Trae / Marvis。
+// isTraePlatformName 判断平台常量是否属于 Trae。
 //
 // 模型广场的 lookupOfficialPricing 只拿得到平台字符串，这里单独提供一个
 // 不依赖 *Account 的判断，避免为了一个布尔值构造账号对象。
-func isTraeOrMarvisPlatformName(platform string) bool {
+func isTraePlatformName(platform string) bool {
 	switch platform {
-	case PlatformTraeCN, PlatformTraeIntl, PlatformMarvis:
+	case PlatformTraeCN, PlatformTraeIntl:
 		return true
 	}
 	return false

@@ -334,7 +334,7 @@ func (s *OpenAIGatewayService) RecordUsage(ctx context.Context, input *OpenAIRec
 	//
 	// 为什么需要这一步：
 	//   - Trae 拿不到上游 token 计量，价格表里也没有它的模型；
-	//   - Marvis 在用通用美元价，与 WorkBuddy 的积分体系差两个数量级；
+	//   - 部分平台在用通用美元价，与 WorkBuddy 的积分体系差两个数量级；
 	//   - WorkBuddy 的私有路由模型（hy4free、balanced-model、codewise-* 等）
 	//     不在价格表，上游 /v3/config 也不给 credits，算下来是 0。
 	//

@@ -59,18 +59,17 @@
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</p>
           <!-- 主值只显示实际消费，标准价放到 tooltip：
                两列并排会让人误读成「花了两个数」。 -->
-          <!-- 主值 = 三个平台官方口径今日消耗之和（不是按定价表估算的值）。 -->
+          <!-- 主值 = 两个平台官方口径今日消耗之和（不是按定价表估算的值）。 -->
           <!-- whitespace-nowrap：数字和单位必须同一行，否则窄屏上「积分」会被挤到下一行。 -->
           <p class="whitespace-nowrap text-xl font-bold text-purple-600 dark:text-purple-400">
             {{ formatCost(platformUsage.total) }}<span class="ml-1 text-sm font-normal text-gray-400">{{ t('admin.accounts.creditsUnit') }}</span>
           </p>
-          <!-- 第三行：按平台拆出今日消耗，三个数相加等于主值。
+          <!-- 第三行：按平台拆出今日消耗，两个数相加等于主值。
                单位只在主值出现一次，这里省略——窄屏上重复三次「积分」会折成四五行。 -->
-          <!-- 三平台分项。容器已经撑满宽度，这里用正常字号即可，
+          <!-- 两平台分项。容器已经撑满宽度，这里用正常字号即可，
                不再需要 clamp 压缩（压缩过的小字在手机上很难读）。 -->
           <p class="text-xs leading-snug text-gray-500 dark:text-gray-400">
             WB {{ formatCost(platformUsage.workbuddy) }} ·
-            MV {{ formatCost(platformUsage.marvis) }} ·
             TR {{ formatCost(platformUsage.trae) }}
           </p>
         </div>
@@ -245,10 +244,8 @@ import Icon from '@/components/icons/Icon.vue'
 import CreditsOverviewCards from '@/components/dashboard/CreditsOverviewCards.vue'
 import {
   getWorkBuddyCreditSnapshot,
-  getMarvisCreditSnapshot,
   getTraeCreditSnapshot,
   type WorkBuddyCreditSnapshot,
-  type MarvisCreditSnapshot,
   type TraeCreditSnapshot
 } from '@/api/admin/workbuddy'
 import type { PlatformDashboardStats, UserDashboardStats as UserStatsType } from '@/api/usage'
@@ -272,41 +269,35 @@ const props = defineProps<{
 }>()
 const { t } = useI18n()
 
-// 「今日消费」卡片的三个分项。
+// 「今日消费」卡片的两个分项。
 //
 // 数据全部取上游官方口径，不用本地 usage_logs 按定价表估算的金额：
 //   WorkBuddy  逐条请求的 credit 之和
-//   Marvis     钱包 used_tokens（额度每日 0 点重置，即今日）
 //   Trae       额度周期内已用量
-// 三者单位统一为积分，相加得到主值。
+// 两者单位统一为积分，相加得到主值。
 const wbSnap = ref<WorkBuddyCreditSnapshot | null>(null)
-const mvSnap = ref<MarvisCreditSnapshot | null>(null)
 const trSnap = ref<TraeCreditSnapshot | null>(null)
 
 const platformUsage = computed(() => {
   const workbuddy = (wbSnap.value?.today_used_cn ?? 0) + (wbSnap.value?.today_used_intl ?? 0)
-  const marvis = mvSnap.value?.today_used ?? 0
   const trae = trSnap.value?.today_used ?? 0
-  return { workbuddy, marvis, trae, total: workbuddy + marvis + trae }
+  return { workbuddy, trae, total: workbuddy + trae }
 })
 
 onMounted(async () => {
-  const [wb, mv, tr] = await Promise.allSettled([
+  const [wb, tr] = await Promise.allSettled([
     getWorkBuddyCreditSnapshot(),
-    getMarvisCreditSnapshot(),
     getTraeCreditSnapshot()
   ])
   if (wb.status === 'fulfilled') wbSnap.value = wb.value
-  if (mv.status === 'fulfilled') mvSnap.value = mv.value
   if (tr.status === 'fulfilled') trSnap.value = tr.value
 })
 
 const PLATFORM_LABELS: Record<string, string> = {
   anthropic: 'Claude',
-  // 三个自有平台的显示名，其余为通用厂商名。
+  // 两个自有平台的显示名，其余为通用厂商名。
   workbuddy_cn: 'WorkBuddy 国内版',
   workbuddy_intl: 'WorkBuddy 国际版',
-  marvis: '腾讯 Marvis',
   trae_cn: 'Trae 国内版',
   trae_intl: 'Trae 国际版',
   openai: 'OpenAI',
@@ -344,7 +335,7 @@ const platformCards = computed<FusedPlatformCard[]>(() => {
     if (hasAnyLimit(q)) platforms.add(platform)
   }
 
-  const PLATFORM_ORDER = ['workbuddy_cn', 'workbuddy_intl', 'marvis', 'trae_cn', 'trae_intl',
+  const PLATFORM_ORDER = ['workbuddy_cn', 'workbuddy_intl', 'trae_cn', 'trae_intl',
     'anthropic', 'openai', 'gemini', 'antigravity', 'grok', 'typesafe']
   const cards: FusedPlatformCard[] = []
 

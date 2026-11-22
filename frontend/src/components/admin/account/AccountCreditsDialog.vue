@@ -118,7 +118,6 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import { platformDisplayName } from '@/constants/platformCatalog'
-import { getMarvisCredits } from '@/api/admin/marvis'
 import {
   getWorkBuddyCreditsDetail,
   type WorkBuddyCreditsDetail
@@ -210,31 +209,6 @@ async function reload() {
   loading.value = true
   error.value = ''
   try {
-    // Marvis 走自己的钱包接口：它按 token 计量，没有 WorkBuddy 的分组积分。
-    if (props.platform === 'marvis') {
-      const m = await getMarvisCredits(props.accountId)
-      detail.value = {
-        account_id: m.account_id,
-        account: m.account,
-        platform: m.platform,
-        total: m.total,
-        // 字段名必须与 WorkBuddyCreditGroup 一致：渲染读的是 remain 不是
-        // remaining，kind 用于图标的取色与行 key。
-        groups: (m.groups ?? []).map((g) => ({
-          kind: 'marvis_tokens',
-          name: g.name,
-          total: g.total,
-          remain: g.remaining,
-          used: g.used,
-          frozen: m.frozen ?? 0
-        })),
-        package_name: m.package_name,
-        is_paid_user: m.is_paid_user,
-        credits_info_available: m.credits_info_available
-      } as unknown as WorkBuddyCreditsDetail
-      if (m.error) error.value = m.error
-      return
-    }
     detail.value = await getWorkBuddyCreditsDetail(props.accountId)
     if (detail.value?.error) error.value = detail.value.error
   } catch (e: any) {

@@ -37,24 +37,6 @@
       }
     },
     {
-      "id": "marvis",
-      "display_name": "腾讯 Marvis",
-      "gateway": "openai",
-      "cn_provider": false,
-      "multi_protocol": {
-        "default_mode": "payg",
-        "routing": "by_inbound",
-        "modes": [
-          {
-            "mode": "payg",
-            "base_urls": {
-              "chat_completions": "https://copilot.tencent.com/v2"
-            }
-          }
-        ]
-      }
-    },
-    {
       "id": "trae_cn",
       "display_name": "Trae 国内版",
       "gateway": "openai",

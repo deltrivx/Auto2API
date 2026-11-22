@@ -408,17 +408,6 @@ func buildAccountForCreate(input *CreateAccountInput, accountExtra map[string]an
 	if isWorkBuddyPlatform(input.Platform) {
 		input.Credentials = ensureWorkBuddyFingerprintCredentials(input.Credentials)
 	}
-	// 腾讯 Marvis 建号时补上默认模型映射。
-	//
-	// 调度器判断「账号是否支持某模型」靠的正是 credentials.model_mapping；
-	// 空映射会让所有请求都落到 "no available accounts supporting model"，
-	// 账号明明是 active 也调度不到。WorkBuddy 是由 /v3/config 同步下来的，
-	// Marvis 没有这个接口，模型集合是固定的槽位表，所以在这里直接写入。
-	if IsMarvisPlatform(input.Platform) {
-		// 与 WorkBuddy 一样：建号时分配一套稳定硬件画像并写进凭据。
-		input.Credentials = ensureMarvisFingerprintCredentials(input.Credentials)
-		input.Credentials = ensureMarvisModelMappingCredentials(input.Credentials)
-	}
 	account := &Account{
 		Name:        input.Name,
 		Notes:       normalizeAccountNotes(input.Notes),
@@ -597,23 +586,6 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 		}
 	}
 
-	// Marvis：分配硬件指纹前先读同平台已有账号占位，保证这台「机器」
-	// 在账号池里是唯一的一台。放在 buildAccountForCreate 之前，
-	// 因为指纹要随凭据一起入库。
-	if IsMarvisPlatform(input.Platform) {
-		var existing []map[string]any
-		if others, lerr := s.accountRepo.ListByPlatform(ctx, input.Platform); lerr == nil {
-			for i := range others {
-				if others[i].Credentials != nil {
-					existing = append(existing, others[i].Credentials)
-				}
-			}
-		}
-		input.Credentials = marvisAssignFingerprintConsidering(input.Credentials, existing)
-		// 模型映射先用静态表，账号创建后异步探测并覆盖。
-		// 同步探测要 8 秒（5 个槽位各一次请求），建号不该等这么久；
-		// 而静态表本身就是可用的兜底，探测只是把它校正成当时的事实。
-	}
 	account, err := buildAccountForCreate(input, accountExtra)
 	if err != nil {
 		return nil, err
@@ -650,12 +622,6 @@ func (s *adminServiceImpl) CreateAccount(ctx context.Context, input *CreateAccou
 		}
 	})
 
-	// Marvis：账号已入库，后台把这个账号的模型映射探测成真实值。
-	// 不阻塞建号响应 —— 探测失败就保留静态表，账号仍然可用。
-	if IsMarvisPlatform(account.Platform) {
-		s.startMarvisModelDiscovery(account.ID)
-	}
-
 	return account, nil
 }
 
@@ -663,12 +629,6 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 	account, err := s.accountRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
-	}
-	// Marvis 重新授权会带来新的 guid（上游在这次登录时分配的设备标识），
-	// 而凭据里的硬件指纹是按旧 guid 派生的。不同步会让 MarvisExt 里的
-	// 设备标识与 guid 对不上，上游按风控拦（4100404）。
-	if IsMarvisPlatform(account.Platform) && input.Credentials != nil {
-		input.Credentials = ensureMarvisFingerprintCredentials(input.Credentials)
 	}
 	var normalizedExtra map[string]any
 	if input.Extra != nil {

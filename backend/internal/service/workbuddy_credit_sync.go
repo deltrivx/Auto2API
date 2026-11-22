@@ -266,7 +266,7 @@ func (s *WorkBuddyCreditSyncService) Sync(ctx context.Context) {
 	snap.Accounts = results
 
 	// 积分归零即停调：额度用尽的账号继续被调度只会一路报错。
-	// 与 Marvis 侧同一条规则，恢复靠充值或人工重新开启。
+	// 与 Trae 侧同一条规则，恢复靠充值或人工重新开启。
 	for i := range results {
 		row := &results[i]
 		if row.Err != "" || row.TotalCredits > 0 {

@@ -143,13 +143,6 @@ func (s *OpenAIGatewayService) forwardAsRawChatCompletionsWithStartTime(
 	if strings.TrimSpace(token) == "" {
 		return nil, fmt.Errorf("account %d missing %s credential", account.ID, tokenKind)
 	}
-	// Marvis 有一批槽位已被上游下线（claude-* / gpt-5.4），转发只会拿到
-	// "无效模型id"。⚠ 必须按平台判断：同名模型在 WorkBuddy 国际站是
-	// 正常可用的，早先只按模型名拦，误伤了国际版。
-	if IsUnavailableModelForPlatform(account.Platform, upstreamModel) {
-		return nil, fmt.Errorf("模型 %s 在 %s 平台已不可用", upstreamModel, account.Platform)
-	}
-
 	var bridgeUsage OpenAIUsage
 
 	if clientStream {

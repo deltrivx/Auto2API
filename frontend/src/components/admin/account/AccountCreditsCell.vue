@@ -56,7 +56,6 @@ import {
   type WorkBuddyCreditDailySummary
 } from '@/api/admin/workbuddy'
 import { fetchCredits as fetchTraeCredits } from '@/api/admin/trae'
-import { getMarvisCredits, type MarvisCredits } from '@/api/admin/marvis'
 
 const props = defineProps<{ accountId: number; platform: string; accountName?: string }>()
 const emit = defineEmits<{ 'show-detail': [{ id: number }] }>()
@@ -130,32 +129,6 @@ async function load() {
     }
   }
 
-  // Marvis 走自己的钱包接口：它按 token 计量，没有 WorkBuddy 那套分组积分。
-  if (props.platform === 'marvis') {
-    try {
-      const m: MarvisCredits = await getMarvisCredits(props.accountId)
-      credits.value = {
-        account_id: m.account_id,
-        account: m.account,
-        platform: m.platform,
-        // 账号列表这一格要显示「还剩多少」，不是「总额」。
-        // WorkBuddy 分支算的也是可用量（total - used），这里保持一致。
-        total: m.available ?? Math.max(0, (m.total ?? 0) - (m.used ?? 0)),
-        groups: m.groups ?? [],
-        package_name: m.package_name,
-        is_paid_user: m.is_paid_user,
-        credits_info_available: m.credits_info_available
-      } as unknown as WorkBuddyCredits
-      trend.value = []
-      return
-    } catch (e: any) {
-      error.value = e?.message || 'failed'
-      credits.value = null
-      return
-    } finally {
-      loading.value = false
-    }
-  }
   try {
     const [c, tr] = await Promise.allSettled([
       getWorkBuddyCredits(props.accountId),

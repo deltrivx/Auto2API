@@ -206,16 +206,11 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	backupHandler := admin.NewBackupHandler(backupService, userService, imageStorageSettingService)
 	oAuthHandler := admin.NewOAuthHandler(oAuthService)
 	workBuddyOAuthHandler := admin.NewWorkBuddyOAuthHandler(workBuddyOAuthService, adminService)
-	marvisOAuthService := service.NewMarvisOAuthService()
 	traeOAuthService := service.NewTraeOAuthService()
-	service.BindMarvisOAuthService(marvisOAuthService)
-	marvisOAuthHandler := admin.NewMarvisOAuthHandler(marvisOAuthService, adminService)
 	traeOAuthHandler := admin.NewTraeOAuthHandler(traeOAuthService, adminService)
 	workBuddyCreditSyncService := service.NewWorkBuddyCreditSyncService(adminService, redisClient)
 	workBuddyTaskScheduler := service.NewWorkBuddyTaskScheduler(adminService)
-	marvisCreditSyncService := service.NewMarvisCreditSyncService(adminService, 5*time.Minute)
 	traeCreditSyncService := service.NewTraeCreditSyncService(adminService)
-	marvisWalletSyncService := service.NewMarvisWalletSyncService(adminService)
 	workBuddyTaskHandler := admin.NewWorkBuddyTaskHandler(adminService, workBuddyCreditSyncService)
 	workBuddyTaskHandler.WithTraeCreditSync(traeCreditSyncService)
 	proxyHandler := admin.NewProxyHandler(adminService)
@@ -278,7 +273,7 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 	upstreamBillingProbeService := service.ProvideUpstreamBillingProbeService(accountRepository, accountTestService, settingService, leaderLockCache, db)
 	idempotencyCoordinator := service.ProvideIdempotencyCoordinator(idempotencyRepository, configConfig)
 	claudeResetCreditService := service.ProvideClaudeResetCreditService(accountRepository, claudeTokenProvider, proxyRepository, settingService, idempotencyCoordinator, leaderLockCache)
-	adminHandlers := handler.ProvideAdminHandlers(dashboardHandler, adminUserHandler, groupHandler, accountHandler, adminAnnouncementHandler, dataManagementHandler, backupHandler, oAuthHandler, workBuddyOAuthHandler, marvisOAuthHandler, traeOAuthHandler, workBuddyTaskHandler, marvisCreditSyncService, proxyHandler, adminRedeemHandler, promoHandler, settingHandler, opsHandler, systemHandler, adminSubscriptionHandler, adminUsageHandler, userAttributeHandler, errorPassthroughHandler, tlsFingerprintProfileHandler, adminAPIKeyHandler, scheduledTestHandler, channelHandler, channelMonitorHandler, channelMonitorRequestTemplateHandler, contentModerationHandler, promptAdminHandler, paymentHandler, affiliateHandler, complianceHandler, auditLogHandler, upstreamBillingProbeService, claudeResetCreditService)
+	adminHandlers := handler.ProvideAdminHandlers(dashboardHandler, adminUserHandler, groupHandler, accountHandler, adminAnnouncementHandler, dataManagementHandler, backupHandler, oAuthHandler, workBuddyOAuthHandler, traeOAuthHandler, workBuddyTaskHandler, proxyHandler, adminRedeemHandler, promoHandler, settingHandler, opsHandler, systemHandler, adminSubscriptionHandler, adminUsageHandler, userAttributeHandler, errorPassthroughHandler, tlsFingerprintProfileHandler, adminAPIKeyHandler, scheduledTestHandler, channelHandler, channelMonitorHandler, channelMonitorRequestTemplateHandler, contentModerationHandler, promptAdminHandler, paymentHandler, affiliateHandler, complianceHandler, auditLogHandler, upstreamBillingProbeService, claudeResetCreditService)
 	usageRecordWorkerPool := service.NewUsageRecordWorkerPool(configConfig)
 	userMsgQueueCache := repository.NewUserMsgQueueCache(redisClient)
 	userMessageQueueService := service.ProvideUserMessageQueueService(userMsgQueueCache, rpmCache, configConfig)
@@ -338,8 +333,6 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 		Cleanup:              v,
 		TaskScheduler:        workBuddyTaskScheduler,
 		CreditSync:           workBuddyCreditSyncService,
-		MarvisWalletSync:     marvisWalletSyncService,
-		MarvisCreditSync:     marvisCreditSyncService,
 		TraeCreditSync:       traeCreditSyncService,
 		ChannelMonitorRunner: channelMonitorRunner,
 	}
@@ -356,10 +349,6 @@ type Application struct {
 	TaskScheduler *service.WorkBuddyTaskScheduler
 	// CreditSync 定时把上游积分同步到快照。
 	CreditSync *service.WorkBuddyCreditSyncService
-	// MarvisWalletSync 定时把腾讯 Marvis 的令牌额度写进账号 extra。
-	MarvisWalletSync *service.MarvisWalletSyncService
-	// MarvisCreditSync 定时汇总 Marvis 各账号额度，供仪表盘读取。
-	MarvisCreditSync *service.MarvisCreditSyncService
 	// TraeCreditSync 定时汇总 Trae 各账号额度（国内站积分 / 国际站美元）。
 	TraeCreditSync *service.TraeCreditSyncService
 	// ChannelMonitorRunner 按各监控的 interval 定期打点上游，

@@ -10,12 +10,9 @@ export default {
       creditsTodayWorkBuddy: 'WB 国内今日',
       creditsTotalWorkBuddy: 'WB 国内总积分',
       creditsWorkBuddyAccountsHint: '全部 WorkBuddy 账号可用积分',
-      creditsMarvis: 'Marvis 积分',
-      creditsMarvisAvailableHint: '全部 Marvis 账号可用积分',
       creditsCNTotal: '国内版',
       creditsIntlTotal: '国际版',
       creditsTodayUsed: '今日消耗：',
-      creditsMarvisTotal: 'Marvis 总积分',
       creditsTraeTotal: 'Trae 总积分',
       cardTodayData: '今日数据',
       cardTodayUsed: '今日消耗',
@@ -45,7 +42,6 @@ export default {
       creditsTrendTitle: '近 14 天积分趋势',
       pleaseCompleteAuth: '请先完成授权登录',
       workbuddyAccount: 'WorkBuddy 账号',
-      marvisAccount: '腾讯 Marvis 账号',
       unknownPlatform: '未知平台',
       reauthUnsupported: '该平台暂不支持在此重新授权，请删除后重新添加账号。',
       workbuddyReauth: {
@@ -89,28 +85,8 @@ export default {
         osVersion: '系统版本',
         rotate: '重新分配设备',
       },
-      marvisAuth: {
-        loginQQ: 'QQ 登录',
-        loginWeChat: '微信登录',
-        step1: '选择登录渠道',
-        step2: '生成授权链接，在浏览器中打开并扫码完成登录',
-        generate: '生成授权链接',
-        waiting: '等待授权中',
-        regenerate: '重新授权',
-        timeoutHint: '授权超时，请点击按钮重新生成授权链接',
-        step3: '登录完成后，把浏览器地址栏里的地址复制或粘贴到这里，并点击完成登录。',
-        step3Hint: '地址形如 …/marvis_oauth?login_type=QC&code=…&state=…',
-        step3Placeholder: '粘贴回调地址，或只粘贴 code',
-        confirm: '完成登录',
-        confirming: '正在登录…',
-        loginFailed: '登录失败',
-        loggedIn: '登录成功',
-        successHint: '{name} 登录成功，请点击创建按钮创建账号',
-      },
       fingerprintMenu: '硬件指纹',
-      fingerprintMarvis: '设备标识',
       fingerprint: {
-        marvisHint: '腾讯 Marvis 的设备标识：guid 与账号绑定，uskey 每次请求现签（上游限制同一 uskey 只能用两次）。',
         dialogTitle: '硬件指纹',
         hint: '该账号在网关转发时使用的设备特征。每个账号独立一套。',
         system: '系统',
@@ -1440,7 +1416,6 @@ export default {
       // OAuth flow
       oauth: {
         authorized: '授权成功',
-        marvis: { title: 'Marvis 账号授权' },
         workbuddy: {
           title: 'WorkBuddy 账号授权'
         },

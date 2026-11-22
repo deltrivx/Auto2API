@@ -19,7 +19,7 @@ func ensureSimpleModeDefaultGroups(ctx context.Context, client *dbent.Client) er
 	// 本分支只服务 WorkBuddy：国内站与国际站各一个默认分组。
 	// 历史上还会为 openai/grok/antigravity 等平台预置分组与图像生成回填，
 	// 那些平台已移除。
-	for _, platform := range []string{service.PlatformWorkBuddyCN, service.PlatformWorkBuddyIntl, service.PlatformMarvis} {
+	for _, platform := range []string{service.PlatformWorkBuddyCN, service.PlatformWorkBuddyIntl} {
 		name := platform + "-default"
 		if err := createGroupIfNotExists(ctx, client, name, platform); err != nil {
 			return err

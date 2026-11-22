@@ -1379,7 +1379,7 @@ func (s *GatewayService) DoGrokNativeResponsesJSON(ctx context.Context, account 
 // 模型列表里。
 //
 // 该机制原本用于 Gemini 分组借 Antigravity 账号出模型。本分支只接入
-// WorkBuddy 与 Marvis，两者各自独立、不交叉调度，因此恒为 false。
+// WorkBuddy 与 Trae，两者各自独立、不交叉调度，因此恒为 false。
 func mixedListingAccountAllowed(groupPlatform string, account *Account) bool {
 	return false
 }

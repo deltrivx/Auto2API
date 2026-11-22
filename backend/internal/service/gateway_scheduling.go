@@ -885,7 +885,7 @@ func modelRoutingAppliesToPlatform(targetPlatform, groupPlatform string) bool {
 // 在只知道目标平台、还没取到分组的位置（调试日志、取分组前的短路）单独判定用。
 func modelRoutingAppliesToTargetPlatform(targetPlatform string) bool {
 	switch targetPlatform {
-	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformMarvis:
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl:
 		return true
 	case PlatformAnthropic, PlatformOpenAI:
 		return true

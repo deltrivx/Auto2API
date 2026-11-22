@@ -59,7 +59,7 @@
               <Icon name="refresh" size="sm" />
               {{ t('admin.accounts.resetQuota') }}
             </button>
-              <button v-if="isWorkBuddy || isMarvis || isTrae" @click="$emit('fingerprint', account); $emit('close')" class="flex w-full items-center gap-2 px-4 py-2 text-sm text-cyan-600 hover:bg-gray-100 dark:hover:bg-dark-700">
+              <button v-if="isWorkBuddy || isTrae" @click="$emit('fingerprint', account); $emit('close')" class="flex w-full items-center gap-2 px-4 py-2 text-sm text-cyan-600 hover:bg-gray-100 dark:hover:bg-dark-700">
                 <Icon name="cpu" size="sm" />
                 {{ t('admin.accounts.fingerprintMenu') }}
               </button>
@@ -117,8 +117,6 @@ useResizeObserver(menuRef, updatePosition)
 const isWorkBuddy = computed(
   () => props.account?.platform === 'workbuddy_cn' || props.account?.platform === 'workbuddy_intl'
 )
-// Marvis 也有设备标识（guid + 每次现签的 uskey），同样提供指纹视图。
-const isMarvis = computed(() => props.account?.platform === 'marvis')
 const isTrae = computed(
   () => props.account?.platform === 'trae_cn' || props.account?.platform === 'trae_intl'
 )

@@ -35,11 +35,6 @@ export function accountsPath(): string {
   return rolePath('/admin/accounts', '/accounts')
 }
 
-/** Marvis 接口：/admin/marvis 或 /marvis。 */
-export function marvisPath(suffix: string): string {
-  return rolePath(`/admin/marvis${suffix}`, `/marvis${suffix}`)
-}
-
 /** WorkBuddy 接口：/admin/workbuddy 或 /workbuddy。 */
 export function workBuddyPath(suffix: string): string {
   return rolePath(`/admin/workbuddy${suffix}`, `/workbuddy${suffix}`)

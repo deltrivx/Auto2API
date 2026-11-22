@@ -4,7 +4,7 @@
       <!-- 与原生指标卡同构：图标在左（p-2 圆角块），文本在右 -->
       <div class="flex items-center gap-3">
         <div class="rounded-lg p-2" :class="card.bg">
-          <!-- 四张卡都绑定一个平台，统一用官方 mark，不再混用线条图标 -->
+          <!-- 每张卡都绑定一个平台，统一用官方 mark，不再混用线条图标 -->
           <PlatformIcon :platform="card.platform" size="md" class="text-gray-700 dark:text-gray-200" />
         </div>
         <div class="min-w-0">
@@ -30,29 +30,25 @@ import { useAutoRefresh } from '@/composables/useAutoRefresh'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import {
   getWorkBuddyCreditSnapshot,
-  getMarvisCreditSnapshot,
   getTraeCreditSnapshot,
   type WorkBuddyCreditSnapshot,
-  type MarvisCreditSnapshot,
   type TraeCreditSnapshot
 } from '@/api/admin/workbuddy'
 
-// 积分体系四卡：
+// 积分体系三卡：
 //
 //   1 WorkBuddy 今日积分  今日签到 + 今日任务
 //   2 WorkBuddy 总积分    副标题给「今日数据：总量 - 今日消费」
-//   3 Marvis 总积分       副标题按授权方式（QQ / 微信）拆分余额
-//   4 Trae 总积分         副标题给今日消费
+//   3 Trae 总积分         副标题给今日消费
 //
 // 数据全部来自上游快照，不读本地台账——账号可能在客户端或别处签到/做任务，
-// 只有上游数据是准确的。三个平台都按「每次刷新现拉上游」取数，上游每日凌晨
+// 只有上游数据是准确的。两个平台都按「每次刷新现拉上游」取数，上游每日凌晨
 // 自行重置额度，因此不需要任何本地重置逻辑。
 //
 // 管理端与用户端共用这一个组件，保证两处口径一致。
 
 const { t } = useI18n()
 const snap = ref<WorkBuddyCreditSnapshot | null>(null)
-const marvis = ref<MarvisCreditSnapshot | null>(null)
 const trae = ref<TraeCreditSnapshot | null>(null)
 
 /** 千分位 + 两位小数。 */
@@ -66,9 +62,9 @@ function fmt(v: number): string {
 /** 积分单位文案（全平台统一「积分」）。 */
 const unit = computed(() => t('admin.accounts.creditsUnit'))
 
-// 三个快照都到齐才算就绪：只到一部分会让合计与今日数据短暂偏小。
+// 两个快照都到齐才算就绪：只到一部分会让合计与今日数据短暂偏小。
 // 某平台没有账号时后端返回空列表（仍是有效快照），不会被误判成未就绪。
-const ready = computed(() => snap.value !== null && marvis.value !== null && trae.value !== null)
+const ready = computed(() => snap.value !== null && trae.value !== null)
 
 type Card = {
   key: string
@@ -76,7 +72,7 @@ type Card = {
   value: string
   hint: string
   // 每张卡都对应一个平台，图标统一取该平台的官方 mark。
-  platform: 'workbuddy_cn' | 'marvis' | 'trae_cn'
+  platform: 'workbuddy_cn' | 'trae_cn'
   // 数值与副标题的颜色，按平台区分，便于扫读。
   color: string
   bg: string
@@ -84,7 +80,6 @@ type Card = {
 
 const cards = computed<Card[]>(() => {
   const wb = snap.value
-  const mv = marvis.value
   const tr = trae.value
 
   const todayCheckin = (wb?.accounts ?? []).reduce(
@@ -94,11 +89,6 @@ const cards = computed<Card[]>(() => {
   const todayTask = wb?.today_task_credits ?? 0
   const wbTotal = wb?.total_credits ?? 0
   const wbTodayCost = todayCheckin + todayTask
-
-  // Marvis 卡片显示「所有账号的余额之和」，不是总额度之和。
-  // available_credits 是各账号钱包余额（avail_tokens）的累加，
-  // total_credits 是额度上限的累加，口径不同。
-  const mvTotal = mv?.available_credits ?? 0
 
   // Trae：额度来自上游（国内站积分 / 国际站美元），后端已折算成积分
   // （1 美元 = 100 积分），这里直接用。
@@ -128,18 +118,6 @@ const cards = computed<Card[]>(() => {
       bg: 'bg-emerald-50 dark:bg-emerald-900/20'
     },
     {
-      key: 'marvis',
-      label: t('admin.accounts.creditsMarvisTotal'),
-      // 换算成积分后量级在万级，K 缩写反而不直观，直接两位小数完整显示。
-      value: fmt(mvTotal),
-      // 副标题按授权方式拆分余额：QQ 登录的账号之和、微信登录的账号之和。
-      // 两个数都由后端按 login_type 分别累加，前端只做展示。
-      hint: `QQ：${fmt(Number(mv?.available_qq ?? 0))} ${unit.value} + 微信：${fmt(Number(mv?.available_wx ?? 0))} ${unit.value}`,
-      platform: 'marvis',
-      color: 'text-cyan-600 dark:text-cyan-400',
-      bg: 'bg-cyan-50 dark:bg-cyan-900/20'
-    },
-    {
       key: 'trae',
       label: t('admin.accounts.creditsTraeTotal'),
       // 全部平台统一两位小数完整显示，不再用 K 缩写。
@@ -159,10 +137,10 @@ function normalizeWb(s: WorkBuddyCreditSnapshot | null): WorkBuddyCreditSnapshot
   return { ...s, accounts: s.accounts ?? [] }
 }
 
-// load 读取三个平台的积分快照。
+// load 读取两个平台的积分快照。
 //
 // 首次无数据时带 sync=1 让后端同步跑一轮再返回，否则仪表盘会先显示骨架条。
-// 三个请求并发，不串行等。失败时保留上一次的值，避免刷新时闪回骨架。
+// 两个请求并发，不串行等。失败时保留上一次的值，避免刷新时闪回骨架。
 async function load(forceSync = false) {
   // 冷启动判断：本次会话里没拉过，就第一次直接带 sync=1。
   //
@@ -171,19 +149,12 @@ async function load(forceSync = false) {
   const coldKey = 'credits-cold-loaded'
   const coldStart = !sessionStorage.getItem(coldKey)
 
-  const [wb, mv, tr] = await Promise.all([
+  const [wb, tr] = await Promise.all([
     (async () => {
       try {
         return normalizeWb(await getWorkBuddyCreditSnapshot(forceSync || coldStart))
       } catch {
         return snap.value
-      }
-    })(),
-    (async () => {
-      try {
-        return await getMarvisCreditSnapshot(forceSync || coldStart)
-      } catch {
-        return marvis.value
       }
     })(),
     (async () => {
@@ -196,7 +167,6 @@ async function load(forceSync = false) {
   ])
   sessionStorage.setItem(coldKey, '1')
   if (wb) snap.value = wb
-  if (mv) marvis.value = mv
   if (tr) trae.value = tr
 }
 

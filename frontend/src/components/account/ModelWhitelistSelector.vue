@@ -247,9 +247,9 @@ const canSyncUpstream = computed(() => {
 const remoteModels = ref<{ value: string; label: string }[]>([])
 
 // 这些平台的模型清单来自后端账号目录（不是本地静态表）：
-// WorkBuddy 由 /v3/config 下发，Marvis 是固定的槽位表。
+// WorkBuddy 由 /v3/config 下发。
 // 走远程目录才能让「同步最新支持模型」与「清除所有模型」真正有数据可操作。
-const REMOTE_CATALOG_PLATFORMS = ['workbuddy_cn', 'workbuddy_intl', 'marvis']
+const REMOTE_CATALOG_PLATFORMS = ['workbuddy_cn', 'workbuddy_intl']
 const usesRemoteCatalog = computed(
   () =>
     !!props.accountId &&

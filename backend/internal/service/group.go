@@ -464,7 +464,7 @@ func NormalizeProfitControlConfig(platform string, enabled bool, minMargin, safe
 
 func profitControlPlatformSupported(platform string) bool {
 	switch platform {
-	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl, PlatformMarvis:
+	case PlatformWorkBuddyCN, PlatformWorkBuddyIntl:
 		return true
 	default:
 		return false

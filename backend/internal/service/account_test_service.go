@@ -387,12 +387,6 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 		return s.testWorkBuddyAccountConnection(c, account, testModelID, prompt)
 	}
 
-	// 腾讯 Marvis 同理：OAuth 账号、无 API Key，必须在这里单独拦下，
-	// 否则会落进通用分支，拿到的错误与真实转发无关。
-	if isMarvisAccount(account) {
-		return s.testMarvisAccountConnection(c, account, modelID, prompt)
-	}
-
 	// 按入站协议分流的多协议供应商（国产厂商等）：按账号协议选测试路径。
 	if account.RoutesProtocolByInbound() {
 		switch account.GetAPIProtocol() {

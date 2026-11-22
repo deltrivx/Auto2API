@@ -13,7 +13,7 @@ func requiresSystemChatRole(account *Account, targetURL, upstreamModel string) b
 	if account == nil || account.Type != AccountTypeAPIKey {
 		return false
 	}
-	// 本分支的接入平台（WorkBuddy / Marvis）都不要求首条必须是 system。
+	// 本分支的接入平台（WorkBuddy / Trae）都不要求首条必须是 system。
 	if isOfficialOpenCodeHost(targetURL) && isDeepSeekCatalogModel(upstreamModel) {
 		return true
 	}

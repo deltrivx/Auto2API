@@ -95,6 +95,9 @@ func RegisterUserRoutes(
 			wb := authenticated.Group("/workbuddy")
 			{
 				wb.GET("/credits/snapshot", h.Admin.WorkBuddyTask.CreditSnapshot)
+				// Trae 积分快照：仪表盘积分卡与 WorkBuddy 卡并列展示，
+				// 缺这条会让普通用户的 ready 条件永远为 false（卡片停在骨架）。
+				wb.GET("/credits/trae", h.Admin.WorkBuddyTask.TraeCreditSnapshot)
 				wb.GET("/tasks/board", h.Admin.WorkBuddyTask.Board)
 				wb.GET("/tasks/trend", h.Admin.WorkBuddyTask.CreditTrend)
 				wb.GET("/tasks/catalog", h.Admin.WorkBuddyTask.Catalog)

@@ -78,9 +78,12 @@ function fmt(v: number): string {
 /** 积分单位文案（全平台统一「积分」）。 */
 const unit = computed(() => t('admin.accounts.creditsUnit'))
 
-// 两个快照都到齐才算就绪：只到一部分会让合计与今日数据短暂偏小。
-// 某平台没有账号时后端返回空列表（仍是有效快照），不会被误判成未就绪。
-const ready = computed(() => snap.value !== null && trae.value !== null)
+// 任一快照到齐即视为就绪。
+//
+// 原先要求两个都到，任一接口失败（例如普通用户没有 Trae 权限、或路由缺失）
+// 就会让整个积分区永久停在骨架条——用户看到的是「卡片不见了」而不是报错。
+// 缺失的那一侧按 0 参与计算，卡片照常渲染。
+const ready = computed(() => snap.value !== null || trae.value !== null)
 
 type Card = {
   key: string

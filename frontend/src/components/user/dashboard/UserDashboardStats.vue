@@ -330,7 +330,10 @@ const platformCards = computed<FusedPlatformCard[]>(() => {
   // 三档全空的限额记录等价于不限额，不单独产生卡片。
   // 后端 by_platform / quota 接口均不会返回 platform='__other__'，
   // 无需显式排除；__other__ 由下方差值补差逻辑单独追加。
-  const platforms = new Set<string>(byPlat.keys())
+  // 四个固定渠道始终出卡：只按「有用量/有配额」派生会让当期没有请求的
+  // 渠道整块消失（例如 WorkBuddy 国际版），拆分表看起来像少了平台。
+  const platforms = new Set<string>(['workbuddy_cn', 'workbuddy_intl', 'trae_cn', 'trae_intl'])
+  for (const platform of byPlat.keys()) platforms.add(platform)
   for (const [platform, q] of byQuota) {
     if (hasAnyLimit(q)) platforms.add(platform)
   }

@@ -11,6 +11,7 @@ export default {
       creditsIntlTotal: 'Intl',
       creditsTodayUsed: 'Used today: ',
       creditsTraeTotal: 'Trae total credits',
+      creditsTotalAll: 'All platforms total credits',
       cardTodayData: 'Today',
       cardTodayUsed: 'Used today',
       creditsAllPlatforms: 'All platforms',

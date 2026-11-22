@@ -14,6 +14,7 @@ export default {
       creditsIntlTotal: '国际版',
       creditsTodayUsed: '今日消耗：',
       creditsTraeTotal: 'Trae 总积分',
+      creditsTotalAll: '全部平台总积分',
       cardTodayData: '今日数据',
       cardTodayUsed: '今日消耗',
       creditsAllPlatforms: '平台总积分',

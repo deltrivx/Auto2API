@@ -5,7 +5,23 @@
       <div class="flex items-center gap-3">
         <div class="rounded-lg p-2" :class="card.bg">
           <!-- 每张卡都绑定一个平台，统一用官方 mark，不再混用线条图标 -->
-          <PlatformIcon :platform="card.platform" size="md" class="text-gray-700 dark:text-gray-200" />
+          <PlatformIcon
+            v-if="card.platform"
+            :platform="card.platform"
+            size="md"
+            class="text-gray-700 dark:text-gray-200"
+          />
+          <svg
+            v-else
+            class="h-5 w-5 text-gray-700 dark:text-gray-200"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 15l4-4 3 3 5-6" />
+          </svg>
         </div>
         <div class="min-w-0">
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ card.label }}</p>
@@ -72,7 +88,8 @@ type Card = {
   value: string
   hint: string
   // 每张卡都对应一个平台，图标统一取该平台的官方 mark。
-  platform: 'workbuddy_cn' | 'trae_cn'
+  // 合计卡没有单一平台，platform 留空则不渲染图标。
+  platform: 'workbuddy_cn' | 'trae_cn' | ''
   // 数值与副标题的颜色，按平台区分，便于扫读。
   color: string
   bg: string
@@ -127,6 +144,17 @@ const cards = computed<Card[]>(() => {
       platform: 'trae_cn',
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-900/20'
+    },
+    {
+      // 所有平台总积分：WorkBuddy（国内外）与 Trae（国内外）四个渠道余额之和。
+      // 与上面两张卡的副标题同源，避免出现「分项之和 ≠ 合计」的口径分歧。
+      key: 'all-total',
+      label: t('admin.accounts.creditsTotalAll'),
+      value: fmt(wbTotal + trTotal),
+      hint: `${t('admin.accounts.creditsTotalWorkBuddy')} ${fmt(wbTotal)} ${unit.value} + ${t('admin.accounts.creditsTraeTotal')} ${fmt(trTotal)} ${unit.value}`,
+      platform: '',
+      color: 'text-sky-600 dark:text-sky-400',
+      bg: 'bg-sky-50 dark:bg-sky-900/20'
     }
   ]
 })

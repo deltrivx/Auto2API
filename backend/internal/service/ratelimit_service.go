@@ -2212,6 +2212,16 @@ func unauthorizedRequiresCredentialHandling(account *Account, responseBody []byt
 	if account == nil {
 		return false
 	}
+	// WorkBuddy 的 401 有两条来源，必须分开：
+	//   1. 真正登录态被拒 —— 带 WWW-Authenticate: invalid_token → 摘账号，需重新授权
+	//   2. 上游边缘网关（APISIX/openresty）偶发 401 Authorization Required ——
+	//      同一个有效 token 下一次就能通，把账号摘掉纯属误伤
+	//
+	// 旧逻辑对所有 OAuth 账号一律返回 true，于是第二类把大批 WorkBuddy 国内
+	// 账号在几分钟内轮流标成失效（线上实测 30 天内 95 条）。
+	if isWorkBuddyPlatform(account.Platform) {
+		return workBuddyUnauthorizedRequiresReauth(responseBody)
+	}
 	if account.Type == AccountTypeOAuth || account.IsShadow() {
 		return true
 	}

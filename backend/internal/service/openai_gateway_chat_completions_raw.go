@@ -904,16 +904,21 @@ type workBuddyAggToolCall struct {
 
 // workBuddyDeriveConversationID 为国内版请求派生稳定的 conversationId。
 //
-// 移植自 AutoBuddy relay.go 的 deriveConversationID：seed 取账号指纹的
-// machineId（无则 uid），拼上 messages 的前 512 字节做 md5，得到
-// "wb-<hash>"。同一账号对同一消息序列产生稳定值，不同请求互不冲突。
+// 移植自 AutoBuddy relay.go 的 deriveConversationID：seed 拼上 messages 的
+// 前 512 字节做 md5，得到 "wb-<hash>"。同一账号对同一消息序列产生稳定值，
+// 不同请求互不冲突。
+//
+// 种子**必须取 uid，不能取 machineId**：上游对 machineId 相同的客户端会
+// 共享会话空间，而 machineId 一旦撞车（旧版本所有账号共用主机哈希），
+// 两个账号发送同样的消息就会算出同一个 conversationId，在上游侧表现为
+// 同一设备并发多个会话——这正是被风控盯上的特征。
 func workBuddyDeriveConversationID(account *Account, messages any) string {
-	seed := ""
-	if fp := account.workBuddyFingerprint(); fp.MachineID != "" {
-		seed = strings.TrimSpace(fp.MachineID)
-	}
+	seed := strings.TrimSpace(account.workBuddyUIDOf())
 	if seed == "" {
-		seed = strings.TrimSpace(account.workBuddyUIDOf())
+		// 极端情况（凭据缺 uid）退回 machineId，总比共享 "wb" 前缀好
+		if fp := account.workBuddyFingerprint(); fp.MachineID != "" {
+			seed = strings.TrimSpace(fp.MachineID)
+		}
 	}
 	if seed == "" {
 		seed = "wb"

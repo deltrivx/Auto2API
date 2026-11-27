@@ -237,6 +237,28 @@ func (a *workBuddyFingerprintAllocator) workBuddyAssign(key string) workBuddyFin
 	}
 }
 
+// workBuddyAccountMachineID 返回**按账号派生**的设备标识。
+//
+// magpie 是「一个进程服务多个账号」，所以它用本机哈希做 machineId 是合理的。
+// 我们是「一个进程里的每个账号代表一台不同设备」，直接复制会撞车：容器里
+// 20 多个账号会拿到同一个 machineId。
+//
+// machineId 参与：
+//   - 事件上报的 machineId 字段（上游按它做设备维度统计）
+//   - workBuddyDeriveConversationID 的种子（撞车会让不同账号生成相同的会话 id）
+//
+// 因此必须一账号一值，且跨容器重建保持稳定——所以只取 uid，不掺主机名。
+// 主机名仍保留在 Hostname 字段里如实展示这台机器的真实名字。
+func workBuddyAccountMachineID(uid string) string {
+	key := strings.TrimSpace(uid)
+	if key == "" {
+		// 没有 uid 时退回主机身份，保证不产生空值
+		return workBuddyHost().MachineID
+	}
+	sum := sha256.Sum256([]byte("magpie-workbuddy-account|" + key))
+	return hex.EncodeToString(sum[:])
+}
+
 // workBuddyFingerprintForAccount 为单个账号生成指纹。
 //
 // 入口函数：uid 优先，退化为账号 ID。同一账号每次调用返回完全相同的值。
@@ -249,7 +271,7 @@ func workBuddyFingerprintForAccount(uid string) workBuddyFingerprint {
 	host := workBuddyHost()
 	fp := workBuddyFingerprint{
 		UID:        uid,
-		MachineID:  host.MachineID,
+		MachineID:  workBuddyAccountMachineID(uid),
 		SessionID:  workBuddyUUIDv5(workBuddyFingerprintNamespace, "wb-session:"+uid),
 		OS:         host.OS,
 		Arch:       host.Arch,
@@ -286,8 +308,14 @@ var workBuddyUASuffixPattern = regexp.MustCompile(`Chrome/(\d+)\.0\.0\.0`)
 
 // WorkBuddyFingerprintOf 返回账号指纹的对外视图。
 //
-// 同时标注指纹是否已固化在凭据里：未固化时每次按 uid 派生，值本身稳定，
-// 但提示运维「这个账号还没走过一次创建流程」。
+// 只输出「真实采集到的值」。旧版本在凭据里写过的模拟硬件（GPU / 屏幕 /
+// 磁盘 / 字体 / WebGL / 地区）**不再回显**：它们从未被发送给上游，展示出来
+// 只会让运维误以为这台机器真有 4070、2560×1440 的显示器。
+//
+// 三个字段用于表达状态：
+//   - persisted：凭据里是否存过指纹
+//   - stale：存过但与当前身份不一致（旧版本主机哈希撞车的遗留）
+//   - 硬件字段缺失时返回 nil，前端显示「未采集」而不是编一个值
 func WorkBuddyFingerprintOf(account *Account) map[string]any {
 	out := map[string]any{}
 	if account == nil {
@@ -297,12 +325,11 @@ func WorkBuddyFingerprintOf(account *Account) map[string]any {
 
 	persisted := false
 	if account.Credentials != nil {
-		if raw, ok := account.Credentials["fingerprint"]; ok {
-			if m, ok := raw.(map[string]any); ok && workBuddyStringField(m, "machine_id") != "" {
-				persisted = true
-			}
+		if raw, ok := account.Credentials["fingerprint"].(map[string]any); ok {
+			persisted = workBuddyStringField(raw, "machine_id") != ""
 		}
 	}
+	drift := account.workBuddyFingerprintDrift()
 
 	return map[string]any{
 		"account_id":     account.ID,
@@ -313,27 +340,30 @@ func WorkBuddyFingerprintOf(account *Account) map[string]any {
 		"session_id":     fp.SessionID,
 		"mp_machine_id":  fp.MPMachineID,
 		"web_machine_id": fp.WebMachineID,
-		"mac":            fp.MAC,
-		"os":             fp.OS,
-		"arch":           fp.Arch,
-		"os_version":     fp.OSVersion,
-		"cpu_cores":      fp.CPUCores,
-		"memory_size":    fp.MemorySize,
-		"ua":             fp.UA,
-		"ide_version":    fp.IDEVersion,
-		// 对齐 magpie 后不再有模拟硬件：这三项为空即「未发送」，
-		// 不再按系统族补一个假值，避免面板显示不存在的设备。
-		"gpu":            fp.GPU,
-		"disk":           fp.Disk,
-		"screen":         fp.Screen,
-		"cpu_model":      workBuddyFingerprintCPUModel(fp),
-		"hostname":       fp.Hostname,
-		"timezone":       fp.Timezone,
-		"locale":         fp.Locale,
-		"fonts":          fp.Fonts,
-		"webgl_vendor":   fp.WebGLVendor,
-		"webgl_renderer": fp.WebGLRenderer,
+		// 以下均为本机真实值（容器内即容器视角的那台机器）
+		"os":          fp.OS,
+		"arch":        fp.Arch,
+		"os_version":  fp.OSVersion,
+		"cpu_model":   fp.CPUModel,
+		"cpu_cores":   fp.CPUCores,
+		"memory_size": fp.MemorySize,
+		"hostname":    fp.Hostname,
+		"timezone":    fp.Timezone,
+		"ua":          fp.UA,
+		"ide_version": fp.IDEVersion,
+		// 以下字段从未被采集也不会上报：明确返回 nil，让前端显示「未采集」。
+		// 保留键名是为了不破坏既有前端契约。
+		"mac":            nil,
+		"gpu":            nil,
+		"disk":           nil,
+		"screen":         nil,
+		"locale":         nil,
+		"fonts":          nil,
+		"webgl_vendor":   nil,
+		"webgl_renderer": nil,
 		"persisted":      persisted,
+		"stale":          drift != "",
+		"stale_hint":     drift,
 	}
 }
 

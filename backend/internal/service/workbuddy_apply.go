@@ -127,13 +127,57 @@ func applyWorkBuddyFingerprintHeaders(account *Account, h http.Header) {
 
 // workBuddyFingerprint 返回账号的身份。
 //
-// 对齐 magpie 后**不再读取历史持久化的指纹**：那些值是旧版本按 uid 派生出来的
-// 模拟硬件（Win32 机型、假 MAC、假内存），照用会让面板和实际上报不一致，
-// 也等于继续带着一套编造的身份。现在一律按真实主机现算。
+// 以「运行时现算」为准，但会读回凭据里持久化的值来**校验一致性**：
+//
+//   - 旧版本在凭据里写过模拟硬件（Win32 机型、假 MAC、假内存、假 GPU），
+//     那些字段一律丢弃，只用当前版本认识的字段。
+//   - 旧版本的 machine_id 是主机哈希（所有账号撞成一个值），与现在的
+//     按账号派生不一致；这种情况下以现算值为准，凭据里那份视为过期。
+//   - machine_id 一致时沿用凭据里的 session_id，避免每次重启换会话号。
+//
+// 换句话说：持久化值不再是「权威来源」，也不再被静默忽略——两者不一致时
+// 以真实身份为准，并由 workBuddyFingerprintDrift 暴露给管理端。
 func (a *Account) workBuddyFingerprint() workBuddyFingerprint {
 	if a == nil {
 		return workBuddyFingerprint{}
 	}
-	return workBuddyFingerprintForAccount(a.workBuddyUIDOf())
+	uid := a.workBuddyUIDOf()
+	fp := workBuddyFingerprintForAccount(uid)
+
+	// 凭据里若存过同一 machine_id，沿用它的 session_id 保持不变。
+	if a.Credentials != nil {
+		if raw, ok := a.Credentials["fingerprint"].(map[string]any); ok {
+			if workBuddyStringField(raw, "machine_id") == fp.MachineID {
+				if sid := workBuddyStringField(raw, "session_id"); sid != "" {
+					fp.SessionID = sid
+				}
+			}
+		}
+	}
+	return fp
+}
+
+// workBuddyFingerprintDrift 报告凭据里持久化的指纹与当前真实身份是否一致。
+//
+// 返回空字符串表示一致（或压根没存过）；否则返回一句可直接展示给运维的说明。
+// 只做描述，不改数据——管理端据此提示「这条指纹是历史遗留，可重新生成」。
+func (a *Account) workBuddyFingerprintDrift() string {
+	if a == nil || a.Credentials == nil {
+		return ""
+	}
+	raw, ok := a.Credentials["fingerprint"].(map[string]any)
+	if !ok {
+		return ""
+	}
+	persisted := workBuddyStringField(raw, "machine_id")
+	if persisted == "" {
+		return ""
+	}
+	current := workBuddyFingerprintForAccount(a.workBuddyUIDOf()).MachineID
+	if persisted == current {
+		return ""
+	}
+	return "stored fingerprint does not match the current per-account identity; " +
+		"the stored value is from an older release and is no longer used"
 }
 

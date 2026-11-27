@@ -112,7 +112,7 @@ func (s *OpenAIGatewayService) handleOpenAIAccountUpstreamError(ctx context.Cont
 			if len(matches) > 0 && matches[0].rule.Scope == TempUnschedScopeModel {
 				stateCtx, cancel := openAIAccountStateContext(ctx)
 				defer cancel()
-				return s.rateLimitService.HandleTempUnschedulable(stateCtx, account, statusCode, ruleBody, model)
+				return s.rateLimitService.HandleTempUnschedulable(stateCtx, account, statusCode, headers, ruleBody, model)
 			}
 		}
 		return false
@@ -170,8 +170,8 @@ func (s *OpenAIGatewayService) handleOpenAIAccountUpstreamError(ctx context.Cont
 	// model before entering the generic account error path. This keeps the
 	// account available to other models and avoids the account runtime blocker.
 	if s.rateLimitService != nil && len(canonicalModel) > 0 && strings.TrimSpace(canonicalModel[0]) != "" &&
-		tempUnschedRulesApply(account, statusCode, responseBody, canonicalModel[0]) &&
-		s.rateLimitService.HandleTempUnschedulable(stateCtx, account, statusCode, responseBody, canonicalModel[0]) {
+		tempUnschedRulesApply(account, statusCode, headers, responseBody, canonicalModel[0]) &&
+		s.rateLimitService.HandleTempUnschedulable(stateCtx, account, statusCode, headers, responseBody, canonicalModel[0]) {
 		return true
 	}
 	if statusCode == http.StatusTooManyRequests && s.rateLimitService != nil && len(canonicalModel) > 0 &&
@@ -186,7 +186,7 @@ func (s *OpenAIGatewayService) handleOpenAIAccountUpstreamError(ctx context.Cont
 	}
 	shouldDisable := s.rateLimitService.HandleUpstreamError(stateCtx, account, statusCode, headers, responseBody)
 	tempModel := tempUnschedulableModel(stateCtx, nil)
-	modelTempMatched := tempModel != "" && tempUnschedRulesApply(account, statusCode, responseBody, tempModel) &&
+	modelTempMatched := tempModel != "" && tempUnschedRulesApply(account, statusCode, headers, responseBody, tempModel) &&
 		len(matchTempUnschedulableRules(account, statusCode, responseBody)) > 0
 	if shouldDisable && !modelTempMatched {
 		s.BlockAccountScheduling(account, time.Time{}, "upstream_disable")

@@ -23,6 +23,8 @@ const (
 	BadRequest Class = "bad_request"
 	// UpstreamError 上游 5xx。
 	UpstreamError Class = "upstream_error"
+	// UpstreamUnauthorized 上游拒绝请求，凭据状态未知。
+	UpstreamUnauthorized Class = "upstream_unauthorized"
 	// Unknown 无法归类。
 	Unknown Class = "unknown"
 )
@@ -70,7 +72,11 @@ var (
 
 // Observe 记录一次上游错误，按平台与类别累计。
 func Observe(platform string, status int, body string) {
-	class := Classify(status, body)
+	ObserveClass(platform, Classify(status, body))
+}
+
+// ObserveClass records an error already classified from its upstream response.
+func ObserveClass(platform string, class Class) {
 	if platform == "" {
 		platform = "unknown"
 	}

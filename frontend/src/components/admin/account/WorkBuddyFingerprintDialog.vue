@@ -6,7 +6,7 @@
     </div>
     <div v-else-if="fp" class="space-y-4">
       <p class="text-xs text-gray-500 dark:text-gray-400">
-        {{ t('admin.accounts.fingerprint.hint') }}
+        {{ t(isTrae ? 'admin.accounts.fingerprint.hint' : 'admin.accounts.fingerprint.gatewayHostHint') }}
       </p>
 
       <!-- 硬件规格：divide-y 列表，标签定宽 112px（w-28），值与标签同行 -->
@@ -14,7 +14,7 @@
         <div v-for="row in specRows" :key="row.label" class="flex gap-4 py-2">
           <dt class="w-28 flex-shrink-0 text-gray-500 dark:text-gray-400">{{ row.label }}</dt>
           <dd class="min-w-0 break-all font-mono text-xs text-gray-900 dark:text-gray-100">
-            {{ row.value || '—' }}
+            {{ row.value || missingValue }}
           </dd>
         </div>
       </dl>
@@ -28,7 +28,7 @@
           <div v-for="row in idRows" :key="row.label" class="flex gap-4 py-2">
             <dt class="w-28 flex-shrink-0 text-gray-500 dark:text-gray-400">{{ row.label }}</dt>
             <dd class="min-w-0 break-all font-mono text-xs text-gray-900 dark:text-gray-100">
-              {{ row.value || '—' }}
+              {{ row.value || missingValue }}
             </dd>
           </div>
         </dl>
@@ -54,8 +54,7 @@ import BaseDialog from '@/components/common/BaseDialog.vue'
 import { getWorkBuddyFingerprint, type WorkBuddyFingerprint } from '@/api/admin/workbuddy'
 import { fetchDevice as getTraeDevice, type TraeDevice } from '@/api/admin/trae'
 
-// platform 决定走哪套指纹接口：WorkBuddy 是完整硬件画像，
-// Trae 是 IDE 设备身份（device_id / machine_id）。
+// WorkBuddy 显示网关环境和账号标识，Trae 显示登录时绑定的设备信息。
 const props = defineProps<{
   show: boolean
   accountId: number
@@ -78,20 +77,26 @@ const dialogTitle = computed(() =>
     : t('admin.accounts.fingerprint.dialogTitle')
 )
 
+const missingValue = computed(() => isTrae.value ? '—' : t('admin.accounts.fingerprint.notCollected'))
+
 const specRows = computed(() => {
   const f = fp.value
   if (!f) return []
+  const memory = isTrae.value
+    ? `${f.memory_size} GB`
+    : f.memory_size > 0 ? `${(f.memory_size / 1024 ** 3).toFixed(2)} GiB` : ''
+  const hostnameLabel = isTrae.value ? 'hostname' : 'gatewayHostname'
   return [
-    { label: t('admin.accounts.fingerprint.system'), value: `${f.os} ${f.os_version}` },
+    { label: t('admin.accounts.fingerprint.system'), value: `${f.os} ${f.os_version}`.trim() },
     { label: t('admin.accounts.fingerprint.cpu'), value: f.cpu_model ? `${f.cpu_model} / ${f.cpu_cores} 核` : `${f.cpu_cores} 核` },
-    { label: t('admin.accounts.fingerprint.memory'), value: `${f.memory_size} GB` },
-    { label: t('admin.accounts.fingerprint.gpu'), value: f.gpu || '—' },
-    { label: t('admin.accounts.fingerprint.disk'), value: f.disk ? `${f.disk} GB` : '—' },
-    { label: t('admin.accounts.fingerprint.screen'), value: f.screen || '—' },
-    { label: t('admin.accounts.fingerprint.hostname'), value: f.hostname || '—' },
-    { label: t('admin.accounts.fingerprint.timezone'), value: f.timezone || '—' },
-    { label: t('admin.accounts.fingerprint.locale'), value: f.locale || '—' },
-    { label: t('admin.accounts.fingerprint.webgl'), value: f.webgl_renderer || '—' }
+    { label: t('admin.accounts.fingerprint.memory'), value: memory },
+    { label: t('admin.accounts.fingerprint.gpu'), value: f.gpu },
+    { label: t('admin.accounts.fingerprint.disk'), value: f.disk ? `${f.disk} GB` : '' },
+    { label: t('admin.accounts.fingerprint.screen'), value: f.screen },
+    { label: t(`admin.accounts.fingerprint.${hostnameLabel}`), value: f.hostname },
+    { label: t('admin.accounts.fingerprint.timezone'), value: f.timezone },
+    { label: t('admin.accounts.fingerprint.locale'), value: f.locale },
+    { label: t('admin.accounts.fingerprint.webgl'), value: f.webgl_renderer }
   ]
 })
 

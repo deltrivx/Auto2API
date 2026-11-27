@@ -1,13 +1,13 @@
 package service
 
 import (
-	"github.com/tidwall/gjson"
-	"bytes"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/tidwall/gjson"
 )
 
 // WorkBuddy 请求签名。
@@ -227,71 +227,29 @@ func workBuddySessionID(h http.Header) string {
 	return strings.TrimSpace(h.Get(workBuddySessionHeader))
 }
 
-// workBuddyIsInvalidToken 判断响应是否为「登录态被拒」。
-//
-// 对应 magpie 的 invalidToken。上游前置网关对不接受的 token 返回 401 并带
-// WWW-Authenticate: Bearer realm="copilot", error="invalid_token"。
-//
-// 注意：不能只看 401 —— 上游对部分路径会给已接受的登录态返回裸 401，
-// 那种情况不应触发重新登录。
-func workBuddyIsInvalidToken(resp *http.Response) bool {
-	if resp == nil || resp.StatusCode != http.StatusUnauthorized {
-		return false
-	}
-	if resp.Header == nil {
-		return false
-	}
-	return strings.Contains(strings.ToLower(resp.Header.Get("WWW-Authenticate")), "invalid_token")
-}
-
-// workBuddyIsEdgeAuthChallenge 判断 401 是否来自上游边缘网关（APISIX / OpenResty）
-// 而不是「登录态被拒」。
-//
-// 实测：同一个仍然有效的 token，在中国站偶发会被 APISIX 直接回
-// `401 Authorization Required`（server: APISIX/*、body 是 nginx 风格 HTML），
-// 既没有 WWW-Authenticate: invalid_token，也没有任何业务错误码；下一次请求
-// 就能正常通。这种 401 **不代表 token 失效**，把它当成失效会让好账号被摘。
-//
-// 判据（全部满足才算边缘网关）：
-//   - 没有 invalid_token（否则是真失效）
-//   - Server 头是 APISIX / openresty / nginx
-//   - 没有 WorkBuddy 的业务错误码（上游业务错误是 JSON，带 code/msg）
-func workBuddyIsEdgeAuthChallenge(resp *http.Response) bool {
-	if resp == nil || resp.StatusCode != http.StatusUnauthorized || resp.Header == nil {
-		return false
-	}
-	if workBuddyIsInvalidToken(resp) {
-		return false
-	}
-	server := strings.ToLower(resp.Header.Get("Server"))
-	edge := strings.Contains(server, "apisix") ||
-		strings.Contains(server, "openresty") ||
-		strings.Contains(server, "nginx")
-	return edge && resp.Header.Get("Content-Type") != ""
-}
-
-// workBuddyUnauthorizedRequiresReauth 判断一次 401 是否值得把账号标成凭据失效。
-//
-// 只有同时满足下面两点才算「需要重新授权」：
-//   - 响应体是 WorkBuddy 的业务错误（JSON，带 code 或 msg）
-//   - 并且带 invalid_token / 业务码指向登录态问题
-//
-// 反过来，APISIX / openresty 的边缘 401（HTML 体、无业务码）**不算**——
-// 它和 token 有效性无关，实测同一个 token 下一次请求就能通。把这种 401
-// 当成失效会让整个账号池在十几分钟内被轮流摘空。
-func workBuddyUnauthorizedRequiresReauth(responseBody []byte) bool {
-	trimmed := bytes.TrimSpace(responseBody)
-	if len(trimmed) == 0 {
-		// 空体 401：上游没给任何理由，按可重试处理，避免误摘
-		return false
-	}
-	// 合法的业务错误一定是 JSON 对象
-	if !gjson.ValidBytes(trimmed) || !gjson.GetBytes(trimmed, "@this").IsObject() {
-		return false
-	}
-	for _, path := range []string{"code", "msg", "message", "error.code", "error.message"} {
-		if gjson.GetBytes(trimmed, path).Exists() {
+// workBuddyUnauthorizedRequiresReauth checks whether an upstream 401 explicitly
+// says the account credential is invalid. A gateway challenge can also return 401.
+func workBuddyUnauthorizedRequiresReauth(headers http.Header, responseBody []byte) bool {
+	for _, challenge := range headers.Values("WWW-Authenticate") {
+		if strings.Contains(strings.ToLower(challenge), "invalid_token") {
 			return true
+		}
+	}
+	if !gjson.ValidBytes(responseBody) {
+		return false
+	}
+	for _, path := range []string{"code", "error", "error.code", "data.code"} {
+		switch strings.ToLower(strings.TrimSpace(gjson.GetBytes(responseBody, path).String())) {
+		case "4100403", "invalid_token", "access_token_invalid", "token_expired", "token_revoked", "token_invalidated":
+			return true
+		}
+	}
+	for _, path := range []string{"msg", "message", "error.message", "error_description"} {
+		message := strings.ToLower(gjson.GetBytes(responseBody, path).String())
+		for _, marker := range []string{"invalid token", "invalid_token", "token expired", "token has expired", "登录态过期", "登录已过期"} {
+			if strings.Contains(message, marker) {
+				return true
+			}
 		}
 	}
 	return false

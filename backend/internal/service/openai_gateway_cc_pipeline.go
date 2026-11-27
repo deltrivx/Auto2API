@@ -91,6 +91,10 @@ func (s *OpenAIGatewayService) readOpenAIUpstreamErrorWithCompleteness(resp *htt
 	return respBody, upstreamMsg, complete
 }
 
+// WorkBuddyUpstreamUnauthorizedReason identifies a request rejected by WorkBuddy
+// without a confirmed account credential failure.
+const WorkBuddyUpstreamUnauthorizedReason = GatewayFailureReason("workbuddy_upstream_unauthorized")
+
 // failoverOpenAIUpstreamHTTPError 对 >=400 的上游响应做 failover 判定：命中时
 // 记录 ops 事件、执行账号级错误处置并返回 *UpstreamFailoverError；未命中返回
 // nil，调用方继续走各自端点格式的非 failover 错误处理链。
@@ -106,7 +110,7 @@ func (s *OpenAIGatewayService) failoverOpenAIUpstreamHTTPError(
 	shouldFailover := s.shouldFailoverOpenAIUpstreamResponse(account, resp.StatusCode, upstreamMsg, respBody)
 	tempUnscheduled := false
 	if c != nil && account != nil && true && !shouldFailover && !IsResponseCommitted(c) && s.rateLimitService != nil {
-		tempUnscheduled = s.rateLimitService.CheckErrorPolicy(ctx, account, resp.StatusCode, respBody, upstreamModel) == ErrorPolicyTempUnscheduled
+		tempUnscheduled = s.rateLimitService.CheckErrorPolicy(ctx, account, resp.StatusCode, resp.Header, respBody, upstreamModel) == ErrorPolicyTempUnscheduled
 		shouldFailover = tempUnscheduled
 	}
 	if account != nil && false {
@@ -126,8 +130,16 @@ func (s *OpenAIGatewayService) failoverOpenAIUpstreamHTTPError(
 		}
 		upstreamDetail = truncateString(string(respBody), maxBytes)
 	}
-	// 统一归类并计数：平台 + 类别，供 /metrics 暴露，便于区分鉴权/风控/限流/参数/上游故障。
-	errcode.Observe(fmt.Sprint(account.Platform), resp.StatusCode, string(respBody))
+	unconfirmedWorkBuddyAuth := isWorkBuddyPlatform(account.Platform) && resp.StatusCode == http.StatusUnauthorized &&
+		!workBuddyUnauthorizedRequiresReauth(resp.Header, respBody)
+	kind := "failover"
+	if unconfirmedWorkBuddyAuth {
+		kind = "http_error"
+		upstreamMsg = "WorkBuddy rejected the request (upstream HTTP 401)"
+		errcode.ObserveClass(account.Platform, errcode.UpstreamUnauthorized)
+	} else {
+		errcode.Observe(fmt.Sprint(account.Platform), resp.StatusCode, string(respBody))
+	}
 	appendOpsUpstreamError(c, OpsUpstreamErrorEvent{
 		ProxyID:            opsUpstreamProxyID(account),
 		ProxyName:          opsUpstreamProxyName(account),
@@ -136,10 +148,23 @@ func (s *OpenAIGatewayService) failoverOpenAIUpstreamHTTPError(
 		AccountName:        account.Name,
 		UpstreamStatusCode: resp.StatusCode,
 		UpstreamRequestID:  resp.Header.Get("x-request-id"),
-		Kind:               "failover",
+		Kind:               kind,
 		Message:            upstreamMsg,
 		Detail:             upstreamDetail,
 	})
+	if unconfirmedWorkBuddyAuth {
+		setOpsUpstreamError(c, resp.StatusCode, upstreamMsg, upstreamDetail)
+		return &UpstreamFailoverError{
+			StatusCode:        resp.StatusCode,
+			ResponseBody:      respBody,
+			ResponseHeaders:   resp.Header.Clone(),
+			Scope:             GatewayFailureScopeRequest,
+			Reason:            WorkBuddyUpstreamUnauthorizedReason,
+			NextAccountAction: NextAccountStop,
+			ClientStatusCode:  http.StatusBadGateway,
+			ClientMessage:     upstreamMsg,
+		}
+	}
 	shouldDisable := tempUnscheduled
 	if true && !tempUnscheduled {
 		shouldDisable = s.handleOpenAIAccountUpstreamError(ctx, account, resp.StatusCode, resp.Header, respBody, upstreamModel)

@@ -61,9 +61,9 @@ jobs:
         working-directory: backend
         run: go test ./internal/errcode/ -count=1
 
-      - name: Compile service package tests
+      - name: Verify WorkBuddy account error handling
         working-directory: backend
-        run: go test -vet=off ./internal/service/ -run '^$' -count=1
+        run: go test -vet=off ./internal/service/ -run '^TestWorkBuddyUpstreamUnauthorizedHandling$' -count=1 -v
 
       - name: Resolve version
         id: version

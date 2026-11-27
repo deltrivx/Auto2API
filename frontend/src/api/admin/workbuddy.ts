@@ -132,7 +132,7 @@ export async function getWorkBuddyCredits(accountId: number): Promise<WorkBuddyC
   return data
 }
 
-/** 账号硬件指纹。按 uid 稳定派生，上游据此判断设备身份。 */
+/** 网关运行环境与 WorkBuddy 账号标识。 */
 export interface WorkBuddyFingerprint {
   account_id: number
   name: string
@@ -147,6 +147,7 @@ export interface WorkBuddyFingerprint {
   arch: string
   os_version: string
   cpu_cores: number
+  /** Total memory in bytes, as seen by the gateway. */
   memory_size: number
   ua: string
   ide_version: string

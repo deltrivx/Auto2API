@@ -90,6 +90,9 @@ export default {
       fingerprint: {
         dialogTitle: 'Hardware Fingerprint',
         hint: 'Device characteristics this account presents when the gateway forwards requests. Each account has its own set.',
+        gatewayHostHint: 'The system, CPU, memory, hostname, and time zone come from the Auto2API runtime and are shared by accounts on this gateway instance.',
+        gatewayHostname: 'Gateway hostname',
+        notCollected: 'Not collected',
         system: 'System',
         cpu: 'CPU',
         cores: 'cores',

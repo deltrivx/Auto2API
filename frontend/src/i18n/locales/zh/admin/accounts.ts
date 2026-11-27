@@ -90,6 +90,9 @@ export default {
       fingerprint: {
         dialogTitle: '硬件指纹',
         hint: '该账号在网关转发时使用的设备特征。每个账号独立一套。',
+        gatewayHostHint: '系统、CPU、内存、主机名和时区来自 Auto2API 的运行环境，同一网关实例下的账号共用这些信息。',
+        gatewayHostname: '网关主机名',
+        notCollected: '未采集',
         system: '系统',
         cpu: 'CPU',
         cores: '核',
